@@ -59,10 +59,25 @@ class Settings(BaseSettings):
     reports_dir: Path = Field(default=Path("outputs/reports"), alias="REPORTS_DIR")
     audits_dir: Path = Field(default=Path("outputs/audits"), alias="AUDITS_DIR")
 
+    search_location: str = Field(
+        default="Montreal, Quebec, Canada",
+        alias="SEARCH_LOCATION",
+    )
+
+    gsc_credentials_path: Path | None = Field(default=None, alias="GSC_CREDENTIALS_PATH")
+    gsc_property_url: str = Field(
+        default="sc-domain:danilulmashev.com",
+        alias="GSC_PROPERTY_URL",
+    )
+
     site_url: str = Field(default="https://danilulmashev.com", alias="SITE_URL")
     site_name: str = Field(default="Daniil Ulmashev", alias="SITE_NAME")
     primary_language: str = Field(default="en", alias="PRIMARY_LANGUAGE")
     primary_market: str = Field(default="North America", alias="PRIMARY_MARKET")
+
+    @property
+    def gsc_ready(self) -> bool:
+        return self.gsc_credentials_path is not None and self.gsc_credentials_path.exists()
 
     @property
     def gemini_ready(self) -> bool:

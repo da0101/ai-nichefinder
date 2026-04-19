@@ -6,7 +6,7 @@ from nichefinder_core.settings import Settings
 from nichefinder_db.crud import SeoRepository
 
 class FakeSerpAPIClient:
-    async def get_related_searches(self, keyword: str):
+    async def get_related_searches(self, keyword: str, location: str = "Montreal, Quebec, Canada"):
         return []
 
 
@@ -39,7 +39,7 @@ def _repository():
 
 
 class FreeTierSerpAPIClient:
-    async def get_related_searches(self, keyword: str):
+    async def get_related_searches(self, keyword: str, location: str = "Montreal, Quebec, Canada"):
         related = {
             "ai consultant": ["ai strategy consultant", "ai consultant pricing"],
             "ai consultant for startups": ["startup ai consultant"],

@@ -282,6 +282,47 @@ class SeoRepository:
         self.session.refresh(record)
         return record
 
+    def find_search_console_record(
+        self,
+        query: str,
+        page_url: str,
+        snapshot_date: date,
+        property_id: str,
+    ) -> SearchConsoleRecord | None:
+        statement = select(SearchConsoleRecord).where(
+            SearchConsoleRecord.query == query,
+            SearchConsoleRecord.page_url == page_url,
+            SearchConsoleRecord.snapshot_date == snapshot_date,
+            SearchConsoleRecord.property_id == property_id,
+        )
+        return self.session.exec(statement).first()
+
+    def upsert_search_console_record(self, record: SearchConsoleRecord) -> SearchConsoleRecord:
+        """Insert or update a GSC record by composite key (query+page+date+property).
+
+        GSC finalizes metrics over a ~2-3 day rolling window so re-syncing the
+        same date range should refresh numbers, not skip them.
+        """
+        existing = self.find_search_console_record(
+            record.query, record.page_url, record.snapshot_date, record.property_id
+        )
+        if existing is None:
+            self.session.add(record)
+            self.session.commit()
+            self.session.refresh(record)
+            return record
+        existing.impressions = record.impressions
+        existing.clicks = record.clicks
+        existing.ctr = record.ctr
+        existing.position = record.position
+        existing.fetched_at = record.fetched_at
+        if record.keyword_id is not None:
+            existing.keyword_id = record.keyword_id
+        self.session.add(existing)
+        self.session.commit()
+        self.session.refresh(existing)
+        return existing
+
     def list_search_console_records(
         self,
         *,

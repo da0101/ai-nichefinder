@@ -5,8 +5,6 @@ One line per completed task. Newest at the top. Append-only.
 Format: `YYYY-MM-DD — <task> — <outcome> — <takeaway>`
 
 ---
-- 2026-04-19 — commit `0474209`: chore: resolve log conflict on develop — auto-logged
-- 2026-04-19 — commit `1cd5d14`: chore: absorb log auto-update 2 — auto-logged
 - 2026-04-19 — commit `08c430a`: chore: absorb log auto-update — auto-logged
 - 2026-04-19 — commit `6757ed4`: chore: absorb platform hook auto-updates — auto-logged
 - 2026-04-19 — commit `72bb6c5`: Add --force to write/brief commands and SerpAPI usage counter — auto-logged

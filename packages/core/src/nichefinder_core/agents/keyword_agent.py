@@ -64,7 +64,7 @@ class KeywordAgent:
 
         serp_queries = list(dict.fromkeys(expanded_terms))[: min(5, payload.max_keywords)]
         for term in serp_queries:
-            related = await self.serpapi_client.get_related_searches(term)
+            related = await self.serpapi_client.get_related_searches(term, location=self.settings.search_location)
             expanded_terms.extend(related)
 
         return list(dict.fromkeys(term.strip() for term in expanded_terms if term.strip()))[: payload.max_keywords]

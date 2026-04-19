@@ -19,6 +19,8 @@ dependencies = [
   "sqlmodel>=0.0.22",
   "tenacity>=9.1.2",
   "lxml>=5.3.0",
+  "google-api-python-client>=2.160.0",
+  "google-auth>=2.40.0",
 ]
 
 [build-system]

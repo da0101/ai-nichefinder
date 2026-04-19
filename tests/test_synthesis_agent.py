@@ -33,7 +33,12 @@ def _repository():
     return SeoRepository(session)
 
 
-async def test_synthesis_formula_and_rankable_cap():
+async def test_synthesis_not_rankable_blocks_brief_but_keeps_real_score():
+    """Not-rankable should block brief creation but not zero out the score.
+
+    The hard cap at 40 was masking real signal. Scoring reflects true opportunity;
+    should_create_content=False is the right gate for brief generation.
+    """
     repository = _repository()
     keyword = repository.upsert_keyword(
         Keyword(
@@ -58,9 +63,9 @@ async def test_synthesis_formula_and_rankable_cap():
             competitor_data={"avg_word_count": 1000, "content_gaps": [], "recommended_word_count": 1200},
         )
     )
-    assert output.opportunity_score.composite_score == 40.0
-    assert output.should_create_content is False
-    assert gemini.called is False
+    assert output.opportunity_score.composite_score > 40.0  # real score, not capped
+    assert output.should_create_content is False             # brief still blocked
+    assert gemini.called is False                            # Gemini not called when no brief
     score_record = repository.get_latest_opportunity_score(keyword.id)
     assert score_record is not None
     assert score_record.formula_version == "opportunity_v2"
