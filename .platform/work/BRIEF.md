@@ -3,8 +3,8 @@
 > Read this first — every session, every agent (Claude, Codex, Gemini).
 > 30-second orientation: what we're building, why, and where we stand.
 
-**Feature:** gsc-monitoring
-**Status:** in-progress
+**Features:** gsc-monitoring, viewer-redesign
+**Status:** both in-progress
 
 ---
 

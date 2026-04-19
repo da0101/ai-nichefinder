@@ -50,6 +50,7 @@ def load_dashboard(settings: Settings) -> dict:
                     "volume": keyword.monthly_volume,
                     "difficulty": keyword.difficulty_score,
                     "has_brief": repository.get_latest_content_brief(keyword.id) is not None,
+                    "priority": (_score_breakdown(repository, keyword.id) or {}).get("priority"),
                 }
                 for keyword in keywords
             ],
@@ -82,6 +83,23 @@ def load_dashboard(settings: Settings) -> dict:
         }
 
 
+def _score_breakdown(repository, keyword_id: str) -> dict | None:
+    record = repository.get_latest_opportunity_score(keyword_id)
+    if record is None:
+        return None
+    return {
+        "volume": record.volume_score,
+        "difficulty": record.difficulty_score,
+        "trend": record.trend_score,
+        "intent": record.intent_score,
+        "competition": record.competition_score,
+        "composite": record.composite_score,
+        "priority": record.priority,
+        "action": record.action,
+        "why": record.why_good_fit,
+    }
+
+
 def load_keyword_detail(settings: Settings, keyword_id: str) -> dict | None:
     with get_session(settings) as session:
         repository = SeoRepository(session)
@@ -110,6 +128,7 @@ def load_keyword_detail(settings: Settings, keyword_id: str) -> dict | None:
                 "difficulty": keyword.difficulty_score,
                 "discovered_at": _stamp(keyword.discovered_at),
             },
+            "score_breakdown": _score_breakdown(repository, keyword.id),
             "serp": None
             if serp_result is None
             else {
