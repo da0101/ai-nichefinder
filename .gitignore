@@ -3,6 +3,7 @@
 __pycache__/
 *.py[cod]
 *.sqlite3
+*.db
 *.log
 .pytest_cache/
 .ruff_cache/
@@ -16,11 +17,17 @@ htmlcov/
 .env
 *.env
 !.env.example
-infra/env/.env
 infra/env/.env.local
 
 data/cache/
 data/exports/
+data/db/
+outputs/articles/*
+outputs/reports/*
+outputs/audits/*
+!outputs/articles/.gitkeep
+!outputs/reports/.gitkeep
+!outputs/audits/.gitkeep
 
 dist/
 build/
@@ -29,3 +36,20 @@ build/
 
 .idea/
 .vscode/
+
+
+
+
+# agentboard:runtime-begin
+.platform/events.jsonl
+.platform/events-*.jsonl
+.platform/events.jsonl.archive-*
+.platform/.daemon-port
+.platform/.file-change-state.lock
+.platform/.file-change-state.lock.d/
+.platform/.file-change-state.tsv
+.platform/.file-locks.json
+.platform/.session-streams.tsv
+.platform/.watch.pid
+.platform/.watch/
+# agentboard:runtime-end

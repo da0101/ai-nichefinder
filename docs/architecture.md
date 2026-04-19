@@ -2,36 +2,45 @@
 
 ## Current Scope
 
-The current codebase is intentionally CLI first. The goal is to make keyword
-research workflows reliable before adding FastAPI or a web dashboard.
+The codebase is a local, CLI-first SEO research and content workflow for
+`danilulmashev.com`. It coordinates keyword discovery, SERP and competitor
+analysis, deterministic opportunity scoring, Gemini-backed synthesis, article
+generation, and rank tracking without introducing a web surface.
 
-## Initial Package Boundaries
+## Package Boundaries
 
 - `nichefinder-core`
-  - Environment configuration
-  - Shared Pydantic models
-  - Future service orchestration
+  - Settings and site config
+  - SQLModel-backed domain models
+  - Gemini client and prompts
+  - Source clients, atomic agents, and LangGraph workflow definitions
 - `nichefinder-db`
-  - SQLAlchemy metadata
-  - Session factory
-  - Bootstrap helpers
-  - Alembic migration environment
+  - SQLite engine/session handling
+  - CRUD and analytics queries
+  - Alembic environment
 - `nichefinder-cli`
   - Operator commands
-  - Research workflow entrypoints
+  - Runtime/service wiring
+  - Interactive config, research, content, budget, and rank workflows
 
-## Locale Strategy
+## Persistence
 
-- Primary market profile: Montreal, Quebec, Canada
-- Primary language: French
-- Secondary language: English
-- The system should keep language and market explicit on every keyword, rather
-  than assuming a global locale
+- Primary database: SQLite at `data/db/seo.db`
+- Generated drafts: `outputs/articles/`
+- Reports: `outputs/reports/`
+- Audits: `outputs/audits/`
+- Site-specific context: `data/site_config.json`
+
+## AI and Orchestration
+
+- Gemini provider: `google-genai`
+- Analytical model default: `gemini-2.0-flash`
+- Content-writing model default: `gemini-2.0-pro`
+- Workflow engine: LangGraph `StateGraph`
+- Human checkpoints happen before content creation and before final approval
 
 ## Scoring Direction
 
-- `serp_difficulty`: raw page-one competitiveness
-- `site_rankability`: personalized fit for your own domain and niche position
-- `demand_score`: composite score using Google Ads buckets, Trends, Autocomplete,
-  and PAA signals
-
+- Opportunity score is deterministic before any LLM synthesis
+- Weighted inputs: volume, inverted difficulty, trend, intent, and competition
+- If SERP rankability is false, the score is capped at 40

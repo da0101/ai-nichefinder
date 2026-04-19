@@ -13,6 +13,7 @@ dependencies = [
 
 [project.scripts]
 nichefinder = "nichefinder_cli.main:app"
+seo = "nichefinder_cli.main:app"
 
 [build-system]
 requires = ["hatchling"]

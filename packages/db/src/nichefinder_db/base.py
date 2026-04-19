@@ -1,6 +1,3 @@
-from sqlalchemy.orm import DeclarativeBase
+from nichefinder_db.engine import create_db_and_tables
 
-
-class Base(DeclarativeBase):
-    """Shared SQLAlchemy base."""
-
+__all__ = ["create_db_and_tables"]

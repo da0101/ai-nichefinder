@@ -1,0 +1,155 @@
+AI Nichefinder
+Google Ads API Design Documentation
+
+Prepared for Google Ads API Basic Access Review
+Owner: Danil Ulmashev
+Primary website: https://danilulmashev.com/en/
+Tool status: Internal CLI-first tool, localhost use only
+
+1. Product Summary
+
+AI Nichefinder is an internal SEO research and keyword analysis tool built for
+Danil Ulmashev's personal portfolio website. The tool helps identify keyword
+opportunities, evaluate search demand, analyze ranking difficulty, and generate
+content briefs for articles and service pages targeting businesses in Montreal,
+Quebec.
+
+The tool is not a public SaaS product. It is not a Google Ads campaign
+management platform. It is not used to create, modify, optimize, or report on
+advertising campaigns for third parties.
+
+2. Intended Use of the Google Ads API
+
+The Google Ads API is used only for Keyword Planning Services. Specifically,
+the tool reads keyword planning data in order to:
+
+- retrieve search demand ranges and related keyword ideas
+- compare keyword opportunities for content planning
+- support internal SEO prioritization for the owner's own website
+
+The Google Ads API is not used for:
+
+- account creation
+- account management
+- campaign creation
+- campaign management
+- ad creation
+- bid management
+- audience management
+- reporting for external users
+- resale or redistribution of Google Ads data
+
+3. Users and Access Model
+
+The tool is used internally by one person: Danil Ulmashev.
+
+Access characteristics:
+
+- single internal user
+- localhost / personal environment
+- no public signup
+- no client-facing dashboard
+- no external API access
+- no third-party user accounts
+
+4. System Architecture Overview
+
+The current architecture is CLI-first and runs locally.
+
+Main components:
+
+- Python CLI application for research workflows
+- PostgreSQL database for storing keywords, snapshots, and analysis results
+- local caching layer to reduce repeated API calls
+- Gemini integration for content brief generation
+- SERP analysis using non-Google sources where appropriate
+
+Google Ads API is one input source among several. It is used for keyword demand
+signals only. Other sources are used for autocomplete expansion, SERP analysis,
+and content planning.
+
+5. Data Flow
+
+Step 1:
+The user enters seed topics related to software development services offered on
+the portfolio website, such as AI development, SaaS development, mobile app
+development, web development, web design, landing page work, technical audits,
+and website modernization.
+
+Step 2:
+The tool expands these topics into candidate keywords using autocomplete and
+other discovery methods.
+
+Step 3:
+The tool calls Google Ads Keyword Planning endpoints to obtain keyword planning
+signals such as search demand ranges for the candidate keywords.
+
+Step 4:
+The returned Google Ads data is stored internally and combined with other SEO
+signals such as SERP weakness, localization relevance, and content opportunity.
+
+Step 5:
+The tool produces an internal priority list and content recommendations for the
+owner's own website.
+
+6. Data Handling and Compliance Intent
+
+The tool is designed for internal analysis only.
+
+Compliance-oriented constraints:
+
+- no public exposure of raw Google Ads API results
+- no resale or redistribution of Google Ads data
+- no use for managing third-party advertising campaigns
+- no multi-tenant client access
+- no automated ad buying or campaign automation
+- cached internal storage is used only to support the owner's own workflow
+
+7. Geographic and Business Scope
+
+The initial focus is one market:
+
+- Montreal, Quebec, Canada
+
+The business use case is to improve search visibility for Danil Ulmashev's own
+service business, including:
+
+- AI feature development
+- SaaS development
+- mobile app development
+- web development
+- web design and landing pages
+- website redesign and modernization
+- technical audits and architecture review
+
+8. Why the Tool Needs Keyword Planning Services
+
+The tool needs Google Ads keyword planning data to make SEO prioritization more
+credible and less speculative. Google Ads data is used as a demand signal to
+help determine:
+
+- which topics have meaningful search interest
+- which keywords deserve content investment
+- which local service terms are worth prioritizing
+
+Without this signal, prioritization would rely too heavily on heuristics alone.
+
+9. Current Development Stage
+
+The tool is currently in internal development.
+
+Current stage:
+
+- local CLI scaffold completed
+- database and configuration setup completed
+- initial external integrations in progress
+- no public release
+- no external users
+
+10. Summary
+
+AI Nichefinder is a private internal research tool built by an independent
+developer for his own website and business development workflow. The Google Ads
+API is used only for keyword planning and internal SEO prioritization. The tool
+does not create or manage ads and does not expose Google Ads functionality to
+external users.

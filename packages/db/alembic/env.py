@@ -4,7 +4,7 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from nichefinder_core.settings import get_settings
-from nichefinder_db.base import Base
+from sqlmodel import SQLModel
 from nichefinder_db import models as _models  # noqa: F401
 
 config = context.config
@@ -12,7 +12,7 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-target_metadata = Base.metadata
+target_metadata = SQLModel.metadata
 settings = get_settings()
 config.set_main_option("sqlalchemy.url", settings.database_url)
 
@@ -47,4 +47,3 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
-
