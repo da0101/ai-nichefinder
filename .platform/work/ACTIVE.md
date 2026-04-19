@@ -6,7 +6,6 @@
 | Stream | Type | Status | Agent | Last updated |
 |---|---|---|---|---|
 | gsc-monitoring | feature | in-progress | claude-code | 2026-04-19 |
-| viewer-redesign | feature | in-progress | claude-code | 2026-04-19 |
 
 ---
 

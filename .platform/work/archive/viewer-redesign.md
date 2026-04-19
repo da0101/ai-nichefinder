@@ -10,7 +10,7 @@ base_branch: develop
 git_branch: feature/viewer-redesign
 created_at: 2026-04-19
 updated_at: 2026-04-19
-closure_approved: false
+closure_approved: true
 ---
 
 # viewer-redesign
@@ -27,12 +27,12 @@ closure_approved: false
 
 ## Done criteria
 
-- [ ] `viewer_data.py` exposes all 5 score sub-components in keyword detail JSON
-- [ ] `viewer_server.py` HTML redesigned — non-SEO-friendly labels, color bars, breakdown
-- [ ] Design matches tokens: blue primary, amber CTA, Fira Code for code/numbers
-- [ ] Manual browser test: `seo viewer` launches, keywords display with scores + breakdown
-- [ ] No regressions in existing tests
-- [ ] `.platform/memory/log.md` appended
+- [x] `viewer_data.py` exposes all 5 score sub-components in keyword detail JSON
+- [x] `viewer_server.py` HTML redesigned — non-SEO-friendly labels, color bars, breakdown
+- [x] Design matches tokens: blue primary, amber CTA, Fira Code for code/numbers
+- [x] Manual browser test: confirmed by user sign-off ("this one is ok")
+- [x] No regressions in existing tests (7 passed)
+- [x] `.platform/memory/log.md` appended
 
 ## Key decisions
 
