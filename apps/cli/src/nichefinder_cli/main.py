@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from nichefinder_cli.commands.articles import articles_app
 from nichefinder_cli.commands.db import db_app
 from nichefinder_cli.commands.keywords import keywords_app
+from nichefinder_cli.commands.monitor import monitor_app
 from nichefinder_cli.commands.ranks import ranks_app
 from nichefinder_cli.commands.status import status
 from nichefinder_cli.commands.viewer import view
@@ -30,6 +31,7 @@ app.add_typer(db_app, name="db")
 app.add_typer(keywords_app, name="keywords")
 app.add_typer(articles_app, name="articles")
 app.add_typer(ranks_app, name="rank")
+app.add_typer(monitor_app, name="monitor")
 
 
 def _console() -> Console:
