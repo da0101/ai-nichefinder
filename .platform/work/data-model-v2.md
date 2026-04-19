@@ -43,13 +43,15 @@ _Append-only. Format: `2026-04-19 — <decision> — <rationale>`_
 _Overwritten by `agentboard checkpoint` — the compact payload the next agent reads first. Keep this block under ~10 lines._
 
 - **Last updated:** 2026-04-19 by danilulmashev (auto)
-- **What just happened:** (auto) a72fee6: Fix audit findings: consolidate migration, add provenance + freshness tests (48 pass)
+- **What just happened:** (auto) e6c170f: chore: absorb agentboard hook auto-updates
 - **Current focus:** —
 - **Next action:** (auto-saved from commit — update next action manually)
 - **Blockers:** none
 
 ## Progress log
 _Append-only. `agentboard checkpoint` prepends a dated line and auto-trims to the last 10 entries. Format: `2026-04-19 HH:MM — <what happened>`._
+
+2026-04-19 13:00 — (auto) e6c170f: chore: absorb agentboard hook auto-updates
 
 2026-04-19 12:52 — (auto) a72fee6: Fix audit findings: consolidate migration, add provenance + freshness tests (48 pass)
 
@@ -67,11 +69,6 @@ _Append-only. `agentboard checkpoint` prepends a dated line and auto-trims to th
 
 2026-04-19 19:30 — Fixed dead volume + difficulty scoring: pytrends avg_interest used as volume proxy, deterministic difficulty estimator from SERP features/authority domains. 46/46 tests pass.
 2026-04-19 18:45 — Second V2 slice: SERP/brief provenance (run_id, agent_version, model_id), SearchConsoleRecord + AnalyticsRecord monitoring tables, PerformanceRecord marked legacy, full schema target doc in data-architecture.md. 29/29 tests pass.
-2026-04-19 12:04 — Implemented the first additive Data Model V2 slice: keyword lifecycle/locale/freshness/provenance fields, persisted OpportunityScoreRecord history, repository support, and additive SQLite migration handling; updated stream/domain/memory docs.
-
-- 2026-04-19 18:10 — Added additive V2 schema fields for keyword lifecycle/locale/freshness/provenance, persisted opportunity score history, added SQLite upgrade support, and passed the full test suite
-- 2026-04-19 18:20 — Verified the additive migration through the real CLI path with `seo db init` and `seo status`, then removed the transient local DB file to keep the tree clean
-
 ## Open questions
 _Things blocked on user input. Remove when resolved._
 
