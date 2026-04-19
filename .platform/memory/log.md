@@ -5,6 +5,7 @@ One line per completed task. Newest at the top. Append-only.
 Format: `YYYY-MM-DD — <task> — <outcome> — <takeaway>`
 
 ---
+- 2026-04-19 — commit `6757ed4`: chore: absorb platform hook auto-updates — auto-logged
 - 2026-04-19 — commit `72bb6c5`: Add --force to write/brief commands and SerpAPI usage counter — auto-logged
 - 2026-04-19 — viewer-redesign — score breakdown + plain-English labels + blue/amber design system shipped — non-SEO users can now read scores without knowing jargon
 - 2026-04-19 — commit `b049ad1`: feat: Rich spinner on every waiting step during seo research — auto-logged
