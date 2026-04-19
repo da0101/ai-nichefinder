@@ -9,7 +9,7 @@ repo_ids: [repo-primary]
 base_branch: develop
 git_branch: feature/data-model-v2
 created_at: 2026-04-19
-updated_at: 2026-04-19T18:45
+updated_at: 2026-04-19
 closure_approved: false
 ---
 
@@ -42,14 +42,20 @@ _Append-only. Format: `2026-04-19 — <decision> — <rationale>`_
 ## Resume state
 _Overwritten by `agentboard checkpoint` — the compact payload the next agent reads first. Keep this block under ~10 lines._
 
-- **Last updated:** 2026-04-19 by danilulmashev
-- **What just happened:** Second V2 slice: SERP/brief provenance fields (run_id, agent_version, model_id) on SerpResult + ContentBriefRecord; new SearchConsoleRecord (GSC) and AnalyticsRecord (GA4) monitoring tables; PerformanceRecord marked legacy; repo methods + tests; full V2 target schema written into data-architecture.md. All 29 tests pass.
+- **Last updated:** 2026-04-19 by danilulmashev (auto)
+- **What just happened:** (auto) 0cee149: update
 - **Current focus:** —
-- **Next action:** All done criteria now checked. Present completion evidence to user for stream closure sign-off, or proceed to next roadmap step: SourceRegistry + provider client stubs for GSC/GA4.
+- **Next action:** (auto-saved from commit — update next action manually)
 - **Blockers:** none
 
 ## Progress log
 _Append-only. `agentboard checkpoint` prepends a dated line and auto-trims to the last 10 entries. Format: `2026-04-19 HH:MM — <what happened>`._
+
+2026-04-19 12:39 — (auto) 0cee149: update
+
+2026-04-19 12:38 — (auto) e8342a1: update
+
+2026-04-19 12:37 — (auto) e1e6613: Data Model V2: scoring signals, monitoring contracts, and provenance
 
 2026-04-19 19:30 — Fixed dead volume + difficulty scoring: pytrends avg_interest used as volume proxy, deterministic difficulty estimator from SERP features/authority domains. 46/46 tests pass.
 2026-04-19 18:45 — Second V2 slice: SERP/brief provenance (run_id, agent_version, model_id), SearchConsoleRecord + AnalyticsRecord monitoring tables, PerformanceRecord marked legacy, full schema target doc in data-architecture.md. 29/29 tests pass.

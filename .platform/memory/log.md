@@ -5,6 +5,9 @@ One line per completed task. Newest at the top. Append-only.
 Format: `YYYY-MM-DD — <task> — <outcome> — <takeaway>`
 
 ---
+- 2026-04-19 — commit `0cee149`: update — auto-logged
+- 2026-04-19 — commit `e8342a1`: update — auto-logged
+- 2026-04-19 — commit `e1e6613`: Data Model V2: scoring signals, monitoring contracts, and provenance — auto-logged
 - 2026-04-19 — commit `926d5f7`: Archive git flow setup stream — auto-logged
 
 2026-04-19 — closed stream git-flow-setup → ./.platform/work/archive/git-flow-setup.md (by danilulmashev)
