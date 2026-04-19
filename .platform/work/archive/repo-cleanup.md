@@ -2,7 +2,7 @@
 stream_id: stream-repo-cleanup
 slug: repo-cleanup
 type: chore
-status: awaiting-verification
+status: done
 agent_owner: codex-cli
 domain_slugs: [repo-hygiene]
 repo_ids: [repo-primary]
@@ -10,7 +10,7 @@ base_branch: develop
 git_branch: chore/repo-cleanup
 created_at: 2026-04-19
 updated_at: 2026-04-19
-closure_approved: false
+closure_approved: true
 ---
 
 # repo-cleanup
@@ -43,8 +43,8 @@ _Overwritten by `agentboard checkpoint` — the compact payload the next agent r
 
 - **Last updated:** 2026-04-19 — by codex-cli
 - **What just happened:** Removed stale tracked docs/tooling, deleted local junk artifacts, and aligned setup docs with the actual codebase
-- **Current focus:** Await user verification before archiving the cleanup stream
-- **Next action:** If approved, archive `repo-cleanup` and return focus to `data-model-v2`
+- **Current focus:** Stream closed and archived
+- **Next action:** Resume `data-model-v2`
 - **Blockers:** none
 
 ## Progress log
@@ -52,6 +52,7 @@ _Append-only. `agentboard checkpoint` prepends a dated line and auto-trims to th
 
 - 2026-04-19 16:30 — Audited tracked/untracked files, identified duplicate env templates, stale architecture/docs artifacts, dead docker scaffolding, and local junk to remove
 - 2026-04-19 16:55 — Removed stale docs/tooling, deleted ignored runtime and generated artifacts, and verified there are no remaining references to the removed surfaces
+- 2026-04-19 17:10 — User approved closure; stream archived and focus returned to `data-model-v2`
 
 ## Open questions
 _Things blocked on user input. Remove when resolved._
