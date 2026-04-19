@@ -5,7 +5,6 @@
 
 | Stream | Type | Status | Agent | Last updated |
 |---|---|---|---|---|
-| git-flow-setup | feature | blocked | codex-cli | 2026-04-19 |
 
 ---
 

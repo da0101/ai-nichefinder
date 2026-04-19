@@ -50,6 +50,7 @@ Things that must be resolved before this project ships / goes live:
 Things that will bite every new session if not flagged upfront.
 
 - **Activation drift happened once already** — older root docs described a different product shape; always trust the current code and `.platform/` over stale session memory.
+- **Git flow is no longer main-first** — start normal work from `develop`; `main` is the release branch now.
 - **Tests are mostly mocked and local** — the Phase 1 loop is live-verified, but deeper confidence still requires first-party integrations such as Search Console.
 - **External-source assumptions need periodic review** — if a provider is not part of the approved workload, remove it from code and docs instead of leaving it as dormant complexity.
 - **Playwright scraping is allowed only with robots/rate-limit discipline** — do not add shortcuts that fetch pages faster or more aggressively than the current guards.
