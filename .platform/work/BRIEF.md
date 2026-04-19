@@ -4,7 +4,7 @@
 > 30-second orientation: what we're building, why, and where we stand.
 
 **Feature:** _Git flow setup_
-**Status:** in-progress
+**Status:** blocked
 **Stream file:** `work/git-flow-setup.md`
 
 ---
@@ -26,7 +26,7 @@ The repo now has enough real workflow and process state that development and rel
 
 ## Current state
 
-The repo currently only has `main` on origin, so the branch policy has to be created rather than refined.
+The branch topology is now in place locally and on origin, but the stream is blocked on one external GitHub setting: the repo default branch still needs to be switched from `main` to `develop`.
 
 ## Relevant context
 

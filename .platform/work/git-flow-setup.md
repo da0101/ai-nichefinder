@@ -2,7 +2,7 @@
 stream_id: stream-git-flow-setup
 slug: git-flow-setup
 type: feature
-status: in-progress
+status: blocked
 agent_owner: codex-cli
 domain_slugs: [git-workflow]
 repo_ids: [repo-primary]
@@ -25,10 +25,10 @@ _Metadata rules: `stream_id` must be `stream-<slug>`, `slug` must match the file
 - Out of scope: branch protection rules, CI release automation, and semantic versioning.
 
 ## Done criteria
-- [ ] Local `develop` exists and is pushed to `origin`.
+- [x] Local `develop` exists and is pushed to `origin`.
 - [ ] GitHub default branch points to `develop`.
-- [ ] Project docs state that `develop` is the integration branch, `main` is the release branch, and feature branches fork from `develop`.
-- [ ] Manual verification confirms local and remote branch state.
+- [x] Project docs state that `develop` is the integration branch, `main` is the release branch, and feature branches fork from `develop`.
+- [x] Manual verification confirms local and remote branch state.
 - [ ] `.platform/memory/log.md` appended
 - [ ] `decisions.md` updated if any architectural choices were made
 
@@ -40,14 +40,16 @@ _Append-only. Format: `2026-04-19 — <decision> — <rationale>`_
 ## Resume state
 _Overwritten by `agentboard checkpoint` — the compact payload the next agent reads first. Keep this block under ~10 lines._
 
-- **Last updated:** 2026-04-19 by codex-cli
-- **What just happened:** Created and pushed `develop`, set local tracking, and updated the repo docs to use `develop` for feature work and `main` for releases.
-- **Current focus:** GitHub default-branch switch
-- **Next action:** Change the GitHub repo default branch from `main` to `develop` once CLI auth or manual access is available.
-- **Blockers:** `gh` auth is invalid on this machine, so the GitHub default-branch setting cannot be changed programmatically yet.
+- **Last updated:** 2026-04-19 by danilulmashev (auto)
+- **What just happened:** (auto) d047bb3: Set develop-based git flow
+- **Current focus:** waiting on GitHub repo setting
+- **Next action:** Change the GitHub default branch from `main` to `develop`, then return to close the stream.
+- **Blockers:** `gh` auth is invalid on this machine, so the GitHub default-branch setting must be changed manually or after re-authentication.
 
 ## Progress log
 _Append-only. `agentboard checkpoint` prepends a dated line and auto-trims to the last 10 entries. Format: `2026-04-19 HH:MM — <what happened>`._
+
+2026-04-19 09:33 — (auto) d047bb3: Set develop-based git flow
 
 2026-04-19 10:05 — Created `develop`, pushed it to `origin`, set local tracking, and updated repo docs to the new `develop -> feature/* -> main` flow. GitHub default-branch switch is blocked by invalid `gh` auth.
 
