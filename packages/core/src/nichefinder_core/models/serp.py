@@ -30,10 +30,17 @@ class SerpResult(SQLModel, table=True):
     id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True)
     keyword_id: str = Field(foreign_key="keyword.id")
     fetched_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    schema_version: str = Field(default="v1")
+    provider: str = Field(default="serpapi")
+    locale: str | None = None
+    market: str | None = None
     features_json: str
     pages_json: str
     competition_analysis: str
     raw_json: str | None = None
+    run_id: str | None = None
+    agent_version: str | None = None
+    model_id: str | None = None
 
 
 class CompetitorPage(SQLModel, table=True):

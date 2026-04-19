@@ -13,6 +13,12 @@ class SearchIntent(str, Enum):
     NAVIGATIONAL = "navigational"
 
 
+class KeywordLifecycleStatus(str, Enum):
+    DISCOVERED = "discovered"
+    ANALYZED = "analyzed"
+    TARGETED = "targeted"
+
+
 class Keyword(SQLModel, table=True):
     id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True)
     term: str = Field(index=True)
@@ -27,6 +33,17 @@ class Keyword(SQLModel, table=True):
     opportunity_score: float | None = None
     discovered_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     source: str
+    lifecycle_status: KeywordLifecycleStatus = Field(default=KeywordLifecycleStatus.DISCOVERED)
+    locale: str = Field(default="en")
+    market: str = Field(default="North America")
+    metrics_fresh_at: datetime | None = None
+    serp_fresh_at: datetime | None = None
+    trend_fresh_at: datetime | None = None
+    score_fresh_at: datetime | None = None
+    metrics_source: str | None = None
+    trend_source: str | None = None
+    score_source: str | None = None
+    score_formula_version: str | None = None
 
 
 class KeywordCluster(SQLModel, table=True):
@@ -68,6 +85,26 @@ class OpportunityScore(BaseModel):
     priority: str
     action: str
     existing_article_url: str | None = None
+
+
+class OpportunityScoreRecord(SQLModel, table=True):
+    id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True)
+    keyword_id: str = Field(foreign_key="keyword.id", index=True)
+    formula_version: str
+    score_source: str
+    volume_score: float
+    difficulty_score: float
+    trend_score: float
+    intent_score: float
+    competition_score: float
+    composite_score: float
+    why_good_fit: str
+    content_angle: str
+    priority: str
+    action: str
+    existing_article_url: str | None = None
+    input_snapshot_json: str | None = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 def compute_opportunity_score(

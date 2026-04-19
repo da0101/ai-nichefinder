@@ -4,6 +4,7 @@ from datetime import date, datetime, timezone
 from sqlmodel import Session, func, select
 
 from nichefinder_core.models import (
+    AnalyticsRecord,
     ApiUsageRecord,
     Article,
     ArticleVersion,
@@ -13,7 +14,10 @@ from nichefinder_core.models import (
     Keyword,
     KeywordCluster,
     KeywordClusterMembership,
+    OpportunityScore,
+    OpportunityScoreRecord,
     RankingSnapshot,
+    SearchConsoleRecord,
     SerpResult,
 )
 
@@ -36,6 +40,9 @@ class SeoRepository:
         self.session.commit()
         self.session.refresh(keyword)
         return keyword
+
+    def get_keyword_by_term(self, term: str) -> Keyword | None:
+        return self.session.exec(select(Keyword).where(Keyword.term == term)).first()
 
     def get_keyword(self, keyword_id: str) -> Keyword | None:
         return self.session.get(Keyword, keyword_id)
@@ -78,8 +85,26 @@ class SeoRepository:
         statement = select(CompetitorPage).where(CompetitorPage.serp_result_id == serp_result_id)
         return list(self.session.exec(statement).all())
 
-    def save_content_brief(self, keyword_id: str, brief: ContentBrief) -> ContentBriefRecord:
-        record = ContentBriefRecord(keyword_id=keyword_id, brief_json=brief.model_dump_json())
+    def save_content_brief(
+        self,
+        keyword_id: str,
+        brief: ContentBrief,
+        *,
+        score_record_id: str | None = None,
+        schema_version: str = "v2",
+        run_id: str | None = None,
+        agent_version: str | None = None,
+        model_id: str | None = None,
+    ) -> ContentBriefRecord:
+        record = ContentBriefRecord(
+            keyword_id=keyword_id,
+            brief_json=brief.model_dump_json(),
+            schema_version=schema_version,
+            score_record_id=score_record_id,
+            run_id=run_id,
+            agent_version=agent_version,
+            model_id=model_id,
+        )
         self.session.add(record)
         self.session.commit()
         self.session.refresh(record)
@@ -95,6 +120,45 @@ class SeoRepository:
         if record is None:
             return None
         return ContentBrief.model_validate_json(record.brief_json)
+
+    def save_opportunity_score(
+        self,
+        keyword_id: str,
+        score: OpportunityScore,
+        *,
+        formula_version: str,
+        score_source: str,
+        input_snapshot: dict | None = None,
+    ) -> OpportunityScoreRecord:
+        record = OpportunityScoreRecord(
+            keyword_id=keyword_id,
+            formula_version=formula_version,
+            score_source=score_source,
+            volume_score=score.volume_score,
+            difficulty_score=score.difficulty_score,
+            trend_score=score.trend_score,
+            intent_score=score.intent_score,
+            competition_score=score.competition_score,
+            composite_score=score.composite_score,
+            why_good_fit=score.why_good_fit,
+            content_angle=score.content_angle,
+            priority=score.priority,
+            action=score.action,
+            existing_article_url=score.existing_article_url,
+            input_snapshot_json=json.dumps(input_snapshot) if input_snapshot is not None else None,
+        )
+        self.session.add(record)
+        self.session.commit()
+        self.session.refresh(record)
+        return record
+
+    def get_latest_opportunity_score(self, keyword_id: str) -> OpportunityScoreRecord | None:
+        statement = (
+            select(OpportunityScoreRecord)
+            .where(OpportunityScoreRecord.keyword_id == keyword_id)
+            .order_by(OpportunityScoreRecord.created_at.desc())
+        )
+        return self.session.exec(statement).first()
 
     def create_article(self, article: Article, content: str) -> Article:
         self.session.add(article)
@@ -211,6 +275,46 @@ class SeoRepository:
             ApiUsageRecord.usage_month == month,
         )
         return self.session.exec(statement).first()
+
+    def save_search_console_record(self, record: SearchConsoleRecord) -> SearchConsoleRecord:
+        self.session.add(record)
+        self.session.commit()
+        self.session.refresh(record)
+        return record
+
+    def list_search_console_records(
+        self,
+        *,
+        keyword_id: str | None = None,
+        property_id: str | None = None,
+        limit: int = 100,
+    ) -> list[SearchConsoleRecord]:
+        statement = select(SearchConsoleRecord).order_by(SearchConsoleRecord.snapshot_date.desc())
+        if keyword_id is not None:
+            statement = statement.where(SearchConsoleRecord.keyword_id == keyword_id)
+        if property_id is not None:
+            statement = statement.where(SearchConsoleRecord.property_id == property_id)
+        return list(self.session.exec(statement.limit(limit)).all())
+
+    def save_analytics_record(self, record: AnalyticsRecord) -> AnalyticsRecord:
+        self.session.add(record)
+        self.session.commit()
+        self.session.refresh(record)
+        return record
+
+    def list_analytics_records(
+        self,
+        *,
+        page_url: str | None = None,
+        property_id: str | None = None,
+        limit: int = 100,
+    ) -> list[AnalyticsRecord]:
+        statement = select(AnalyticsRecord).order_by(AnalyticsRecord.record_date.desc())
+        if page_url is not None:
+            statement = statement.where(AnalyticsRecord.page_url == page_url)
+        if property_id is not None:
+            statement = statement.where(AnalyticsRecord.property_id == property_id)
+        return list(self.session.exec(statement.limit(limit)).all())
 
     def cluster_keywords(self) -> list[KeywordCluster]:
         keywords = self.list_keywords()

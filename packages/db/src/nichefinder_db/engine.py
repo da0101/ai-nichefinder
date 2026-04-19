@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from sqlmodel import Session, SQLModel, create_engine
 
 from nichefinder_core.models import (
+    AnalyticsRecord,
     ApiUsageRecord,
     Article,
     ArticleVersion,
@@ -12,13 +13,17 @@ from nichefinder_core.models import (
     Keyword,
     KeywordCluster,
     KeywordClusterMembership,
+    OpportunityScoreRecord,
     PerformanceRecord,
     RankingSnapshot,
+    SearchConsoleRecord,
     SerpResult,
 )
 from nichefinder_core.settings import Settings, get_settings
+from nichefinder_db.migrations import apply_additive_sqlite_migrations
 
 _REGISTERED_MODELS = (
+    AnalyticsRecord,
     ApiUsageRecord,
     Article,
     ArticleVersion,
@@ -27,8 +32,10 @@ _REGISTERED_MODELS = (
     Keyword,
     KeywordCluster,
     KeywordClusterMembership,
+    OpportunityScoreRecord,
     PerformanceRecord,
     RankingSnapshot,
+    SearchConsoleRecord,
     SerpResult,
 )
 
@@ -40,7 +47,9 @@ def get_engine(settings: Settings | None = None):
 
 
 def create_db_and_tables(settings: Settings | None = None) -> None:
-    SQLModel.metadata.create_all(get_engine(settings))
+    engine = get_engine(settings)
+    SQLModel.metadata.create_all(engine)
+    apply_additive_sqlite_migrations(engine)
 
 
 @contextmanager

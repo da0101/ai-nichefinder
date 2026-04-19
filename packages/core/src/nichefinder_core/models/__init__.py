@@ -9,15 +9,24 @@ from nichefinder_core.models.keyword import (
     Keyword,
     KeywordCluster,
     KeywordClusterMembership,
+    KeywordLifecycleStatus,
     OpportunityScore,
+    OpportunityScoreRecord,
     SearchIntent,
     compute_opportunity_score,
 )
 from nichefinder_core.models.serp import CompetitorPage, SerpFeatures, SerpPage, SerpResult
 from nichefinder_core.models.site import SiteConfig, load_site_config, save_site_config
-from nichefinder_core.models.tracking import ApiUsageRecord, PerformanceRecord, RankingSnapshot
+from nichefinder_core.models.tracking import (
+    AnalyticsRecord,
+    ApiUsageRecord,
+    PerformanceRecord,
+    RankingSnapshot,
+    SearchConsoleRecord,
+)
 
 __all__ = [
+    "AnalyticsRecord",
     "ApiUsageRecord",
     "Article",
     "ArticleVersion",
@@ -28,9 +37,12 @@ __all__ = [
     "Keyword",
     "KeywordCluster",
     "KeywordClusterMembership",
+    "KeywordLifecycleStatus",
     "OpportunityScore",
+    "OpportunityScoreRecord",
     "PerformanceRecord",
     "RankingSnapshot",
+    "SearchConsoleRecord",
     "SearchIntent",
     "SerpFeatures",
     "SerpPage",
