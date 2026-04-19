@@ -17,7 +17,8 @@ from nichefinder_db import SeoRepository
 from rich.console import Console
 from rich.prompt import Confirm, Prompt
 from rich.table import Table
-from typer import Argument, Typer
+from typer import Argument, Option, Typer
+from typing import Annotated
 
 app = Typer(
     add_completion=False,
@@ -47,6 +48,17 @@ def _record_gemini_usage(repository: SeoRepository, services) -> None:
     )
 
 
+def _print_serpapi_usage(repository: SeoRepository, settings) -> None:
+    usage = repository.get_api_usage("serpapi")
+    used = usage.call_count if usage else 0
+    limit = settings.serpapi_calls_per_month
+    remaining = max(0, limit - used)
+    color = "green" if remaining > 30 else "yellow" if remaining > 10 else "red"
+    _console().print(
+        f"\n[dim]SerpAPI this month:[/dim] [{color}]{used}/{limit} searches used · {remaining} remaining[/{color}]"
+    )
+
+
 @app.command("research")
 def research(keyword: str = Argument(..., help="Seed keyword")) -> None:
     settings, site_config, session_context = get_runtime()
@@ -72,6 +84,7 @@ def research(keyword: str = Argument(..., help="Seed keyword")) -> None:
                 output = asyncio.run(write_article(opp.keyword_id, site_config.model_dump(), services, repository))
                 _console().print(output.model_dump())
         _record_gemini_usage(repository, services)
+        _print_serpapi_usage(repository, settings)
         asyncio.run(services.scraper.close())
 
 
@@ -101,24 +114,30 @@ def serp(keyword: str = Argument(..., help="Keyword to analyze")) -> None:
 
 
 @app.command("brief")
-def brief(keyword_id: str = Argument(..., help="Keyword ID")) -> None:
+def brief(
+    keyword_id: str = Argument(..., help="Keyword ID"),
+    force: Annotated[bool, Option("--force", help="Generate brief even if score/rankable gate says no")] = False,
+) -> None:
     settings, site_config, session_context = get_runtime()
     with session_context as session:
         repository = SeoRepository(session)
         services = build_services(settings, repository)
-        output = asyncio.run(generate_brief(keyword_id, site_config.model_dump(), services, repository))
+        output = asyncio.run(generate_brief(keyword_id, site_config.model_dump(), services, repository, force=force))
         _console().print(output.model_dump())
         _record_gemini_usage(repository, services)
         asyncio.run(services.scraper.close())
 
 
 @app.command("write")
-def write(keyword_id: str = Argument(..., help="Keyword ID")) -> None:
+def write(
+    keyword_id: str = Argument(..., help="Keyword ID"),
+    force: Annotated[bool, Option("--force", help="Write article even if score/rankable gate says no")] = False,
+) -> None:
     settings, site_config, session_context = get_runtime()
     with session_context as session:
         repository = SeoRepository(session)
         services = build_services(settings, repository)
-        output = asyncio.run(write_article(keyword_id, site_config.model_dump(), services, repository))
+        output = asyncio.run(write_article(keyword_id, site_config.model_dump(), services, repository, force=force))
         _console().print(output.model_dump())
         _record_gemini_usage(repository, services)
 

@@ -175,7 +175,7 @@ async def run_full_pipeline(
     return {"keyword_output": keyword_output, "analyses": analyses}
 
 
-async def generate_brief(keyword_id: str, site_config: dict, services, repository):
+async def generate_brief(keyword_id: str, site_config: dict, services, repository, *, force: bool = False):
     keyword = repository.get_keyword(keyword_id)
     if keyword is None:
         raise ValueError(f"Keyword not found: {keyword_id}")
@@ -188,7 +188,7 @@ async def generate_brief(keyword_id: str, site_config: dict, services, repositor
         "questions_covered": [],
         "recommended_word_count": 1200,
     }
-    if serp_output.rankable:
+    if serp_output.rankable or force:
         competitor = await services.competitor_agent.run(
             CompetitorAgentInput(keyword_id=keyword.id, serp_result_id=serp_output.serp_result_id)
         )
@@ -202,17 +202,21 @@ async def generate_brief(keyword_id: str, site_config: dict, services, repositor
             trend_data=trend_output.model_dump(),
             ads_data=ads_output.model_dump(),
             competitor_data=competitor_output,
+            force_create_content=force,
         )
     )
 
 
-async def write_article(keyword_id: str, site_config: dict, services, repository):
+async def write_article(keyword_id: str, site_config: dict, services, repository, *, force: bool = False):
     brief = repository.get_latest_content_brief(keyword_id)
     if brief is None:
-        synthesis_output = await generate_brief(keyword_id, site_config, services, repository)
+        synthesis_output = await generate_brief(keyword_id, site_config, services, repository, force=force)
         brief = synthesis_output.content_brief
     if brief is None:
-        raise ValueError("No content brief available for the keyword")
+        raise ValueError(
+            "No content brief generated — keyword scored below threshold or not rankable. "
+            "Use --force to override."
+        )
     return await services.content_agent.run(
         ContentAgentInput(content_brief=brief, site_config=site_config),
         keyword_id=keyword_id,

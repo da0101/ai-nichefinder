@@ -24,6 +24,7 @@ class SynthesisAgentInput(BaseModel):
     trend_data: dict
     ads_data: dict
     competitor_data: dict
+    force_create_content: bool = False
 
 
 class SynthesisAgentOutput(BaseModel):
@@ -120,7 +121,10 @@ class SynthesisAgent:
         # should_create_content already blocks brief generation for non-rankable keywords.
         keyword = self.repository.update_keyword(payload.keyword_id, opportunity_score=composite)
         content_brief = None
-        should_create_content = composite >= self.settings.min_opportunity_score and payload.serp_data["rankable"]
+        should_create_content = (
+            payload.force_create_content
+            or (composite >= self.settings.min_opportunity_score and payload.serp_data.get("rankable", False))
+        )
         llm_context = {
             "why_good_fit": "Keyword not recommended.",
             "content_type": "how_to",
