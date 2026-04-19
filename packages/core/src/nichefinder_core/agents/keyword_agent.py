@@ -4,7 +4,7 @@ from typing import Any
 from pydantic import BaseModel
 
 from nichefinder_core.gemini.prompts import KEYWORD_EXPANSION_PROMPT, KEYWORD_INTENT_PROMPT
-from nichefinder_core.models import Keyword, SearchIntent
+from nichefinder_core.models import Keyword, KeywordLifecycleStatus, SearchIntent
 from nichefinder_core.settings import Settings
 
 
@@ -110,6 +110,10 @@ class KeywordAgent:
                 competition_level=metric.get("competition"),
                 search_intent=self._intent_from_value(intents_by_term.get(term)),
                 source=source,
+                lifecycle_status=KeywordLifecycleStatus.DISCOVERED,
+                locale=payload.site_config.get("primary_language", "en"),
+                market=self.settings.primary_market,
+                metrics_source=source,
             )
             saved = self.repository.upsert_keyword(keyword)
             saved_ids.append(saved.id)

@@ -35,6 +35,11 @@ class ContentBriefRecord(SQLModel, table=True):
     id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True)
     keyword_id: str = Field(foreign_key="keyword.id", index=True)
     brief_json: str
+    schema_version: str = Field(default="v1")
+    score_record_id: str | None = None
+    run_id: str | None = None
+    agent_version: str | None = None
+    model_id: str | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 

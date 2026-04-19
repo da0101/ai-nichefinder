@@ -9,6 +9,7 @@ Format: `YYYY-MM-DD — <task> — <outcome> — <takeaway>`
 
 2026-04-19 — closed stream git-flow-setup → ./.platform/work/archive/git-flow-setup.md (by danilulmashev)
 2026-04-19 — closed stream repo-cleanup → ./.platform/work/archive/repo-cleanup.md (by codex-cli)
+2026-04-19 — Data Model V2 slice 1 — added additive keyword metadata, score-history persistence, and SQLite upgrade support; all existing tests still pass
 2026-04-19 — repo cleanup pass — removed stale architecture/docs artifacts, dead docker scaffolding, duplicate env templates, and local junk so the tracked surface matches the current CLI-first workflow
 - 2026-04-19 — commit `959b2dc`: Mark git flow setup blocked on GitHub default branch — auto-logged
 - 2026-04-19 — commit `d047bb3`: Set develop-based git flow — auto-logged

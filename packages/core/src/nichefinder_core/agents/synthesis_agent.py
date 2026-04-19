@@ -4,7 +4,16 @@ import math
 from pydantic import BaseModel
 
 from nichefinder_core.gemini.prompts import SYNTHESIS_PROMPT
-from nichefinder_core.models import ContentBrief, ContentType, OpportunityScore, compute_opportunity_score
+from nichefinder_core.models import (
+    ContentBrief,
+    ContentType,
+    KeywordLifecycleStatus,
+    OpportunityScore,
+    compute_opportunity_score,
+)
+from nichefinder_core.utils.serp_signals import avg_interest_to_volume_score
+
+OPPORTUNITY_SCORE_FORMULA_VERSION = "opportunity_v2"
 
 
 class SynthesisAgentInput(BaseModel):
@@ -25,20 +34,46 @@ class SynthesisAgentOutput(BaseModel):
 
 
 class SynthesisAgent:
-    def __init__(self, *, settings, gemini_client, repository):
+    def __init__(
+        self,
+        *,
+        settings,
+        gemini_client,
+        repository,
+        agent_version: str | None = None,
+        model_id: str | None = None,
+    ):
         self.settings = settings
         self.gemini_client = gemini_client
         self.repository = repository
+        self.agent_version = agent_version
+        self.model_id = model_id
 
-    def _volume_score(self, volume: int | None, *, source: str) -> float:
+    def _volume_score(
+        self,
+        volume: int | None,
+        *,
+        source: str,
+        avg_interest: float | None = None,
+    ) -> float:
         if volume is None and source == "gemini_serpapi":
+            if avg_interest is not None:
+                return avg_interest_to_volume_score(avg_interest)
             return self.settings.unknown_free_source_volume_score
         if not volume or volume <= 0:
             return 0.0
         return min(100.0, round(math.log10(volume + 1) / 4 * 100, 2))
 
-    def _difficulty_score(self, value: int | None, *, source: str) -> float:
+    def _difficulty_score(
+        self,
+        value: int | None,
+        *,
+        source: str,
+        difficulty_estimate: int | None = None,
+    ) -> float:
         if value is None and source == "gemini_serpapi":
+            if difficulty_estimate is not None:
+                return float(max(0, 100 - difficulty_estimate))
             return self.settings.unknown_free_source_difficulty_score
         return float(max(0, 100 - (value or 100)))
 
@@ -59,12 +94,18 @@ class SynthesisAgent:
     def _competition_score(level: str | None) -> float:
         return {"low": 100.0, "medium": 50.0, "high": 10.0}.get(level or "", 0.0)
 
-    async def run(self, payload: SynthesisAgentInput) -> SynthesisAgentOutput:
+    async def run(self, payload: SynthesisAgentInput, *, run_id: str | None = None) -> SynthesisAgentOutput:
         keyword = self.repository.get_keyword(payload.keyword_id)
         if keyword is None:
             raise ValueError(f"Keyword not found: {payload.keyword_id}")
-        volume_score = self._volume_score(keyword.monthly_volume, source=keyword.source)
-        difficulty_score = self._difficulty_score(keyword.difficulty_score, source=keyword.source)
+        avg_interest: float | None = payload.trend_data.get("avg_interest")
+        difficulty_estimate: int | None = payload.serp_data.get("difficulty_estimate")
+        volume_score = self._volume_score(
+            keyword.monthly_volume, source=keyword.source, avg_interest=avg_interest
+        )
+        difficulty_score = self._difficulty_score(
+            keyword.difficulty_score, source=keyword.source, difficulty_estimate=difficulty_estimate
+        )
         trend_score = self._trend_score(payload.trend_data["direction"])
         intent_score = self._intent_score(keyword.search_intent.value if keyword.search_intent else None)
         competition_score = self._competition_score(payload.serp_data["competition_level"])
@@ -122,7 +163,6 @@ class SynthesisAgent:
                 existing_article_url=llm_context.get("existing_article_url"),
                 existing_article_content=None,
             )
-            self.repository.save_content_brief(payload.keyword_id, content_brief)
         opportunity_score = OpportunityScore(
             keyword_id=keyword.id,
             keyword_term=keyword.term,
@@ -138,6 +178,33 @@ class SynthesisAgent:
             action=llm_context.get("action", "skip"),
             existing_article_url=llm_context.get("existing_article_url"),
         )
+        score_record = self.repository.save_opportunity_score(
+            payload.keyword_id,
+            opportunity_score,
+            formula_version=OPPORTUNITY_SCORE_FORMULA_VERSION,
+            score_source="synthesis_agent",
+            input_snapshot=payload.model_dump(),
+        )
+        if content_brief is not None:
+            self.repository.save_content_brief(
+                payload.keyword_id,
+                content_brief,
+                score_record_id=score_record.id,
+                run_id=run_id,
+                agent_version=self.agent_version,
+                model_id=self.model_id,
+            )
+        keyword = self.repository.update_keyword(
+            payload.keyword_id,
+            opportunity_score=composite,
+            score_fresh_at=score_record.created_at,
+            score_source="synthesis_agent",
+            score_formula_version=OPPORTUNITY_SCORE_FORMULA_VERSION,
+            lifecycle_status=(
+                KeywordLifecycleStatus.TARGETED if should_create_content else KeywordLifecycleStatus.ANALYZED
+            ),
+        )
+        opportunity_score.keyword_term = keyword.term
         return SynthesisAgentOutput(
             opportunity_score=opportunity_score,
             content_brief=content_brief,

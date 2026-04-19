@@ -1,6 +1,7 @@
 from sqlmodel import Session, SQLModel, create_engine
 
 from nichefinder_core.agents.keyword_agent import KeywordAgent, KeywordAgentInput
+from nichefinder_core.models import KeywordLifecycleStatus
 from nichefinder_core.settings import Settings
 from nichefinder_db.crud import SeoRepository
 
@@ -78,3 +79,7 @@ async def test_keyword_agent_creates_keywords_from_gemini_and_serpapi_sources():
     assert "ai consultant for startups" in terms
     assert "ai strategy consultant" in terms
     assert all(keyword.source == "gemini_serpapi" for keyword in keywords)
+    assert all(keyword.lifecycle_status == KeywordLifecycleStatus.DISCOVERED for keyword in keywords)
+    assert all(keyword.locale == "en" for keyword in keywords)
+    assert all(keyword.market == "North America" for keyword in keywords)
+    assert all(keyword.metrics_source == "gemini_serpapi" for keyword in keywords)
