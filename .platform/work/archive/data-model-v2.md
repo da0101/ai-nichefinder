@@ -2,7 +2,7 @@
 stream_id: stream-data-model-v2
 slug: data-model-v2
 type: feature
-status: in-progress
+status: closed
 agent_owner: codex-cli
 domain_slugs: [data-architecture]
 repo_ids: [repo-primary]
@@ -10,7 +10,7 @@ base_branch: develop
 git_branch: feature/data-model-v2
 created_at: 2026-04-19
 updated_at: 2026-04-19
-closure_approved: false
+closure_approved: true
 ---
 
 # data-model-v2

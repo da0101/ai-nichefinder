@@ -5,6 +5,7 @@ One line per completed task. Newest at the top. Append-only.
 Format: `YYYY-MM-DD — <task> — <outcome> — <takeaway>`
 
 ---
+2026-04-19 — stream data-model-v2 closed — V2 schema, scoring signals, monitoring contracts merged to develop (48 tests) — additive migrations + deterministic scoring are the right pattern for schema evolution without breaking Phase 1 flows
 - 2026-04-19 — commit `e6c170f`: chore: absorb agentboard hook auto-updates — auto-logged
 - 2026-04-19 — commit `a72fee6`: Fix audit findings: consolidate migration, add provenance + freshness tests (48 pass) — auto-logged
 - 2026-04-19 — commit `0478aa5`: chore: absorb agentboard hook auto-updates — auto-logged
