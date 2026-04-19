@@ -1,6 +1,7 @@
 from collections.abc import Iterator
 from contextlib import contextmanager
 
+from sqlalchemy import text
 from sqlmodel import Session, SQLModel, create_engine
 
 from nichefinder_core.models import (
@@ -43,7 +44,12 @@ _REGISTERED_MODELS = (
 def get_engine(settings: Settings | None = None):
     resolved_settings = settings or get_settings()
     connect_args = {"check_same_thread": False} if resolved_settings.database_url.startswith("sqlite") else {}
-    return create_engine(resolved_settings.database_url, echo=False, connect_args=connect_args)
+    engine = create_engine(resolved_settings.database_url, echo=False, connect_args=connect_args)
+    if resolved_settings.database_url.startswith("sqlite"):
+        with engine.connect() as conn:
+            conn.execute(text("PRAGMA journal_mode=WAL"))
+            conn.execute(text("PRAGMA synchronous=NORMAL"))
+    return engine
 
 
 def create_db_and_tables(settings: Settings | None = None) -> None:
