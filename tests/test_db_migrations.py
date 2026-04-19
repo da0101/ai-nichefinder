@@ -1,9 +1,13 @@
+from datetime import datetime, timezone
 from pathlib import Path
 
 from sqlalchemy import create_engine, inspect, text
+from sqlmodel import Session, SQLModel
 
+from nichefinder_core.models import Keyword, SerpResult
 from nichefinder_core.settings import Settings
 from nichefinder_db import create_db_and_tables
+from nichefinder_db.crud import SeoRepository
 
 
 def test_create_db_and_tables_adds_v2_keyword_columns_and_score_table(tmp_path: Path):
@@ -64,3 +68,51 @@ def test_create_db_and_tables_adds_v2_keyword_columns_and_score_table(tmp_path: 
     assert "run_id" in brief_columns
     assert "agent_version" in brief_columns
     assert "model_id" in brief_columns
+
+
+def test_serp_result_provenance_fields_round_trip():
+    engine = create_engine("sqlite://", connect_args={"check_same_thread": False})
+    SQLModel.metadata.create_all(engine)
+    session = Session(engine)
+    repo = SeoRepository(session)
+
+    keyword = repo.upsert_keyword(
+        Keyword(term="provenance test", seed_keyword="provenance test", source="manual")
+    )
+    serp = SerpResult(
+        keyword_id=keyword.id,
+        features_json="{}",
+        pages_json="[]",
+        competition_analysis="{}",
+        run_id="run-abc123",
+        agent_version="serp-agent-v1",
+        model_id="gemini-2.5-flash",
+    )
+    saved = repo.create_serp_result(serp)
+
+    fetched = repo.get_latest_serp_result(keyword.id)
+    assert fetched is not None
+    assert fetched.run_id == "run-abc123"
+    assert fetched.agent_version == "serp-agent-v1"
+    assert fetched.model_id == "gemini-2.5-flash"
+
+
+def test_freshness_fields_written_by_update_keyword():
+    engine = create_engine("sqlite://", connect_args={"check_same_thread": False})
+    SQLModel.metadata.create_all(engine)
+    session = Session(engine)
+    repo = SeoRepository(session)
+
+    keyword = repo.upsert_keyword(
+        Keyword(term="freshness test", seed_keyword="freshness test", source="manual")
+    )
+    assert keyword.serp_fresh_at is None
+    assert keyword.trend_fresh_at is None
+
+    now = datetime.now(timezone.utc)
+    repo.update_keyword(keyword.id, serp_fresh_at=now, trend_fresh_at=now)
+
+    updated = repo.get_keyword(keyword.id)
+    assert updated is not None
+    assert updated.serp_fresh_at is not None
+    assert updated.trend_fresh_at is not None

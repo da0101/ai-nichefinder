@@ -33,6 +33,9 @@ def apply_additive_sqlite_migrations(engine) -> None:
             {
                 "schema_version": "VARCHAR DEFAULT 'v1'",
                 "score_record_id": "VARCHAR",
+                "run_id": "VARCHAR",
+                "agent_version": "VARCHAR",
+                "model_id": "VARCHAR",
             },
         )
         _ensure_columns(
@@ -44,16 +47,6 @@ def apply_additive_sqlite_migrations(engine) -> None:
                 "provider": "VARCHAR DEFAULT 'serpapi'",
                 "locale": "VARCHAR",
                 "market": "VARCHAR",
-                "run_id": "VARCHAR",
-                "agent_version": "VARCHAR",
-                "model_id": "VARCHAR",
-            },
-        )
-        _ensure_columns(
-            connection,
-            inspector,
-            "contentbriefrecord",
-            {
                 "run_id": "VARCHAR",
                 "agent_version": "VARCHAR",
                 "model_id": "VARCHAR",
