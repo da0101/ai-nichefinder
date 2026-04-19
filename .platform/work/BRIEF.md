@@ -1,28 +1,42 @@
 # Feature Brief — ai-nichefinder
 
 > Read this first — every session, every agent (Claude, Codex, Gemini).
-> There is currently no active stream. Start a new one before doing non-trivial work.
+> 30-second orientation: what we're building, why, and where we stand.
 
-**Feature:** _No active stream_
-**Status:** idle
-**Stream file:** `work/TEMPLATE.md`
+**Feature:** _Git flow setup_
+**Status:** in-progress
+**Stream file:** `work/git-flow-setup.md`
 
 ---
 
+## What we're building
+
+We are putting a simple Git flow in place for this repository: `develop` becomes the default branch for normal work, `main` stays the release branch, and feature branches fork from `develop`.
+
+## Why
+
+The repo now has enough real workflow and process state that development and release lines should be separated. This keeps integration work moving on `develop` while preserving `main` as the clean release target.
+
+## What done looks like
+
+- `develop` exists locally and on GitHub.
+- GitHub uses `develop` as the default branch.
+- New feature branches are created from `develop`.
+- `main` is documented as release-only and receives promoted changes from `develop`.
+
 ## Current state
 
-Phase 1 of the local SEO CLI is complete and ready to use locally. The project now has a functioning workflow for research, briefing, drafting, approval, publishing state, rank checks, reporting, usage tracking, keyword inspection, and a lightweight read-only viewer.
-
-The next meaningful step is to start a new stream focused on first-party monitoring, most likely Google Search Console first and GA4 shortly after.
-
-See `work/ACTIVE.md` for active streams. If this file still says there are none, ask the user what to work on next.
+The repo currently only has `main` on origin, so the branch policy has to be created rather than refined.
 
 ## Relevant context
 
 - `.platform/STATUS.md`
 - `.platform/architecture.md`
+- `.platform/domains/git-workflow.md`
 - `.platform/domains/keyword-research.md`
 - `.platform/domains/content-production.md`
 - `.platform/domains/rank-tracking.md`
+- `AGENTS.md`
+- `README.md`
 
 **Never load:** `work/archive/*`

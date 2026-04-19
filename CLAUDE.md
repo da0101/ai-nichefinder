@@ -40,6 +40,13 @@ Non-trivial tasks run through the 6-stage inline workflow in `.platform/workflow
 triage → interview → research → propose → execute → verify.
 New non-trivial tasks must follow the new-task bootstrap (domain file → stream file → `ACTIVE.md` row → BRIEF update) before any code.
 
+## Git Flow
+
+- `develop` is the default development branch.
+- `main` is the release branch.
+- New feature branches fork from `develop`.
+- Promote to `main` from `develop`, not directly from feature branches.
+
 ## Reference Pack (`.platform/`)
 
 - `.platform/STATUS.md` — feature areas, immediate priorities, gotchas, blockers

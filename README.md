@@ -71,3 +71,10 @@ uv run --package nichefinder-cli seo budget
 - Human approval is expected before generated content is treated as final.
 - SerpAPI is the only Google SERP source. No direct Google Search scraping.
 - DataForSEO is not part of the active pipeline.
+
+## Git Flow
+
+- `develop` is the default development and integration branch.
+- `main` is the release branch.
+- New feature branches must be created from `develop`.
+- Changes should be promoted into `main` from `develop`, not merged directly from feature branches.
