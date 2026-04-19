@@ -5,6 +5,8 @@ One line per completed task. Newest at the top. Append-only.
 Format: `YYYY-MM-DD — <task> — <outcome> — <takeaway>`
 
 ---
+- 2026-04-19 — commit `a72fee6`: Fix audit findings: consolidate migration, add provenance + freshness tests (48 pass) — auto-logged
+- 2026-04-19 — commit `0478aa5`: chore: absorb agentboard hook auto-updates — auto-logged
 - 2026-04-19 — commit `949a5bb`: chore: absorb agentboard hook auto-updates — auto-logged
 - 2026-04-19 — commit `8479d09`: Update stream file and log after agentboard auto-update — auto-logged
 - 2026-04-19 — commit `0cee149`: update — auto-logged

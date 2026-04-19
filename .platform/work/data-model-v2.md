@@ -43,13 +43,15 @@ _Append-only. Format: `2026-04-19 — <decision> — <rationale>`_
 _Overwritten by `agentboard checkpoint` — the compact payload the next agent reads first. Keep this block under ~10 lines._
 
 - **Last updated:** 2026-04-19 by danilulmashev (auto)
-- **What just happened:** (auto) 0478aa5: chore: absorb agentboard hook auto-updates
+- **What just happened:** (auto) a72fee6: Fix audit findings: consolidate migration, add provenance + freshness tests (48 pass)
 - **Current focus:** —
 - **Next action:** (auto-saved from commit — update next action manually)
 - **Blockers:** none
 
 ## Progress log
 _Append-only. `agentboard checkpoint` prepends a dated line and auto-trims to the last 10 entries. Format: `2026-04-19 HH:MM — <what happened>`._
+
+2026-04-19 12:52 — (auto) a72fee6: Fix audit findings: consolidate migration, add provenance + freshness tests (48 pass)
 
 2026-04-19 12:40 — (auto) 0478aa5: chore: absorb agentboard hook auto-updates
 
