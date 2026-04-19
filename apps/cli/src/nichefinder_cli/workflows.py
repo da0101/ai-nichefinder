@@ -1,4 +1,5 @@
 import asyncio
+from contextlib import nullcontext
 from datetime import datetime, timedelta, timezone
 
 from rich.console import Console
@@ -34,16 +35,19 @@ async def run_full_pipeline(
         if console:
             console.print(msg)
 
-    log(f"\n[bold cyan]Research:[/bold cyan] [bold]{seed_keyword}[/bold]  [dim]({location})[/dim]")
-    log(f"[dim]Step 1/3 — Expanding seed with Gemini + SerpAPI related searches...[/dim]")
+    def spin(msg: str):
+        return console.status(msg, spinner="dots") if console else nullcontext()
 
-    keyword_output = await services.keyword_agent.run(
-        KeywordAgentInput(seed_keyword=seed_keyword, site_config=site_config)
-    )
+    log(f"\n[bold cyan]Research:[/bold cyan] [bold]{seed_keyword}[/bold]  [dim]({location})[/dim]")
+
+    with spin("[dim]Step 1/3 — Expanding seed with Gemini + SerpAPI...[/dim]"):
+        keyword_output = await services.keyword_agent.run(
+            KeywordAgentInput(seed_keyword=seed_keyword, site_config=site_config)
+        )
 
     log(
         f"[green]✓[/green] Expanded to [bold]{keyword_output.keywords_found}[/bold] keywords, "
-        f"[bold]{keyword_output.keywords_saved}[/bold] saved (passed volume/difficulty filters)"
+        f"[bold]{keyword_output.keywords_saved}[/bold] passed filters"
     )
 
     if not keyword_output.keyword_ids:
@@ -61,12 +65,12 @@ async def run_full_pipeline(
             continue
 
         log(f"\n  [{i}/{total}] [bold]{keyword.term}[/bold]")
-        log(f"         [dim]→ Fetching SerpAPI (Montréal SERP) + Google Trends in parallel...[/dim]")
 
-        serp_output, trend_output = await asyncio.gather(
-            services.serp_agent.run(SerpAgentInput(keyword_id=keyword_id, keyword_term=keyword.term, location=location)),
-            services.trend_agent.run(TrendAgentInput(keyword_id=keyword_id, keyword_term=keyword.term)),
-        )
+        with spin(f"  [{i}/{total}] Fetching SERP + Google Trends..."):
+            serp_output, trend_output = await asyncio.gather(
+                services.serp_agent.run(SerpAgentInput(keyword_id=keyword_id, keyword_term=keyword.term, location=location)),
+                services.trend_agent.run(TrendAgentInput(keyword_id=keyword_id, keyword_term=keyword.term)),
+            )
 
         features_str = ", ".join(serp_output.features_detected) if serp_output.features_detected else "none"
         log(
@@ -77,16 +81,16 @@ async def run_full_pipeline(
         )
         log(
             f"         [dim]Trend:[/dim] {trend_output.direction} · "
-            f"avg interest {trend_output.avg_interest}/100 · "
-            f"seasonal: {trend_output.is_seasonal}"
+            f"avg interest {trend_output.avg_interest}/100"
         )
 
         if not serp_output.rankable:
-            log(f"         [yellow]⚠ Gemini says not rankable — skipping competitor scrape[/yellow]")
+            log(f"         [yellow]⚠ not rankable — skipping competitor scrape[/yellow]")
 
-        ads_output = await services.ads_agent.run(
-            AdsAgentInput(keyword_id=keyword_id, keyword_term=keyword.term)
-        )
+        with spin(f"  [{i}/{total}] Estimating ad signals..."):
+            ads_output = await services.ads_agent.run(
+                AdsAgentInput(keyword_id=keyword_id, keyword_term=keyword.term)
+            )
 
         competitor_output = {
             "avg_word_count": 0,
@@ -95,31 +99,30 @@ async def run_full_pipeline(
             "recommended_word_count": 1200,
         }
         if serp_output.rankable:
-            log(f"         [dim]→ Scraping top competitor pages for content gaps...[/dim]")
-            competitor_agent_output = await services.competitor_agent.run(
-                CompetitorAgentInput(
-                    keyword_id=keyword_id,
-                    serp_result_id=serp_output.serp_result_id,
+            with spin(f"  [{i}/{total}] Scraping competitor pages..."):
+                competitor_agent_output = await services.competitor_agent.run(
+                    CompetitorAgentInput(
+                        keyword_id=keyword_id,
+                        serp_result_id=serp_output.serp_result_id,
+                    )
                 )
-            )
             competitor_output = competitor_agent_output.model_dump()
             scraped = competitor_output.get("pages_scraped", 0)
             avg_words = competitor_output.get("avg_word_count", 0)
-            log(f"         [dim]Competitors:[/dim] {scraped} pages scraped · avg {avg_words} words")
+            log(f"         [dim]Competitors:[/dim] {scraped} pages · avg {avg_words} words")
 
-        log(f"         [dim]→ Scoring opportunity with Gemini...[/dim]")
-
-        synthesis_output = await services.synthesis_agent.run(
-            SynthesisAgentInput(
-                keyword_id=keyword_id,
-                site_config=site_config,
-                keyword_data=keyword_output.model_dump(),
-                serp_data=serp_output.model_dump(),
-                trend_data=trend_output.model_dump(),
-                ads_data=ads_output.model_dump(),
-                competitor_data=competitor_output,
+        with spin(f"  [{i}/{total}] Scoring opportunity with Gemini..."):
+            synthesis_output = await services.synthesis_agent.run(
+                SynthesisAgentInput(
+                    keyword_id=keyword_id,
+                    site_config=site_config,
+                    keyword_data=keyword_output.model_dump(),
+                    serp_data=serp_output.model_dump(),
+                    trend_data=trend_output.model_dump(),
+                    ads_data=ads_output.model_dump(),
+                    competitor_data=competitor_output,
+                )
             )
-        )
 
         score = synthesis_output.opportunity_score.composite_score
         priority = synthesis_output.opportunity_score.priority
