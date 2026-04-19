@@ -5,6 +5,8 @@
 
 | Stream | Type | Status | Agent | Last updated |
 |---|---|---|---|---|
+| data-model-v2 | feature | in-progress | codex-cli | 2026-04-19 |
+| repo-cleanup | chore | awaiting-verification | codex-cli | 2026-04-19 |
 
 ---
 
