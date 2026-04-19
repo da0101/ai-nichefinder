@@ -12,7 +12,7 @@ from nichefinder_core.models import Keyword, RankingSnapshot
 from nichefinder_core.sources.scraper import ContentScraper
 
 
-async def run_full_pipeline(seed_keyword: str, site_config: dict, services, repository) -> dict:
+async def run_full_pipeline(seed_keyword: str, site_config: dict, services, repository, location: str = "Montreal, Quebec, Canada") -> dict:
     keyword_output = await services.keyword_agent.run(
         KeywordAgentInput(seed_keyword=seed_keyword, site_config=site_config)
     )
@@ -22,7 +22,7 @@ async def run_full_pipeline(seed_keyword: str, site_config: dict, services, repo
         if keyword is None:
             continue
         serp_output, trend_output = await asyncio.gather(
-            services.serp_agent.run(SerpAgentInput(keyword_id=keyword_id, keyword_term=keyword.term)),
+            services.serp_agent.run(SerpAgentInput(keyword_id=keyword_id, keyword_term=keyword.term, location=location)),
             services.trend_agent.run(TrendAgentInput(keyword_id=keyword_id, keyword_term=keyword.term)),
         )
         ads_output = await services.ads_agent.run(

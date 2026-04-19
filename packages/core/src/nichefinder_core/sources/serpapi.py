@@ -49,12 +49,12 @@ class SerpAPIClient:
             self.usage_store.record_api_usage(provider="serpapi", calls=1)
         return response.json()
 
-    async def get_people_also_ask(self, keyword: str) -> list[str]:
-        payload = await self.search(keyword)
+    async def get_people_also_ask(self, keyword: str, location: str = "United States") -> list[str]:
+        payload = await self.search(keyword, location=location)
         return [item.get("question", "") for item in payload.get("people_also_ask", []) if item.get("question")]
 
-    async def get_related_searches(self, keyword: str) -> list[str]:
-        payload = await self.search(keyword)
+    async def get_related_searches(self, keyword: str, location: str = "United States") -> list[str]:
+        payload = await self.search(keyword, location=location)
         return [item.get("query", "") for item in payload.get("related_searches", []) if item.get("query")]
 
     @staticmethod

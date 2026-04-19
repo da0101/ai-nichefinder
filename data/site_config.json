@@ -1,29 +1,37 @@
 {
   "site_url": "https://danilulmashev.com",
   "site_name": "Daniil Ulmashev",
-  "site_description": "Personal portfolio - AI tools, SaaS, mobile apps, web design, consulting",
-  "target_audience": "startups, SMBs, entrepreneurs looking for technical help",
+  "site_description": "Montreal-based freelance web developer specializing in React, Next.js, and custom web applications for local businesses and startups",
+  "target_audience": "Montreal SMBs, startups, and entrepreneurs who need to hire a web developer or web design agency",
   "services": [
-    "AI tool development",
-    "SaaS development",
-    "mobile app development",
+    "web development",
+    "React development",
+    "Next.js development",
+    "custom web applications",
     "landing pages",
     "web design",
-    "technical consulting"
+    "freelance web developer"
   ],
   "primary_language": "en",
   "blog_url": "https://danilulmashev.com/en/blog/",
   "existing_articles": [],
   "seed_keywords": [
-    "ai development consultant",
-    "build ai saas",
-    "hire mobile app developer"
+    "web developer montreal",
+    "hire web developer montreal",
+    "web design agency montreal",
+    "freelance web developer montreal",
+    "react developer montreal",
+    "how much does a website cost in montreal"
   ],
-  "target_persona": "technical founder or business owner who needs a development partner",
-  "competitors": [],
+  "target_persona": "Montreal business owner or startup founder who needs a website or web app built and wants to hire a local developer",
+  "competitors": [
+    "digitalsilk.com",
+    "nurunmontreal.com",
+    "agenceweb.ca"
+  ],
   "geographic_focus": [
-    "global",
-    "north_america",
-    "europe"
+    "Montreal",
+    "Quebec",
+    "Canada"
   ]
 }

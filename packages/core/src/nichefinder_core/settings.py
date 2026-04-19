@@ -59,6 +59,11 @@ class Settings(BaseSettings):
     reports_dir: Path = Field(default=Path("outputs/reports"), alias="REPORTS_DIR")
     audits_dir: Path = Field(default=Path("outputs/audits"), alias="AUDITS_DIR")
 
+    search_location: str = Field(
+        default="Montreal, Quebec, Canada",
+        alias="SEARCH_LOCATION",
+    )
+
     gsc_credentials_path: Path | None = Field(default=None, alias="GSC_CREDENTIALS_PATH")
     gsc_property_url: str = Field(
         default="sc-domain:danilulmashev.com",
