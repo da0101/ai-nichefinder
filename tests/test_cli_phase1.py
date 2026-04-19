@@ -30,7 +30,7 @@ def _runtime(tmp_path: Path) -> tuple[Settings, SiteConfig]:
 def test_research_command_stores_keywords_and_prints_ranked_output(monkeypatch, tmp_path: Path):
     settings, site_config = _runtime(tmp_path)
 
-    async def fake_run_full_pipeline(seed_keyword: str, site_config_data: dict, services, repository, location: str = "Montreal, Quebec, Canada"):
+    async def fake_run_full_pipeline(seed_keyword: str, site_config_data: dict, services, repository, location: str = "Montreal, Quebec, Canada", console=None):
         keyword = repository.upsert_keyword(
             Keyword(
                 term="ai tool development consultant",

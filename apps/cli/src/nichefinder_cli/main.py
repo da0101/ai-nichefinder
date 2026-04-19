@@ -53,7 +53,7 @@ def research(keyword: str = Argument(..., help="Seed keyword")) -> None:
     with session_context as session:
         repository = SeoRepository(session)
         services = build_services(settings, repository)
-        result = asyncio.run(run_full_pipeline(keyword, site_config.model_dump(), services, repository, location=settings.search_location))
+        result = asyncio.run(run_full_pipeline(keyword, site_config.model_dump(), services, repository, location=settings.search_location, console=_console()))
         table = Table(title=f"Opportunity Report: {keyword}")
         table.add_column("Keyword ID")
         table.add_column("Keyword")

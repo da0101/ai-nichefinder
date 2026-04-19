@@ -1,6 +1,8 @@
 import asyncio
 from datetime import datetime, timedelta, timezone
 
+from rich.console import Console
+
 from nichefinder_core.agents.ads_agent import AdsAgentInput
 from nichefinder_core.agents.competitor_agent import CompetitorAgentInput
 from nichefinder_core.agents.content_agent import ContentAgentInput
@@ -12,22 +14,80 @@ from nichefinder_core.models import Keyword, RankingSnapshot
 from nichefinder_core.sources.scraper import ContentScraper
 
 
-async def run_full_pipeline(seed_keyword: str, site_config: dict, services, repository, location: str = "Montreal, Quebec, Canada") -> dict:
+def _score_color(score: float) -> str:
+    if score >= 70:
+        return "green"
+    if score >= 50:
+        return "yellow"
+    return "red"
+
+
+async def run_full_pipeline(
+    seed_keyword: str,
+    site_config: dict,
+    services,
+    repository,
+    location: str = "Montreal, Quebec, Canada",
+    console: Console | None = None,
+) -> dict:
+    def log(msg: str) -> None:
+        if console:
+            console.print(msg)
+
+    log(f"\n[bold cyan]Research:[/bold cyan] [bold]{seed_keyword}[/bold]  [dim]({location})[/dim]")
+    log(f"[dim]Step 1/3 — Expanding seed with Gemini + SerpAPI related searches...[/dim]")
+
     keyword_output = await services.keyword_agent.run(
         KeywordAgentInput(seed_keyword=seed_keyword, site_config=site_config)
     )
+
+    log(
+        f"[green]✓[/green] Expanded to [bold]{keyword_output.keywords_found}[/bold] keywords, "
+        f"[bold]{keyword_output.keywords_saved}[/bold] saved (passed volume/difficulty filters)"
+    )
+
+    if not keyword_output.keyword_ids:
+        log("[yellow]⚠ No keywords passed filters — try lowering MIN_OPPORTUNITY_SCORE in .env[/yellow]")
+        return {"keyword_output": keyword_output, "analyses": []}
+
+    log(f"\n[dim]Step 2/3 — Analyzing each keyword (SERP + Trends + Competitors)...[/dim]")
+
     analyses = []
-    for keyword_id in keyword_output.keyword_ids:
+    total = len(keyword_output.keyword_ids)
+
+    for i, keyword_id in enumerate(keyword_output.keyword_ids, 1):
         keyword = repository.get_keyword(keyword_id)
         if keyword is None:
             continue
+
+        log(f"\n  [{i}/{total}] [bold]{keyword.term}[/bold]")
+        log(f"         [dim]→ Fetching SerpAPI (Montréal SERP) + Google Trends in parallel...[/dim]")
+
         serp_output, trend_output = await asyncio.gather(
             services.serp_agent.run(SerpAgentInput(keyword_id=keyword_id, keyword_term=keyword.term, location=location)),
             services.trend_agent.run(TrendAgentInput(keyword_id=keyword_id, keyword_term=keyword.term)),
         )
+
+        features_str = ", ".join(serp_output.features_detected) if serp_output.features_detected else "none"
+        log(
+            f"         [dim]SERP:[/dim] {serp_output.pages_analyzed} pages · "
+            f"difficulty {serp_output.difficulty_estimate}/100 · "
+            f"competition: {serp_output.competition_level} · "
+            f"features: {features_str}"
+        )
+        log(
+            f"         [dim]Trend:[/dim] {trend_output.direction} · "
+            f"avg interest {trend_output.avg_interest}/100 · "
+            f"seasonal: {trend_output.is_seasonal}"
+        )
+
+        if not serp_output.rankable:
+            log(f"         [yellow]⚠ Gemini says not rankable — skipping competitor scrape[/yellow]")
+
         ads_output = await services.ads_agent.run(
             AdsAgentInput(keyword_id=keyword_id, keyword_term=keyword.term)
         )
+
         competitor_output = {
             "avg_word_count": 0,
             "content_gaps": [],
@@ -35,6 +95,7 @@ async def run_full_pipeline(seed_keyword: str, site_config: dict, services, repo
             "recommended_word_count": 1200,
         }
         if serp_output.rankable:
+            log(f"         [dim]→ Scraping top competitor pages for content gaps...[/dim]")
             competitor_agent_output = await services.competitor_agent.run(
                 CompetitorAgentInput(
                     keyword_id=keyword_id,
@@ -42,6 +103,12 @@ async def run_full_pipeline(seed_keyword: str, site_config: dict, services, repo
                 )
             )
             competitor_output = competitor_agent_output.model_dump()
+            scraped = competitor_output.get("pages_scraped", 0)
+            avg_words = competitor_output.get("avg_word_count", 0)
+            log(f"         [dim]Competitors:[/dim] {scraped} pages scraped · avg {avg_words} words")
+
+        log(f"         [dim]→ Scoring opportunity with Gemini...[/dim]")
+
         synthesis_output = await services.synthesis_agent.run(
             SynthesisAgentInput(
                 keyword_id=keyword_id,
@@ -53,6 +120,16 @@ async def run_full_pipeline(seed_keyword: str, site_config: dict, services, repo
                 competitor_data=competitor_output,
             )
         )
+
+        score = synthesis_output.opportunity_score.composite_score
+        priority = synthesis_output.opportunity_score.priority
+        color = _score_color(score)
+        write_flag = " [green]→ BRIEF QUEUED[/green]" if synthesis_output.should_create_content else ""
+        log(
+            f"         [bold {color}]Score: {score:.0f}[/bold {color}] · "
+            f"priority: {priority}{write_flag}"
+        )
+
         analyses.append(
             {
                 "keyword": keyword,
@@ -63,10 +140,35 @@ async def run_full_pipeline(seed_keyword: str, site_config: dict, services, repo
                 "synthesis": synthesis_output,
             }
         )
+
     analyses.sort(
         key=lambda item: item["synthesis"].opportunity_score.composite_score,
         reverse=True,
     )
+
+    if analyses and console:
+        log(f"\n[dim]Step 3/3 — Final ranking[/dim]")
+        from rich.table import Table
+        table = Table(title=f"Opportunity Ranking — {seed_keyword}")
+        table.add_column("#", style="dim", width=3)
+        table.add_column("Keyword")
+        table.add_column("Score", justify="right")
+        table.add_column("Difficulty", justify="right")
+        table.add_column("Trend")
+        table.add_column("Write?")
+        for rank, item in enumerate(analyses, 1):
+            opp = item["synthesis"].opportunity_score
+            color = _score_color(opp.composite_score)
+            table.add_row(
+                str(rank),
+                item["keyword"].term,
+                f"[{color}]{opp.composite_score:.0f}[/{color}]",
+                str(item["serp"].difficulty_estimate),
+                item["trend"].direction,
+                "✓" if item["synthesis"].should_create_content else "—",
+            )
+        console.print(table)
+
     return {"keyword_output": keyword_output, "analyses": analyses}
 
 
