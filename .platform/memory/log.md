@@ -5,6 +5,20 @@ One line per completed task. Newest at the top. Append-only.
 Format: `YYYY-MM-DD — <task> — <outcome> — <takeaway>`
 
 ---
+- 2026-04-19 — commit `1cd5d14`: chore: absorb log auto-update 2 — auto-logged
+- 2026-04-19 — commit `08c430a`: chore: absorb log auto-update — auto-logged
+- 2026-04-19 — commit `6757ed4`: chore: absorb platform hook auto-updates — auto-logged
+- 2026-04-19 — commit `72bb6c5`: Add --force to write/brief commands and SerpAPI usage counter — auto-logged
+- 2026-04-19 — viewer-redesign — score breakdown + plain-English labels + blue/amber design system shipped — non-SEO users can now read scores without knowing jargon
+- 2026-04-19 — commit `b049ad1`: feat: Rich spinner on every waiting step during seo research — auto-logged
+- 2026-04-19 — commit `c217749`: fix: pytrends 429 graceful fallback, remove score cap, informational seeds — auto-logged
+- 2026-04-19 — commit `7a80d71`: feat: real-time console feedback during seo research pipeline — auto-logged
+- 2026-04-19 — commit `505ff0f`: feat: Montreal-focused SEO targeting — location wired end-to-end, seeds updated — auto-logged
+- 2026-04-19 — commit `1abddc4`: docs: add CLI cheat sheet — auto-logged
+- 2026-04-19 — commit `a9a9c92`: feat(db): auto-backup before init, backup/export commands, WAL mode — auto-logged
+- 2026-04-19 — commit `72f6544`: feat(gsc-monitoring): GSC adapter, upsert, monitor sync CLI (53 tests pass) — auto-logged
+- 2026-04-19 — commit `a396ce1`: Register gsc-monitoring stream: domain file, stream file, ACTIVE.md, BRIEF.md — auto-logged
+- 2026-04-19 — commit `05585cb`: Close data-model-v2 stream: archive, clear ACTIVE.md, reset BRIEF.md, log closure — auto-logged
 2026-04-19 — stream data-model-v2 closed — V2 schema, scoring signals, monitoring contracts merged to develop (48 tests) — additive migrations + deterministic scoring are the right pattern for schema evolution without breaking Phase 1 flows
 - 2026-04-19 — commit `e6c170f`: chore: absorb agentboard hook auto-updates — auto-logged
 - 2026-04-19 — commit `a72fee6`: Fix audit findings: consolidate migration, add provenance + freshness tests (48 pass) — auto-logged
