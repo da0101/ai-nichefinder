@@ -14,9 +14,14 @@ class TrendsClient:
         return await loop.run_in_executor(None, self._fetch_interest, keyword, timeframe)
 
     def _fetch_interest(self, keyword: str, timeframe: str) -> dict:
-        self.pytrends.build_payload([keyword], timeframe=timeframe)
-        df = self.pytrends.interest_over_time()
-        values = [] if df.empty else [int(value) for value in df[keyword].tolist()[-12:]]
+        try:
+            self.pytrends.build_payload([keyword], timeframe=timeframe)
+            df = self.pytrends.interest_over_time()
+            values = [] if df.empty else [int(value) for value in df[keyword].tolist()[-12:]]
+        except Exception:
+            # pytrends is unofficial and gets rate-limited (429) frequently.
+            # Degrade gracefully — scoring falls back to neutral trend.
+            values = []
         if not values:
             values = [0] * 12
         midpoint = max(len(values) // 2, 1)

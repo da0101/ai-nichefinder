@@ -116,8 +116,8 @@ class SynthesisAgent:
             intent_score=intent_score,
             competition_score=competition_score,
         )
-        if payload.serp_data["rankable"] is False:
-            composite = min(composite, 40.0)
+        # Don't hard-cap score when not rankable — it hides real signal.
+        # should_create_content already blocks brief generation for non-rankable keywords.
         keyword = self.repository.update_keyword(payload.keyword_id, opportunity_score=composite)
         content_brief = None
         should_create_content = composite >= self.settings.min_opportunity_score and payload.serp_data["rankable"]
