@@ -55,7 +55,7 @@ _Append-only. Format: `YYYY-MM-DD — <decision> — <rationale>`_
 _Overwritten by `agentboard checkpoint` — the compact payload the next agent reads first. Keep this block under ~10 lines._
 
 - **Last updated:** 2026-04-19 by danilulmashev (auto)
-- **What just happened:** (auto) b049ad1: feat: Rich spinner on every waiting step during seo research
+- **What just happened:** (auto) da66d4b: Close viewer-redesign stream: archive, remove from ACTIVE.md
 - **Current focus:** —
 - **Next action:** (auto-saved from commit — update next action manually)
 - **Blockers:** none
@@ -63,6 +63,8 @@ _Overwritten by `agentboard checkpoint` — the compact payload the next agent r
 ## Progress log
 
 _Append-only._
+
+2026-04-19 17:44 — (auto) da66d4b: Close viewer-redesign stream: archive, remove from ACTIVE.md
 
 2026-04-19 16:11 — (auto) b049ad1: feat: Rich spinner on every waiting step during seo research
 

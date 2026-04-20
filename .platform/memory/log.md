@@ -4,7 +4,13 @@ One line per completed task. Newest at the top. Append-only.
 
 Format: `YYYY-MM-DD — <task> — <outcome> — <takeaway>`
 
+2026-04-20 — DDGS evidence layer before SERP — added bounded DDGS cross-checking on top of deterministic scoring, Trends, and Tavily; full pytest green at 61/61 — free research sources help only when their weight stays below seed fidelity and drift controls
+
+2026-04-20 — dashboard-rework — React 18 + shadcn/ui dashboard built and served by Python; live 30s polling eliminates server restart requirement — inline HTML in Python strings doesn't scale; dist/ committed to git keeps CLI-first UX intact
+
 ---
+- 2026-04-19 — buyer-problem-first discovery v0 — structured buyer problems now precede keyword expansion and the no-SERP shortlist shifted toward cost/timeline/comparison terms — smart keyword systems need a problem artifact, not just better scoring on raw keyword lists
+- 2026-04-19 — commit `da66d4b`: Close viewer-redesign stream: archive, remove from ACTIVE.md — auto-logged
 - 2026-04-19 — commit `08c430a`: chore: absorb log auto-update — auto-logged
 - 2026-04-19 — commit `6757ed4`: chore: absorb platform hook auto-updates — auto-logged
 - 2026-04-19 — commit `72bb6c5`: Add --force to write/brief commands and SerpAPI usage counter — auto-logged
@@ -49,3 +55,6 @@ Format: `YYYY-MM-DD — <task> — <outcome> — <takeaway>`
 2026-04-18 — Keyword discovery fallback — default research path now works without DataForSEO — paid-source assumptions must be enforced in code, not just in docs
 2026-04-17 — Re-activated project context — `.platform/` and root entry files now match the current local SEO CLI — future sessions should trust repo reality over stale activation assumptions
 2026-04-17 — Initialized project with agentboard — created .platform/ context pack — workflow, conventions, and templates are in place; next task is to fill STATUS.md and architecture.md
+2026-04-20 — Free multi-engine research buckets — added bounded Bing and Yahoo research adapters alongside DDGS, grouped validation output by source, and extended `seo validate-free` to scrape engine-backed articles into separate keyword-bank evidence buckets before Tavily/SerpAPI
+
+2026-04-20 — debug: Bing validation always returned no evidence — fixed root cause: Bing HTML SERP was serving a challenge page, so the adapter now uses the RSS feed with XML parsing and keeps empty-result HTML snapshots for inspection

@@ -26,6 +26,10 @@ class Settings(BaseSettings):
 
     google_gemini_api_key: str | None = Field(default=None, alias="GOOGLE_GEMINI_API_KEY")
     serpapi_key: str | None = Field(default=None, alias="SERPAPI_KEY")
+    tavily_api_key: str | None = Field(default=None, alias="TAVILY_API_KEY")
+    ddgs_enabled: bool = Field(default=True, alias="DDGS_ENABLED")
+    bing_enabled: bool = Field(default=True, alias="BING_ENABLED")
+    yahoo_enabled: bool = Field(default=True, alias="YAHOO_ENABLED")
 
     gemini_flash_model: str = Field(default="gemini-2.5-flash", alias="GEMINI_FLASH_MODEL")
     gemini_pro_model: str = Field(default="gemini-2.5-pro", alias="GEMINI_PRO_MODEL")
@@ -43,6 +47,27 @@ class Settings(BaseSettings):
     )
 
     serpapi_calls_per_month: int = Field(default=100, alias="SERPAPI_CALLS_PER_MONTH")
+    max_serp_keywords: int = Field(default=8, alias="MAX_SERP_KEYWORDS")
+    tavily_credits_per_month: int = Field(default=1000, alias="TAVILY_CREDITS_PER_MONTH")
+    max_tavily_keyword_validations: int = Field(default=3, alias="MAX_TAVILY_KEYWORD_VALIDATIONS")
+    max_tavily_problem_validations: int = Field(default=2, alias="MAX_TAVILY_PROBLEM_VALIDATIONS")
+    ddgs_calls_per_month: int = Field(default=300, alias="DDGS_CALLS_PER_MONTH")
+    max_ddgs_keyword_validations: int = Field(default=3, alias="MAX_DDGS_KEYWORD_VALIDATIONS")
+    max_ddgs_problem_validations: int = Field(default=2, alias="MAX_DDGS_PROBLEM_VALIDATIONS")
+    ddgs_region: str = Field(default="ca-en", alias="DDGS_REGION")
+    bing_calls_per_month: int = Field(default=300, alias="BING_CALLS_PER_MONTH")
+    max_bing_keyword_validations: int = Field(default=3, alias="MAX_BING_KEYWORD_VALIDATIONS")
+    max_bing_problem_validations: int = Field(default=2, alias="MAX_BING_PROBLEM_VALIDATIONS")
+    yahoo_calls_per_month: int = Field(default=300, alias="YAHOO_CALLS_PER_MONTH")
+    max_yahoo_keyword_validations: int = Field(default=3, alias="MAX_YAHOO_KEYWORD_VALIDATIONS")
+    max_yahoo_problem_validations: int = Field(default=2, alias="MAX_YAHOO_PROBLEM_VALIDATIONS")
+    max_free_article_keywords: int = Field(default=3, alias="MAX_FREE_ARTICLE_KEYWORDS")
+    max_free_article_pages_per_keyword: int = Field(default=2, alias="MAX_FREE_ARTICLE_PAGES_PER_KEYWORD")
+    max_free_problem_article_queries: int = Field(default=2, alias="MAX_FREE_PROBLEM_ARTICLE_QUERIES")
+    max_free_problem_pages_per_query: int = Field(default=2, alias="MAX_FREE_PROBLEM_PAGES_PER_QUERY")
+    free_search_cache_ttl_hours: int = Field(default=72, alias="FREE_SEARCH_CACHE_TTL_HOURS")
+    free_article_cache_ttl_hours: int = Field(default=168, alias="FREE_ARTICLE_CACHE_TTL_HOURS")
+    free_validation_context_ttl_hours: int = Field(default=24, alias="FREE_VALIDATION_CONTEXT_TTL_HOURS")
     scrape_delay_min_seconds: float = Field(default=3.0, alias="SCRAPE_DELAY_MIN_SECONDS")
     scrape_delay_max_seconds: float = Field(default=7.0, alias="SCRAPE_DELAY_MAX_SECONDS")
     max_concurrent_scrapers: int = Field(default=3, alias="MAX_CONCURRENT_SCRAPERS")
@@ -86,6 +111,22 @@ class Settings(BaseSettings):
     @property
     def serpapi_ready(self) -> bool:
         return bool(self.serpapi_key)
+
+    @property
+    def tavily_ready(self) -> bool:
+        return bool(self.tavily_api_key)
+
+    @property
+    def ddgs_ready(self) -> bool:
+        return self.ddgs_enabled
+
+    @property
+    def bing_ready(self) -> bool:
+        return self.bing_enabled
+
+    @property
+    def yahoo_ready(self) -> bool:
+        return self.yahoo_enabled
 
     def resolve_path(self, path: Path) -> Path:
         if path.is_absolute():

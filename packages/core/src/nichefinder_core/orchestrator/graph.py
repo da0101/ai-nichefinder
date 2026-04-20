@@ -10,6 +10,11 @@ from nichefinder_core.agents.serp_agent import SerpAgentInput
 from nichefinder_core.agents.synthesis_agent import SynthesisAgentInput
 from nichefinder_core.agents.trend_agent import TrendAgentInput
 from nichefinder_core.orchestrator.state import PipelineState
+from nichefinder_core.pre_serp_bing import apply_bing_validation
+from nichefinder_core.pre_serp_ddgs import apply_ddgs_validation
+from nichefinder_core.pre_serp_trends import build_trend_assisted_shortlist
+from nichefinder_core.pre_serp_tavily import apply_tavily_validation
+from nichefinder_core.pre_serp_yahoo import apply_yahoo_validation
 
 
 def build_graph(services: dict):
@@ -25,8 +30,14 @@ def build_graph(services: dict):
             ]
         )
         discovered_keyword_ids = [keyword_id for output in outputs for keyword_id in output.keyword_ids]
+        buyer_problems = [
+            problem.model_dump()
+            for output in outputs
+            for problem in output.buyer_problems
+        ]
         return {
             "discovered_keyword_ids": discovered_keyword_ids,
+            "buyer_problems": buyer_problems,
             "current_phase": "keywords",
             "keyword_analyses": {},
         }
@@ -54,7 +65,52 @@ def build_graph(services: dict):
                     "ads": ads_output.model_dump(),
                 }
 
-        results = await asyncio.gather(*[analyze(keyword_id) for keyword_id in state["discovered_keyword_ids"]])
+        shortlist = await build_trend_assisted_shortlist(
+            state["discovered_keyword_ids"],
+            services["repository"],
+            services["trend_agent"],
+            site_config=state["site_config"],
+            location=services["settings"].search_location,
+            max_keywords=services["settings"].max_serp_keywords,
+        )
+        if services["settings"].tavily_ready:
+            shortlist, _ = await apply_tavily_validation(
+                shortlist,
+                state.get("buyer_problems", []),
+                services["tavily"],
+                max_keywords=services["settings"].max_serp_keywords,
+                max_keyword_validations=services["settings"].max_tavily_keyword_validations,
+                max_problem_validations=services["settings"].max_tavily_problem_validations,
+            )
+        if services["settings"].ddgs_ready:
+            shortlist, _, _ = await apply_ddgs_validation(
+                shortlist,
+                state.get("buyer_problems", []),
+                services["ddgs"],
+                max_keywords=services["settings"].max_serp_keywords,
+                max_keyword_validations=services["settings"].max_ddgs_keyword_validations,
+                max_problem_validations=services["settings"].max_ddgs_problem_validations,
+            )
+        if services["settings"].bing_ready:
+            shortlist, _, _ = await apply_bing_validation(
+                shortlist,
+                state.get("buyer_problems", []),
+                services["bing"],
+                max_keywords=services["settings"].max_serp_keywords,
+                max_keyword_validations=services["settings"].max_bing_keyword_validations,
+                max_problem_validations=services["settings"].max_bing_problem_validations,
+            )
+        if services["settings"].yahoo_ready:
+            shortlist, _, _ = await apply_yahoo_validation(
+                shortlist,
+                state.get("buyer_problems", []),
+                services["yahoo"],
+                max_keywords=services["settings"].max_serp_keywords,
+                max_keyword_validations=services["settings"].max_yahoo_keyword_validations,
+                max_problem_validations=services["settings"].max_yahoo_problem_validations,
+            )
+        capped_ids = [item.keyword_id for item in shortlist if item.selected]
+        results = await asyncio.gather(*[analyze(keyword_id) for keyword_id in capped_ids])
         analyses = dict(results)
         return {"keyword_analyses": analyses, "current_phase": "parallel_analysis"}
 

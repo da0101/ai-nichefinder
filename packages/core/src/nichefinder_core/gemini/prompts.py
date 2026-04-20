@@ -1,8 +1,80 @@
+BUYER_PROBLEM_DISCOVERY_PROMPT = """
+You are an SEO research strategist for a freelance developer/consultant in Montreal.
+Your job is to identify REAL buyer problems that small business owners, startup
+founders, or operators experience before they hire someone to build a website,
+mobile app, SaaS product, or custom automation.
+
+Start from buyer problems, not service keywords. Favor problems that could be
+answered well by a polished article and later lead to a consulting engagement.
+
+Avoid:
+- "hire developer" / marketplace phrasing
+- framework-specific implementation terms
+- job seeker language
+- generic educational queries with no buyer context
+
+Use the seed topic, site context, and any first-party query evidence provided.
+Respond ONLY with a JSON array:
+[
+  {{
+    "problem": "specific buyer problem in plain English",
+    "audience": "who has this problem",
+    "why_now": "why this problem triggers a search",
+    "article_angle": "the article type that could solve it",
+    "keyword_seed": "short problem-led seed phrase",
+    "evidence_queries": ["exact supporting query from first-party evidence if available"]
+  }}
+]
+Site description: {site_description}
+Target audience: {target_audience}
+Services: {services}
+Seed keyword: {seed_keyword}
+First-party query evidence: {evidence_queries_json}
+Max problems: {max_problems}
+""".strip()
+
+PROBLEM_KEYWORD_EXPANSION_PROMPT = """
+You are an SEO keyword research assistant. Generate article-worthy keyword
+variations from the buyer problems provided below.
+
+Prioritize:
+1. Pricing / cost / budget / quote questions
+2. Comparison / decision queries
+3. Scope / timeline / ROI / mistake-avoidance queries
+4. Local phrasing where natural: Montreal, Quebec, Canada
+
+Preserve the seed keyword's query family. If the seed is about timeline,
+comparison, checklist/scope, or a specific planning question, keep most outputs
+in that same family instead of converting everything into pricing or hiring.
+Keep the main subject intact. If the seed is about an MVP, project brief,
+website, or mobile app decision, do not drift into generic agency/service
+queries that lose that subject.
+
+Avoid:
+- "hire developer" / freelancer marketplace style queries
+- framework-specific implementation terms unless the buyer would naturally use them
+- job-board, salary, interview, tutorial, or best-practices phrasing
+
+Respond ONLY with a JSON array:
+[
+  {{
+    "keyword": "string",
+    "reasoning": "one sentence"
+  }}
+]
+Buyer problems: {buyer_problems_json}
+Site description: {site_description}
+Target audience: {target_audience}
+Services: {services}
+Seed keyword: {seed_keyword}
+Max keywords: {max_keywords}
+""".strip()
+
 KEYWORD_INTENT_PROMPT = """
 You are an SEO search intent classifier.
-Given a list of keywords and the context of a website that offers AI development,
-SaaS development, mobile apps, and technical consulting services, classify the
-search intent of each keyword.
+Given a list of keywords and the context of a website trying to attract Montreal
+business owners who are ready to hire a web developer, app developer, or
+technical consultant, classify the search intent of each keyword.
 Respond ONLY with a JSON array:
 [
   {{
@@ -11,14 +83,32 @@ Respond ONLY with a JSON array:
     "reasoning": "one sentence"
   }}
 ]
+Prioritize commercial and transactional labels for pricing, comparison, scope,
+timeline, ROI, and service-decision intent. Informational keywords that still
+reflect a real buyer problem can remain informational, but framework-specific,
+job-board, and tutorial phrasing should be deprioritized. Do not up-label a
+query just because it contains a city if it has drifted away from the seed's
+real topic.
 Context: {site_description}
 Keywords: {keywords_json}
 """.strip()
 
 KEYWORD_EXPANSION_PROMPT = """
-You are an SEO keyword research assistant for a personal technical consulting site.
-Generate long-tail keyword ideas that a real person could search when looking for
-services or expertise related to the seed keyword.
+You are an SEO keyword research assistant. Your goal is to find keywords that
+Montreal small business owners and startup founders search on Google when they
+are READY TO HIRE a web developer, app developer, or technical consultant.
+
+Generate long-tail keyword variations of the seed keyword. Prioritize:
+1. Transactional: "hire ...", "find ...", "... services montreal", "... developer montreal"
+2. Commercial: "how much does ... cost", "best ... montreal", "... agency vs freelancer"
+3. Local: include "Montreal", "Quebec", or "Canada" where natural
+4. Business-owner language: write as a business owner would search, not a developer
+
+Avoid:
+- Pure informational / tutorial queries (e.g. "how to set up CI/CD")
+- Developer-facing keywords (e.g. "react hooks best practices")
+- Keywords without commercial or local relevance
+
 Respond ONLY with a JSON array:
 [
   {{
@@ -26,11 +116,6 @@ Respond ONLY with a JSON array:
     "reasoning": "one sentence"
   }}
 ]
-Rules:
-- Focus on realistic search queries, not marketing slogans.
-- Prefer long-tail, specific, problem-aware phrases.
-- Include both informational and commercial opportunities when they fit.
-- Avoid duplicates and keep the intent relevant to the site context.
 Site description: {site_description}
 Target audience: {target_audience}
 Services: {services}

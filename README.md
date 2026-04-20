@@ -51,6 +51,7 @@ uv run --package nichefinder-cli seo config
 
 ```bash
 uv run --package nichefinder-cli seo research "ai development consultant"
+uv run --package nichefinder-cli seo validate-free "how much does a website cost in montreal"
 uv run --package nichefinder-cli seo research-batch
 uv run --package nichefinder-cli seo keywords list
 uv run --package nichefinder-cli seo brief <keyword-id>
@@ -63,6 +64,10 @@ uv run --package nichefinder-cli seo rank check
 uv run --package nichefinder-cli seo report
 uv run --package nichefinder-cli seo budget
 ```
+
+## Score Reference
+
+- Free-validation and research score meanings: [docs/scoring-cheatsheet.md](docs/scoring-cheatsheet.md)
 
 ## Important Constraints
 

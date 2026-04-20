@@ -4,6 +4,13 @@ from datetime import datetime, timedelta, timezone
 
 from rich.console import Console
 
+from nichefinder_cli.research_output import (
+    normalize_external_validation_output,
+    print_buyer_problems,
+    print_keyword_validations,
+    print_pre_serp_shortlist,
+    print_problem_validations,
+)
 from nichefinder_core.agents.ads_agent import AdsAgentInput
 from nichefinder_core.agents.competitor_agent import CompetitorAgentInput
 from nichefinder_core.agents.content_agent import ContentAgentInput
@@ -12,6 +19,11 @@ from nichefinder_core.agents.serp_agent import SerpAgentInput
 from nichefinder_core.agents.synthesis_agent import SynthesisAgentInput
 from nichefinder_core.agents.trend_agent import TrendAgentInput
 from nichefinder_core.models import Keyword, RankingSnapshot
+from nichefinder_core.pre_serp_bing import apply_bing_validation
+from nichefinder_core.pre_serp_ddgs import apply_ddgs_validation
+from nichefinder_core.pre_serp_trends import build_trend_assisted_shortlist
+from nichefinder_core.pre_serp_tavily import apply_tavily_validation
+from nichefinder_core.pre_serp_yahoo import apply_yahoo_validation
 from nichefinder_core.sources.scraper import ContentScraper
 
 
@@ -40,10 +52,12 @@ async def run_full_pipeline(
 
     log(f"\n[bold cyan]Research:[/bold cyan] [bold]{seed_keyword}[/bold]  [dim]({location})[/dim]")
 
-    with spin("[dim]Step 1/3 — Expanding seed with Gemini + SerpAPI...[/dim]"):
+    with spin("[dim]Step 1/4 — Discovering buyer problems and expanding with Gemini...[/dim]"):
         keyword_output = await services.keyword_agent.run(
             KeywordAgentInput(seed_keyword=seed_keyword, site_config=site_config)
         )
+    if console:
+        print_buyer_problems(console, [problem.model_dump() for problem in keyword_output.buyer_problems])
 
     log(
         f"[green]✓[/green] Expanded to [bold]{keyword_output.keywords_found}[/bold] keywords, "
@@ -54,12 +68,78 @@ async def run_full_pipeline(
         log("[yellow]⚠ No keywords passed filters — try lowering MIN_OPPORTUNITY_SCORE in .env[/yellow]")
         return {"keyword_output": keyword_output, "analyses": []}
 
-    log(f"\n[dim]Step 2/3 — Analyzing each keyword (SERP + Trends + Competitors)...[/dim]")
+    with spin("[dim]Step 2/5 — Enriching top candidates with Google Trends...[/dim]"):
+        shortlist = await build_trend_assisted_shortlist(
+            keyword_output.keyword_ids,
+            repository,
+            services.trend_agent,
+            site_config=site_config,
+            location=location,
+            max_keywords=services.settings.max_serp_keywords,
+        )
+    keyword_validations = []
+    problem_validations = []
+    async def run_bucket(label: str, apply_validation, client, *, max_keyword_validations: int, max_problem_validations: int) -> None:
+        nonlocal shortlist, keyword_validations, problem_validations
+        with spin(f"[dim]Step 3/5 — Validating shortlist and buyer problems with {label}...[/dim]"):
+            shortlist, bucket_keyword_validations, bucket_problem_validations = normalize_external_validation_output(
+                await apply_validation(
+                    shortlist,
+                    keyword_output.buyer_problems,
+                    client,
+                    max_keywords=services.settings.max_serp_keywords,
+                    max_keyword_validations=max_keyword_validations,
+                    max_problem_validations=max_problem_validations,
+                )
+            )
+        keyword_validations.extend(bucket_keyword_validations)
+        problem_validations.extend(bucket_problem_validations)
+
+    if services.settings.ddgs_ready:
+        await run_bucket(
+            "DDGS",
+            apply_ddgs_validation,
+            services.ddgs,
+            max_keyword_validations=services.settings.max_ddgs_keyword_validations,
+            max_problem_validations=services.settings.max_ddgs_problem_validations,
+        )
+    if services.settings.bing_ready:
+        await run_bucket(
+            "Bing",
+            apply_bing_validation,
+            services.bing,
+            max_keyword_validations=services.settings.max_bing_keyword_validations,
+            max_problem_validations=services.settings.max_bing_problem_validations,
+        )
+    if services.settings.yahoo_ready:
+        await run_bucket(
+            "Yahoo",
+            apply_yahoo_validation,
+            services.yahoo,
+            max_keyword_validations=services.settings.max_yahoo_keyword_validations,
+            max_problem_validations=services.settings.max_yahoo_problem_validations,
+        )
+    if services.settings.tavily_ready:
+        await run_bucket(
+            "Tavily",
+            apply_tavily_validation,
+            services.tavily,
+            max_keyword_validations=services.settings.max_tavily_keyword_validations,
+            max_problem_validations=services.settings.max_tavily_problem_validations,
+        )
+    selected_keyword_ids = [item.keyword_id for item in shortlist if item.selected]
+    if console and shortlist:
+        print_pre_serp_shortlist(console, shortlist, services.settings.max_serp_keywords)
+    if console and keyword_validations:
+        print_keyword_validations(console, keyword_validations)
+    if console and problem_validations:
+        print_problem_validations(console, problem_validations)
+    log(f"\n[dim]Step 4/5 — Analyzing each keyword (SERP + Trends + Competitors)...[/dim]")
 
     analyses = []
-    total = len(keyword_output.keyword_ids)
+    total = len(selected_keyword_ids)
 
-    for i, keyword_id in enumerate(keyword_output.keyword_ids, 1):
+    for i, keyword_id in enumerate(selected_keyword_ids, 1):
         keyword = repository.get_keyword(keyword_id)
         if keyword is None:
             continue
@@ -150,7 +230,7 @@ async def run_full_pipeline(
     )
 
     if analyses and console:
-        log(f"\n[dim]Step 3/3 — Final ranking[/dim]")
+        log(f"\n[dim]Step 5/5 — Final ranking[/dim]")
         from rich.table import Table
         table = Table(title=f"Opportunity Ranking — {seed_keyword}")
         table.add_column("#", style="dim", width=3)

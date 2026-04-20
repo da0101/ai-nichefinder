@@ -6,6 +6,9 @@
 | Stream | Type | Status | Agent | Last updated |
 |---|---|---|---|---|
 | gsc-monitoring | feature | in-progress | claude-code | 2026-04-19 |
+| serp-pipeline-fix | feature | in-progress | codex | 2026-04-19 |
+| buyer-problem-research | feature | in-progress | codex | 2026-04-19 |
+| dashboard-rework | feature | in-progress | claude-code | 2026-04-20 |
 
 ---
 

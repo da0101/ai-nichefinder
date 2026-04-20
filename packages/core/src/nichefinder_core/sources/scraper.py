@@ -8,6 +8,7 @@ from playwright.async_api import async_playwright
 from pydantic import BaseModel
 from readability import Document
 
+from nichefinder_core.cache_store import load_json_cache, save_json_cache
 from nichefinder_core.settings import Settings
 from nichefinder_core.utils.logger import get_logger
 from nichefinder_core.utils.rate_limiter import scraper_limiter
@@ -44,6 +45,15 @@ class ContentScraper:
         self.browser = await self.playwright.chromium.launch(headless=True)
 
     async def fetch_article(self, url: str) -> ScrapedContent | None:
+        cache_key = url.strip()
+        cached = load_json_cache(
+            self.settings,
+            namespace="scraped-articles",
+            key=cache_key,
+            max_age_hours=self.settings.free_article_cache_ttl_hours,
+        )
+        if cached is not None:
+            return ScrapedContent.model_validate(cached)
         if not await self.robots.can_fetch(url):
             logger.warning("Robots.txt disallows scraping: %s", url)
             return None
@@ -80,7 +90,7 @@ class ContentScraper:
         has_schema_markup = bool(
             BeautifulSoup(html, "lxml").find_all("script", attrs={"type": "application/ld+json"})
         )
-        return ScrapedContent(
+        scraped = ScrapedContent(
             url=url,
             title=document.short_title() or "",
             h1=h1.get_text(" ", strip=True) if h1 else "",
@@ -93,6 +103,13 @@ class ContentScraper:
             has_schema_markup=has_schema_markup,
             fetched_at=datetime.now(timezone.utc),
         )
+        save_json_cache(
+            self.settings,
+            namespace="scraped-articles",
+            key=cache_key,
+            payload=scraped.model_dump(mode="json"),
+        )
+        return scraped
 
     async def close(self):
         if self.browser is not None:

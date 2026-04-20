@@ -8,6 +8,7 @@ from nichefinder_cli.commands.monitor import monitor_app
 from nichefinder_cli.commands.ranks import ranks_app
 from nichefinder_cli.commands.status import status
 from nichefinder_cli.commands.viewer import view
+from nichefinder_cli.free_validation import run_free_validation_pipeline
 from nichefinder_cli.runtime import build_services, get_runtime
 from nichefinder_cli.workflows import generate_brief, rewrite_article, run_full_pipeline, write_article
 from nichefinder_core.agents.serp_agent import SerpAgentInput
@@ -59,6 +60,83 @@ def _print_serpapi_usage(repository: SeoRepository, settings) -> None:
     )
 
 
+def _print_tavily_usage(repository: SeoRepository, settings) -> None:
+    usage = repository.get_api_usage("tavily")
+    used = usage.call_count if usage else 0
+    limit = settings.tavily_credits_per_month
+    remaining = max(0, limit - used)
+    color = "green" if remaining > 500 else "yellow" if remaining > 200 else "red"
+    _console().print(
+        f"[dim]Tavily this month:[/dim] [{color}]{used}/{limit} credits used · {remaining} remaining[/{color}]"
+    )
+
+
+def _print_ddgs_usage(repository: SeoRepository, settings) -> None:
+    usage = repository.get_api_usage("ddgs")
+    used = usage.call_count if usage else 0
+    limit = settings.ddgs_calls_per_month
+    remaining = max(0, limit - used)
+    color = "green" if remaining > 150 else "yellow" if remaining > 50 else "red"
+    _console().print(
+        f"[dim]DDGS this month:[/dim] [{color}]{used}/{limit} validations used · {remaining} remaining[/{color}]"
+    )
+
+
+def _print_bing_usage(repository: SeoRepository, settings) -> None:
+    usage = repository.get_api_usage("bing")
+    used = usage.call_count if usage else 0
+    limit = settings.bing_calls_per_month
+    remaining = max(0, limit - used)
+    color = "green" if remaining > 150 else "yellow" if remaining > 50 else "red"
+    _console().print(
+        f"[dim]Bing this month:[/dim] [{color}]{used}/{limit} validations used · {remaining} remaining[/{color}]"
+    )
+
+
+def _print_yahoo_usage(repository: SeoRepository, settings) -> None:
+    usage = repository.get_api_usage("yahoo")
+    used = usage.call_count if usage else 0
+    limit = settings.yahoo_calls_per_month
+    remaining = max(0, limit - used)
+    color = "green" if remaining > 150 else "yellow" if remaining > 50 else "red"
+    _console().print(
+        f"[dim]Yahoo this month:[/dim] [{color}]{used}/{limit} validations used · {remaining} remaining[/{color}]"
+    )
+
+
+def _print_usage_for_sources(repository: SeoRepository, settings, sources: tuple[str, ...]) -> None:
+    printers = {
+        "ddgs": _print_ddgs_usage,
+        "bing": _print_bing_usage,
+        "yahoo": _print_yahoo_usage,
+    }
+    for source in sources:
+        printer = printers.get(source)
+        if printer is not None:
+            printer(repository, settings)
+
+
+def _run_free_validation_command(keyword: str, *, sources: tuple[str, ...]) -> None:
+    settings, site_config, session_context = get_runtime()
+    with session_context as session:
+        repository = SeoRepository(session)
+        services = build_services(settings, repository)
+        asyncio.run(
+            run_free_validation_pipeline(
+                keyword,
+                site_config.model_dump(),
+                services,
+                repository,
+                location=settings.search_location,
+                sources=sources,
+                console=_console(),
+            )
+        )
+        _record_gemini_usage(repository, services)
+        _print_usage_for_sources(repository, settings, sources)
+        asyncio.run(services.scraper.close())
+
+
 @app.command("research")
 def research(keyword: str = Argument(..., help="Seed keyword")) -> None:
     settings, site_config, session_context = get_runtime()
@@ -85,7 +163,31 @@ def research(keyword: str = Argument(..., help="Seed keyword")) -> None:
                 _console().print(output.model_dump())
         _record_gemini_usage(repository, services)
         _print_serpapi_usage(repository, settings)
+        _print_tavily_usage(repository, settings)
+        _print_ddgs_usage(repository, settings)
+        _print_bing_usage(repository, settings)
+        _print_yahoo_usage(repository, settings)
         asyncio.run(services.scraper.close())
+
+
+@app.command("validate-free")
+def validate_free(keyword: str = Argument(..., help="Seed keyword")) -> None:
+    _run_free_validation_command(keyword, sources=("ddgs", "bing", "yahoo"))
+
+
+@app.command("validate-ddgs")
+def validate_ddgs(keyword: str = Argument(..., help="Seed keyword")) -> None:
+    _run_free_validation_command(keyword, sources=("ddgs",))
+
+
+@app.command("validate-bing")
+def validate_bing(keyword: str = Argument(..., help="Seed keyword")) -> None:
+    _run_free_validation_command(keyword, sources=("bing",))
+
+
+@app.command("validate-yahoo")
+def validate_yahoo(keyword: str = Argument(..., help="Seed keyword")) -> None:
+    _run_free_validation_command(keyword, sources=("yahoo",))
 
 
 @app.command("research-batch")
@@ -215,7 +317,7 @@ def budget() -> None:
         table.add_column("Spend")
         table.add_column("Tokens In")
         table.add_column("Tokens Out")
-        for provider in ["serpapi", "gemini"]:
+        for provider in ["serpapi", "tavily", "ddgs", "bing", "yahoo", "gemini"]:
             usage = repository.get_api_usage(provider)
             table.add_row(
                 provider,

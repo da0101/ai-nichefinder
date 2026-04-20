@@ -9,18 +9,27 @@ from nichefinder_core.agents.synthesis_agent import SynthesisAgent
 from nichefinder_core.agents.trend_agent import TrendAgent
 from nichefinder_core.gemini import GeminiClient
 from nichefinder_core.models import SiteConfig, load_site_config, save_site_config
+from nichefinder_core.sources.bing import BingClient
 from nichefinder_core.settings import Settings, get_settings
+from nichefinder_core.sources.ddgs import DDGSClient
 from nichefinder_core.sources.scraper import ContentScraper
 from nichefinder_core.sources.serpapi import SerpAPIClient
+from nichefinder_core.sources.tavily import TavilyClient
 from nichefinder_core.sources.trends import TrendsClient
+from nichefinder_core.sources.yahoo import YahooClient
 from nichefinder_core.utils.robots import RobotsChecker
 from nichefinder_db import SeoRepository, get_session
 
 
 @dataclass
 class ServiceContainer:
+    settings: Settings
     gemini: GeminiClient
     serpapi: SerpAPIClient
+    tavily: TavilyClient
+    ddgs: DDGSClient
+    bing: BingClient
+    yahoo: YahooClient
     trends: TrendsClient
     scraper: ContentScraper
     keyword_agent: KeywordAgent
@@ -44,14 +53,23 @@ def ensure_site_config(settings: Settings) -> SiteConfig:
 def build_services(settings: Settings, repository: SeoRepository) -> ServiceContainer:
     gemini = GeminiClient(settings)
     serpapi = SerpAPIClient(settings, repository)
+    tavily = TavilyClient(settings, repository)
+    ddgs = DDGSClient(settings, repository)
+    bing = BingClient(settings, repository)
+    yahoo = YahooClient(settings, repository)
     trends = TrendsClient()
     scraper = ContentScraper(
         RobotsChecker(allow_on_error=settings.robots_fetch_fail_open),
         settings,
     )
     return ServiceContainer(
+        settings=settings,
         gemini=gemini,
         serpapi=serpapi,
+        tavily=tavily,
+        ddgs=ddgs,
+        bing=bing,
+        yahoo=yahoo,
         trends=trends,
         scraper=scraper,
         keyword_agent=KeywordAgent(

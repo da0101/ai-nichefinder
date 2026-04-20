@@ -1,11 +1,18 @@
 import json
 from functools import partial
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from urllib.parse import urlparse
 
 from nichefinder_core.settings import Settings
 
 from nichefinder_cli.viewer_data import load_dashboard, load_keyword_detail
+
+
+def _dist_dir() -> Path:
+    # viewer_server.py is at apps/cli/src/nichefinder_cli/viewer_server.py
+    # apps/dashboard/dist/ is at ../../../../dashboard/dist relative to this file
+    return Path(__file__).parent.parent.parent.parent / "dashboard" / "dist"
 
 HTML = """<!doctype html>
 <html lang="en">
@@ -218,26 +225,77 @@ class ViewerHandler(BaseHTTPRequestHandler):
         self.settings = settings
         super().__init__(*args, **kwargs)
 
+    @staticmethod
+    def _mime(filename: str) -> str:
+        ext = Path(filename).suffix.lower()
+        return {
+            ".html": "text/html; charset=utf-8",
+            ".js": "application/javascript",
+            ".css": "text/css",
+            ".svg": "image/svg+xml",
+            ".ico": "image/x-icon",
+            ".png": "image/png",
+            ".woff2": "font/woff2",
+        }.get(ext, "application/octet-stream")
+
+    def _static(self, path: Path, mime: str) -> None:
+        data = path.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", mime)
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
     def do_GET(self):
         parsed = urlparse(self.path)
-        if parsed.path == "/":
-            self._html(HTML)
-            return
+
+        # --- API routes (unchanged) ---
         if parsed.path == "/api/dashboard":
-            self._json(load_dashboard(self.settings))
+            try:
+                self._json(load_dashboard(self.settings))
+            except Exception as exc:
+                self._json({"error": str(exc)}, status=500)
             return
         if parsed.path.startswith("/api/keywords/"):
             keyword_id = parsed.path.removeprefix("/api/keywords/")
-            detail = load_keyword_detail(self.settings, keyword_id)
+            try:
+                detail = load_keyword_detail(self.settings, keyword_id)
+            except Exception as exc:
+                self._json({"error": str(exc)}, status=500)
+                return
             if detail is None:
                 self._json({"error": "keyword not found"}, status=404)
                 return
             self._json(detail)
             return
-        self._json({"error": "not found"}, status=404)
 
-    def log_message(self, format, *args):  # noqa: A003
-        return
+        # --- Static / React app ---
+        dist = _dist_dir()
+        index = dist / "index.html"
+
+        if parsed.path == "/":
+            if index.exists():
+                self._static(index, "text/html; charset=utf-8")
+            else:
+                self._html(HTML)
+            return
+
+        # Any other non-API path: try to serve from dist
+        rel = parsed.path.lstrip("/")
+        target = (dist / rel).resolve()
+        # Guard against path traversal
+        try:
+            target.relative_to(dist.resolve())
+        except ValueError:
+            self._json({"error": "forbidden"}, status=403)
+            return
+        if target.exists() and target.is_file():
+            self._static(target, self._mime(target.name))
+        else:
+            self._json({"error": "not found"}, status=404)
+
+    def log_message(self, *_: object) -> None:  # suppress HTTP access logs
+        pass
 
     def _html(self, body: str, status: int = 200):
         payload = body.encode("utf-8")

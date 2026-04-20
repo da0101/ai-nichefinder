@@ -15,6 +15,7 @@ from nichefinder_core.models.keyword import (
     SearchIntent,
     compute_opportunity_score,
 )
+from nichefinder_core.models.problem import BuyerProblem
 from nichefinder_core.models.serp import CompetitorPage, SerpFeatures, SerpPage, SerpResult
 from nichefinder_core.models.site import SiteConfig, load_site_config, save_site_config
 from nichefinder_core.models.tracking import (
@@ -30,6 +31,7 @@ __all__ = [
     "ApiUsageRecord",
     "Article",
     "ArticleVersion",
+    "BuyerProblem",
     "CompetitorPage",
     "ContentBrief",
     "ContentBriefRecord",

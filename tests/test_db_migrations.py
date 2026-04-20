@@ -116,3 +116,21 @@ def test_freshness_fields_written_by_update_keyword():
     assert updated is not None
     assert updated.serp_fresh_at is not None
     assert updated.trend_fresh_at is not None
+
+
+def test_create_db_and_tables_resolves_default_relative_sqlite_path_from_repo_root():
+    settings = Settings()
+    repo_relative = Path(".tmp-test-db/relative.db")
+    settings.database_url = f"sqlite:///{repo_relative}"
+    expected_path = settings.resolve_path(repo_relative)
+    try:
+        create_db_and_tables(settings)
+        assert expected_path.exists()
+    finally:
+        wal_path = expected_path.with_name(f"{expected_path.name}-wal")
+        shm_path = expected_path.with_name(f"{expected_path.name}-shm")
+        for path in [wal_path, shm_path, expected_path]:
+            if path.exists():
+                path.unlink()
+        if expected_path.parent.exists():
+            expected_path.parent.rmdir()

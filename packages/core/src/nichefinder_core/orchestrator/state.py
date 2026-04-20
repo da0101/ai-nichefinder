@@ -5,6 +5,7 @@ class PipelineState(TypedDict, total=False):
     seed_keywords: list[str]
     site_config: dict
     discovered_keyword_ids: list[str]
+    buyer_problems: list[dict]
     keyword_analyses: dict[str, dict]
     opportunity_scores: list[dict]
     content_briefs: list[dict]

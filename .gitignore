@@ -31,11 +31,14 @@ outputs/audits/*
 
 dist/
 build/
+node_modules/
+**/node_modules/
 *.egg-info/
 .python-version
 
 .idea/
 .vscode/
+
 
 
 

@@ -1,10 +1,15 @@
 import json
+import re
 from typing import Any
 
 from pydantic import BaseModel
 
-from nichefinder_core.gemini.prompts import KEYWORD_EXPANSION_PROMPT, KEYWORD_INTENT_PROMPT
-from nichefinder_core.models import Keyword, KeywordLifecycleStatus, SearchIntent
+from nichefinder_core.gemini.prompts import (
+    BUYER_PROBLEM_DISCOVERY_PROMPT,
+    KEYWORD_INTENT_PROMPT,
+    PROBLEM_KEYWORD_EXPANSION_PROMPT,
+)
+from nichefinder_core.models import BuyerProblem, Keyword, KeywordLifecycleStatus, SearchIntent
 from nichefinder_core.settings import Settings
 
 
@@ -19,6 +24,7 @@ class KeywordAgentOutput(BaseModel):
     keywords_found: int
     keywords_saved: int
     keyword_ids: list[str]
+    buyer_problems: list[BuyerProblem]
 
 
 class KeywordAgent:
@@ -38,9 +44,53 @@ class KeywordAgent:
             return None
         return SearchIntent(value)
 
-    async def _expand_with_free_sources(self, payload: KeywordAgentInput) -> list[str]:
+    def _recent_query_evidence(self, seed_keyword: str, limit: int = 8) -> list[str]:
+        seed_tokens = {token for token in re.findall(r"[a-z0-9]+", seed_keyword.lower()) if len(token) > 2}
+        records = self.repository.list_search_console_records(limit=50)
+        matches: list[str] = []
+        seen: set[str] = set()
+        for record in records:
+            query = record.query.strip()
+            query_tokens = set(re.findall(r"[a-z0-9]+", query.lower()))
+            if query.lower() in seen:
+                continue
+            if seed_tokens and not (seed_tokens & query_tokens):
+                continue
+            seen.add(query.lower())
+            matches.append(query)
+            if len(matches) >= limit:
+                break
+        return matches
+
+    async def _discover_buyer_problems(self, payload: KeywordAgentInput) -> list[BuyerProblem]:
+        evidence_queries = self._recent_query_evidence(payload.seed_keyword)
+        response = await self.gemini_client.analyze(
+            BUYER_PROBLEM_DISCOVERY_PROMPT.format(
+                site_description=payload.site_config.get("site_description", ""),
+                target_audience=payload.site_config.get("target_audience", ""),
+                services=", ".join(payload.site_config.get("services", [])),
+                seed_keyword=payload.seed_keyword,
+                evidence_queries_json=json.dumps(evidence_queries),
+                max_problems=min(8, payload.max_keywords),
+            ),
+            json.dumps(
+                {
+                    "seed_keyword": payload.seed_keyword,
+                    "site_config": payload.site_config,
+                    "evidence_queries": evidence_queries,
+                }
+            ),
+        )
+        items = response.get("items", response if isinstance(response, list) else [])
+        return [BuyerProblem.model_validate(item) for item in items if isinstance(item, dict) and item.get("problem")]
+
+    async def _expand_with_free_sources(
+        self, payload: KeywordAgentInput
+    ) -> tuple[list[str], list[BuyerProblem]]:
+        buyer_problems = await self._discover_buyer_problems(payload)
         expansion_response = await self.gemini_client.analyze(
-            KEYWORD_EXPANSION_PROMPT.format(
+            PROBLEM_KEYWORD_EXPANSION_PROMPT.format(
+                buyer_problems_json=json.dumps([problem.model_dump() for problem in buyer_problems]),
                 site_description=payload.site_config.get("site_description", ""),
                 target_audience=payload.site_config.get("target_audience", ""),
                 services=", ".join(payload.site_config.get("services", [])),
@@ -51,6 +101,7 @@ class KeywordAgent:
                 {
                     "seed_keyword": payload.seed_keyword,
                     "site_config": payload.site_config,
+                    "buyer_problems": [problem.model_dump() for problem in buyer_problems],
                     "max_keywords": payload.max_keywords,
                 }
             ),
@@ -62,18 +113,16 @@ class KeywordAgent:
             if isinstance(item, dict) and item.get("keyword")
         )
 
-        serp_queries = list(dict.fromkeys(expanded_terms))[: min(5, payload.max_keywords)]
-        for term in serp_queries:
-            related = await self.serpapi_client.get_related_searches(term, location=self.settings.search_location)
-            expanded_terms.extend(related)
-
-        return list(dict.fromkeys(term.strip() for term in expanded_terms if term.strip()))[: payload.max_keywords]
+        return (
+            list(dict.fromkeys(term.strip() for term in expanded_terms if term.strip()))[: payload.max_keywords],
+            buyer_problems,
+        )
 
     async def run(self, payload: KeywordAgentInput) -> KeywordAgentOutput:
         metrics: list[dict] = []
         difficulties: list[dict] = []
         source = "gemini_serpapi"
-        expanded_terms = await self._expand_with_free_sources(payload)
+        expanded_terms, buyer_problems = await self._expand_with_free_sources(payload)
 
         metrics_by_term = {
             self._extract_term(item) or "": item for item in metrics if self._extract_term(item)
@@ -122,4 +171,5 @@ class KeywordAgent:
             keywords_found=len(expanded_terms),
             keywords_saved=len(saved_ids),
             keyword_ids=saved_ids,
+            buyer_problems=buyer_problems,
         )
