@@ -20,6 +20,8 @@ class ExternalEvidenceValidation:
     score: float
     result_count: int
     top_domains: list[str]
+    degraded: bool = False
+    usable_for_article_evidence: bool = True
     query_variants: list[str] = field(default_factory=list)
     results: list[ExternalEvidenceResult] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
@@ -73,7 +75,7 @@ async def apply_external_validation(
     for item in shortlist:
         if item.term not in payloads:
             continue
-        raw_score, notes, _, _, _ = _score_payload(item.term, payloads[item.term], source=source)
+        raw_score, notes, _, _, _, _, _ = _score_payload(item.term, payloads[item.term], source=source)
         score = _weighted_keyword_score(item, raw_score, base_weight=base_weight)
         item.breakdown[f"{source}_validation_raw"] = raw_score
         item.breakdown[f"{source}_validation"] = score
@@ -88,7 +90,7 @@ async def apply_external_validation(
 
     keyword_validations = []
     for item in candidate_keywords:
-        score, notes, result_count, domains, results = _score_payload(
+        score, notes, result_count, domains, results, degraded, usable_for_article_evidence = _score_payload(
             item.term,
             payloads.get(item.term, {}),
             source=source,
@@ -100,6 +102,8 @@ async def apply_external_validation(
                 score=score,
                 result_count=result_count,
                 top_domains=domains,
+                degraded=degraded,
+                usable_for_article_evidence=usable_for_article_evidence,
                 results=results,
                 notes=notes,
             )
@@ -164,9 +168,19 @@ def _aggregate_problem_validation(
     seen_domains: set[str] = set()
     seen_urls: set[str] = set()
     result_count = 0
+    degraded = False
+    usable_for_article_evidence = True
 
     for item in queries:
-        score, item_notes, item_result_count, domains, item_results = _score_payload(
+        (
+            score,
+            item_notes,
+            item_result_count,
+            domains,
+            item_results,
+            item_degraded,
+            item_usable_for_article_evidence,
+        ) = _score_payload(
             item.query,
             payloads.get(item.query, {}),
             source=source,
@@ -174,6 +188,8 @@ def _aggregate_problem_validation(
         scores.append(score)
         result_count = max(result_count, item_result_count)
         notes.extend(item_notes)
+        degraded = degraded or item_degraded
+        usable_for_article_evidence = usable_for_article_evidence and item_usable_for_article_evidence
         for domain in domains:
             lowered = domain.lower()
             if lowered in seen_domains:
@@ -199,6 +215,8 @@ def _aggregate_problem_validation(
         score=round(aggregate_score, 2),
         result_count=result_count,
         top_domains=top_domains[:3],
+        degraded=degraded,
+        usable_for_article_evidence=usable_for_article_evidence,
         query_variants=[item.query for item in queries],
         results=results[:3],
         notes=list(dict.fromkeys(notes)),
@@ -210,15 +228,22 @@ def _score_payload(
     payload: dict,
     *,
     source: str,
-) -> tuple[float, list[str], int, list[str], list[ExternalEvidenceResult]]:
+) -> tuple[float, list[str], int, list[str], list[ExternalEvidenceResult], bool, bool]:
+    meta = payload.get("_meta") if isinstance(payload, dict) and isinstance(payload.get("_meta"), dict) else {}
+    degraded_reason = str(meta.get("degraded_reason", "")).strip()
+    reason_suffix = f" ({degraded_reason.replace('_', ' ')})" if degraded_reason else ""
     if not isinstance(payload, dict):
-        return 0.0, [f"{source}: unavailable"], 0, [], []
+        return 0.0, [f"{source}: unavailable"], 0, [], [], True, False
     if payload.get("_error"):
-        return 0.0, [f"{source}: unavailable"], 0, [], []
+        return 0.0, [f"{source}: unavailable{reason_suffix}"], 0, [], [], True, False
 
     results = payload.get("results", [])
+    degraded = bool(meta.get("degraded"))
     if not results:
-        return -6.0, [f"{source}: no evidence"], 0, [], []
+        notes = [f"{source}: no evidence"]
+        if degraded:
+            notes.append(f"{source}: degraded{reason_suffix}")
+        return -6.0, notes, 0, [], [], degraded, False
 
     query_tokens = {
         _normalize_token(token)
@@ -270,7 +295,12 @@ def _score_payload(
     if len(unique_domains) >= 2:
         score += 2.0
         notes.append(f"{source} diversity")
-    return score, notes, result_count, unique_domains[:3], normalized_results
+    usable_for_article_evidence = score > 0
+    if degraded:
+        score = min(score, 0.0)
+        usable_for_article_evidence = False
+        notes.append(f"{source}: degraded{reason_suffix}")
+    return score, notes, result_count, unique_domains[:3], normalized_results, degraded, usable_for_article_evidence
 
 
 def _weighted_keyword_score(item: PreSerpCandidateScore, raw_score: float, *, base_weight: float) -> float:

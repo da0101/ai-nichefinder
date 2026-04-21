@@ -60,7 +60,13 @@ class HtmlSearchEngineClient:
         results = self._parse_results(response.text, max_results=max_results)
         if not results and self.debug_on_empty_results:
             self._save_empty_result_debug(query, response.text)
-        payload = {"results": results}
+        payload = {
+            "results": results,
+            "_meta": {
+                "provider": self.provider,
+                "degraded": False,
+            },
+        }
         save_json_cache(
             self.settings,
             namespace=f"search-results/{self.provider}",

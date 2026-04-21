@@ -5,6 +5,7 @@ import httpx
 
 from nichefinder_core.settings import Settings
 from nichefinder_core.sources.bing import BingClient
+from nichefinder_core.sources.ddgs import DDGSClient
 from nichefinder_core.sources.scraper import ContentScraper
 from nichefinder_core.sources.trends import TrendsClient
 from nichefinder_core.sources.yahoo import YahooClient
@@ -262,6 +263,53 @@ async def test_yahoo_client_uses_cached_search_payload_without_usage(monkeypatch
     assert first == second
     assert calls["count"] == 1
     assert usage.calls["yahoo"] == 1
+
+
+async def test_ddgs_client_parses_duckduckgo_html_results(monkeypatch, tmp_path):
+    usage = FakeUsageStore()
+    client = DDGSClient(Settings(cache_dir=tmp_path / "cache"), usage)
+    html = """
+    <html><body>
+      <div class="result">
+        <a class="result__a" href="https://duckduckgo.com/l/?uddg=https%3A%2F%2Fexample.com%2Fguide">Guide</a>
+        <div class="result__snippet">Snippet one</div>
+      </div>
+      <div class="result">
+        <a class="result__a" href="https://example.org/pricing">Pricing</a>
+        <div class="result__snippet">Snippet two</div>
+      </div>
+    </body></html>
+    """
+
+    async def fake_get(url: str, params: dict):
+        return FakeHtmlResponse(html)
+
+    monkeypatch.setattr(client.client, "get", fake_get)
+    payload = await client.search("website cost montreal", max_results=2)
+
+    assert [item["url"] for item in payload["results"]] == [
+        "https://example.com/guide",
+        "https://example.org/pricing",
+    ]
+    assert payload["_meta"]["degraded"] is False
+    assert usage.calls["ddgs"] == 1
+
+
+async def test_ddgs_client_marks_unreachable_duckduckgo_as_degraded(monkeypatch, tmp_path):
+    usage = FakeUsageStore()
+    client = DDGSClient(Settings(cache_dir=tmp_path / "cache"), usage)
+
+    async def fake_get(url: str, params: dict):
+        raise httpx.ConnectError("unreachable")
+
+    monkeypatch.setattr(client.client, "get", fake_get)
+    payload = await client.search("website cost montreal", max_results=2)
+
+    assert payload["results"] == []
+    assert payload["_meta"]["degraded"] is True
+    assert payload["_meta"]["degraded_reason"] == "duckduckgo_unreachable"
+    assert "unreachable" in payload["_error"]
+    assert usage.calls == {}
 
 
 async def test_scraper_uses_cached_article_snapshot(monkeypatch, tmp_path):

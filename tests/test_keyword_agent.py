@@ -726,8 +726,8 @@ async def test_collect_free_article_evidence_builds_keyword_bank_from_ddgs_resul
 
     assert evidence[0].query == "how much does a website cost in montreal"
     assert evidence[0].pages_scraped == 2
-    assert "What affects website cost?" in evidence[0].recurring_headings
-    assert evidence[0].question_bank
+    assert "What affects website cost?" not in evidence[0].recurring_headings
+    assert "What affects website cost?" in evidence[0].question_bank
     assert evidence[0].suggested_primary_keyword == "how much does a website cost in montreal"
     assert evidence[0].suggested_secondary_keywords
 
@@ -909,6 +909,124 @@ async def test_collect_free_article_evidence_uses_body_signals_for_secondary_key
     assert "project scope discovery" in evidence[0].suggested_secondary_keywords
 
 
+async def test_collect_free_article_evidence_strips_noisy_headings_questions_and_numeric_terms():
+    validations = [
+        ExternalEvidenceValidation(
+            source="yahoo",
+            query="how much does a website cost in montreal",
+            score=8.0,
+            result_count=3,
+            top_domains=["example.com", "example.org"],
+            results=[
+                ExternalEvidenceResult(title="Website Cost Guide", url="https://example.com/one", content="Pricing guide"),
+                ExternalEvidenceResult(title="Montreal Pricing", url="https://example.org/two", content="Pricing guide"),
+            ],
+        )
+    ]
+
+    class Scraped:
+        def __init__(self, url, title, h1, h2_list, h3_list, clean_text, word_count):
+            self.url = url
+            self.title = title
+            self.h1 = h1
+            self.h2_list = h2_list
+            self.h3_list = h3_list
+            self.clean_text = clean_text
+            self.word_count = word_count
+
+    scraper = FakeScraper(
+        {
+            "https://example.com/one": Scraped(
+                "https://example.com/one",
+                "Website Cost Guide",
+                "Website Cost Guide",
+                [
+                    "How to Save Money on Montreal Web Design (Without Sacrificing Quality)",
+                    "Sources and References",
+                    "The Premium Tier ($25,000+)",
+                    "Why Montreal Web Design Costs More Than Other Cities?",
+                    "What affects website cost?",
+                ],
+                [],
+                "Project scope discovery workshop reduces rework. Montreal 2025 pricing benchmarks vary widely. "
+                "A project scope discovery workshop prevents hidden costs. 500 000 budget examples are not typical.",
+                1200,
+            ),
+            "https://example.org/two": Scraped(
+                "https://example.org/two",
+                "Montreal Pricing",
+                "Montreal Pricing",
+                [
+                    "How to Save Money on Montreal Web Design (Without Sacrificing Quality)",
+                    "Sources and References",
+                    "The Premium Tier ($25,000+)",
+                    "Building an e-commerce store in Quebec?",
+                    "What affects website cost?",
+                ],
+                [],
+                "A project scope discovery workshop helps define scope before estimates. Montreal 2025 budgets drift. "
+                "Many teams skip project scope discovery workshop and create avoidable revisions.",
+                1100,
+            ),
+        }
+    )
+
+    evidence = await collect_free_article_evidence(
+        validations,
+        scraper,
+        max_keywords=1,
+        max_pages_per_keyword=2,
+    )
+
+    assert evidence
+    summary = evidence[0]
+    assert "What affects website cost?" not in summary.recurring_headings
+    assert "Sources and References" not in summary.recurring_headings
+    assert "The Premium Tier ($25,000+)" not in summary.recurring_headings
+    assert all("questions to ask" not in item.lower() for item in summary.recurring_headings)
+    assert all("save money on" not in item.lower() for item in summary.recurring_headings)
+    assert summary.question_bank == ["What affects website cost?"]
+    assert "project scope discovery" in summary.body_signal_terms
+    assert "montreal 2025" not in summary.body_signal_terms
+    assert "500 000" not in summary.body_signal_terms
+    assert all("how to save money" not in item.lower() for item in summary.suggested_secondary_keywords)
+    assert "how much" not in summary.suggested_secondary_keywords
+    assert "much web" not in summary.suggested_secondary_keywords
+    assert "montreal web" not in summary.suggested_secondary_keywords
+
+
+async def test_collect_free_article_evidence_skips_degraded_validations():
+    validations = [
+        ExternalEvidenceValidation(
+            source="ddgs",
+            query="website cost montreal",
+            score=8.0,
+            result_count=3,
+            top_domains=["example.com"],
+            degraded=True,
+            usable_for_article_evidence=False,
+            results=[
+                ExternalEvidenceResult(
+                    title="Website cost",
+                    url="https://example.com/cost",
+                    content="Pricing page",
+                )
+            ],
+        )
+    ]
+
+    scraper = FakeScraper({"https://example.com/cost": object()})
+
+    evidence = await collect_free_article_evidence(
+        validations,
+        scraper,
+        max_keywords=1,
+        max_pages_per_keyword=2,
+    )
+
+    assert evidence == []
+
+
 def test_summarize_cross_source_patterns_aggregates_repeated_domains_and_questions():
     validations = [
         ExternalEvidenceValidation(
@@ -963,6 +1081,40 @@ def test_summarize_cross_source_patterns_aggregates_repeated_domains_and_questio
     assert "clevrsolutions.ca" in summary.repeated_domains
     assert "web design" in summary.repeated_secondary_keywords
     assert "Why Montreal Web Design Costs More Than Other Cities?" in summary.repeated_questions
+
+
+def test_summarize_cross_source_patterns_ignores_degraded_or_nonpositive_validations():
+    validations = [
+        ExternalEvidenceValidation(
+            source="ddgs",
+            query="how much does a website cost in montreal",
+            score=0.0,
+            result_count=3,
+            top_domains=["fallback.example"],
+            degraded=True,
+        ),
+        ExternalEvidenceValidation(
+            source="bing",
+            query="how much does a website cost in montreal",
+            score=8.0,
+            result_count=3,
+            top_domains=["clevrsolutions.ca", "elitics.io", "fivesquaredesign.com"],
+        ),
+        ExternalEvidenceValidation(
+            source="yahoo",
+            query="how much does a website cost in montreal",
+            score=8.0,
+            result_count=3,
+            top_domains=["clevrsolutions.ca", "elitics.io", "www.aurolys.ca"],
+        ),
+    ]
+
+    summaries = summarize_cross_source_patterns(validations)
+
+    assert len(summaries) == 1
+    summary = summaries[0]
+    assert summary.sources == ["BING", "YAHOO"]
+    assert summary.agreement == "2-source"
 
 
 def test_summarize_cross_source_patterns_falls_back_to_single_source_items():
@@ -1042,6 +1194,49 @@ async def test_apply_external_validation_splits_problem_seed_variants():
     assert validation.query == "website cost montreal, web app cost montreal"
     assert validation.query_variants == ["website cost montreal", "web app cost montreal"]
     assert "ddgs variant agreement" in validation.notes
+
+
+async def test_apply_external_validation_marks_degraded_payloads_unusable_for_article_evidence():
+    shortlist = [
+        SimpleNamespace(
+            keyword_id="k1",
+            term="website cost montreal",
+            score=70.0,
+            breakdown={"seed_fidelity": 30.0, "query_drift": 0.0, "developer_penalty": 0.0, "local_intent": 2.0},
+            canonical_key="website cost",
+            selected=True,
+            notes=[],
+        )
+    ]
+
+    async def fake_search(query: str) -> dict:
+        return {
+            "results": [
+                {"title": "Website cost Montreal", "url": "https://example.com/cost", "content": "website cost montreal"},
+                {"title": "Montreal pricing", "url": "https://example.org/cost", "content": "website cost montreal"},
+            ],
+            "_meta": {"provider": "ddgs", "degraded": True, "degraded_reason": "fallback_backend:auto"},
+        }
+
+    _, keyword_validations, _ = await apply_external_validation(
+        shortlist,
+        [],
+        source="ddgs",
+        ready=True,
+        search=fake_search,
+        max_keywords=1,
+        max_keyword_validations=1,
+        max_problem_validations=0,
+        concurrency=1,
+        base_weight=0.28,
+    )
+
+    assert len(keyword_validations) == 1
+    validation = keyword_validations[0]
+    assert validation.degraded is True
+    assert validation.usable_for_article_evidence is False
+    assert validation.score <= 0
+    assert "ddgs: degraded" in validation.notes
 
 
 def test_free_validation_context_round_trips_shortlist(tmp_path):

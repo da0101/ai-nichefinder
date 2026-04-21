@@ -36,6 +36,10 @@ def summarize_cross_source_patterns(
     query_labels: dict[str, str] = {}
     query_variants: dict[str, set[str]] = {}
     for item in validations:
+        if bool(getattr(item, "degraded", False)):
+            continue
+        if float(getattr(item, "score", 0.0)) <= 0:
+            continue
         raw_query = getattr(item, "query", "")
         key = _group_key(raw_query, grouping=grouping)
         if not key:

@@ -3,8 +3,8 @@
 > Read this first — every session, every agent (Claude, Codex, Gemini).
 > 30-second orientation: what we're building, why, and where we stand.
 
-**Features:** gsc-monitoring, serp-pipeline-fix, buyer-problem-research, dashboard-rework
-**Status:** all in-progress
+**Features:** gsc-monitoring, serp-pipeline-fix, buyer-problem-research, dashboard-rework, reddit-api-integration, google-ads-api-integration
+**Status:** mixed active states (in-progress, blocked, planning)
 
 ---
 
@@ -28,13 +28,16 @@ The current pipeline still proposes many commercially flavored but unwinnable qu
 - Phase 1: complete
 - Data Model V2: complete and merged to develop
 - **Active:** buyer-problem-research on top of the current keyword-research flow
-- Also active: gsc-monitoring, serp-pipeline-fix
+- Also active: gsc-monitoring, serp-pipeline-fix, dashboard-rework
+- Newly tracked: reddit-api-integration (blocked waiting on Reddit approval), google-ads-api-integration (planning)
 - Next after this: GA4 provider → source registry → LangGraph interrupt/resume
 
 ## Relevant context
 
 - `.platform/work/gsc-monitoring.md`
 - `.platform/work/buyer-problem-research.md`
+- `.platform/work/reddit-api-integration.md`
+- `.platform/work/google-ads-api-integration.md`
 - `.platform/domains/buyer-problem-research.md`
 - `.platform/domains/gsc-monitoring.md`
 - `.platform/domains/keyword-research.md`
