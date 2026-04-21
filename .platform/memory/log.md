@@ -9,6 +9,7 @@ Format: `YYYY-MM-DD — <task> — <outcome> — <takeaway>`
 2026-04-20 — dashboard-rework — React 18 + shadcn/ui dashboard built and served by Python; live 30s polling eliminates server restart requirement — inline HTML in Python strings doesn't scale; dist/ committed to git keeps CLI-first UX intact
 
 ---
+- 2026-04-21 — commit `d8adaff`: chore: absorb log auto-update — auto-logged
 - 2026-04-21 — commit `41ec9e8`: feat: harden free validation and track API integrations — auto-logged
 - 2026-04-20 — commit `61eb5c1`: updated engins — auto-logged
 - 2026-04-19 — buyer-problem-first discovery v0 — structured buyer problems now precede keyword expansion and the no-SERP shortlist shifted toward cost/timeline/comparison terms — smart keyword systems need a problem artifact, not just better scoring on raw keyword lists
