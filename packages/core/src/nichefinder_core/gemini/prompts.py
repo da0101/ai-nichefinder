@@ -1,15 +1,20 @@
 BUYER_PROBLEM_DISCOVERY_PROMPT = """
-You are an SEO research strategist for a freelance developer/consultant in Montreal.
-Your job is to identify REAL buyer problems that small business owners, startup
-founders, or operators experience before they hire someone to build a website,
-mobile app, SaaS product, or custom automation.
+You are an SEO research strategist.
+Your job is to identify REAL buyer problems that the target audience experiences
+before they choose, buy, adopt, or engage a solution related to the seed topic.
 
 Start from buyer problems, not service keywords. Favor problems that could be
-answered well by a polished article and later lead to a consulting engagement.
+answered well by a polished article and later lead to relevant commercial intent.
+
+Preserve the seed topic's real subject. If the seed is about an operational,
+financial, workflow, or industry problem, do not convert it into software
+procurement, custom development, agency hiring, or implementation language
+unless the seed or the site context explicitly requires that shift.
 
 Avoid:
-- "hire developer" / marketplace phrasing
-- framework-specific implementation terms
+- forcing everything into software, services, agency, or custom-build framing
+- marketplace phrasing unrelated to the seed's real problem
+- implementation terms that belong to vendors, developers, or internal teams
 - job seeker language
 - generic educational queries with no buyer context
 
@@ -27,7 +32,9 @@ Respond ONLY with a JSON array:
 ]
 Site description: {site_description}
 Target audience: {target_audience}
+Target persona: {target_persona}
 Services: {services}
+Geographic focus: {geographic_focus}
 Seed keyword: {seed_keyword}
 First-party query evidence: {evidence_queries_json}
 Max problems: {max_problems}
@@ -47,11 +54,14 @@ Preserve the seed keyword's query family. If the seed is about timeline,
 comparison, checklist/scope, or a specific planning question, keep most outputs
 in that same family instead of converting everything into pricing or hiring.
 Keep the main subject intact. If the seed is about an MVP, project brief,
-website, or mobile app decision, do not drift into generic agency/service
+website, restaurant operations, food cost, staffing, scheduling, or another
+operational problem, do not drift into generic agency/service/software
 queries that lose that subject.
 
 Avoid:
 - "hire developer" / freelancer marketplace style queries
+- generic software / platform / tool / app / SaaS phrasing unless it is already
+  present in the seed or clearly required by the buyer problem
 - framework-specific implementation terms unless the buyer would naturally use them
 - job-board, salary, interview, tutorial, or best-practices phrasing
 
@@ -65,16 +75,17 @@ Respond ONLY with a JSON array:
 Buyer problems: {buyer_problems_json}
 Site description: {site_description}
 Target audience: {target_audience}
+Target persona: {target_persona}
 Services: {services}
+Geographic focus: {geographic_focus}
 Seed keyword: {seed_keyword}
 Max keywords: {max_keywords}
 """.strip()
 
 KEYWORD_INTENT_PROMPT = """
 You are an SEO search intent classifier.
-Given a list of keywords and the context of a website trying to attract Montreal
-business owners who are ready to hire a web developer, app developer, or
-technical consultant, classify the search intent of each keyword.
+Given a list of keywords and the context of the business described below,
+classify the search intent of each keyword.
 Respond ONLY with a JSON array:
 [
   {{
@@ -84,12 +95,15 @@ Respond ONLY with a JSON array:
   }}
 ]
 Prioritize commercial and transactional labels for pricing, comparison, scope,
-timeline, ROI, and service-decision intent. Informational keywords that still
-reflect a real buyer problem can remain informational, but framework-specific,
-job-board, and tutorial phrasing should be deprioritized. Do not up-label a
-query just because it contains a city if it has drifted away from the seed's
-real topic.
+timeline, ROI, buying, adoption, and solution-decision intent. Informational
+keywords that still reflect a real buyer problem can remain informational, but
+job-board, tutorial, and implementation-detail phrasing should be deprioritized.
+Do not up-label a query just because it contains a city if it has drifted away
+from the seed's real topic.
 Context: {site_description}
+Target audience: {target_audience}
+Target persona: {target_persona}
+Services: {services}
 Keywords: {keywords_json}
 """.strip()
 

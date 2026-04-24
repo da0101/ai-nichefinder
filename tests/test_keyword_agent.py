@@ -11,6 +11,14 @@ from nichefinder_core.free_validation_context import (
     save_free_validation_context,
     thaw_shortlist,
 )
+from nichefinder_core.noise_memory import (
+    approve_noise_entries,
+    approve_training_entries,
+    load_noise_profile,
+    record_validation_run,
+    summarize_noise_candidates,
+    summarize_training_candidates,
+)
 from nichefinder_core.pre_serp_ddgs import apply_ddgs_validation
 from nichefinder_core.pre_serp import PreSerpCandidateScore, build_pre_serp_shortlist
 from nichefinder_core.pre_serp_external import (
@@ -148,11 +156,64 @@ async def test_keyword_agent_creates_keywords_from_gemini_output_only():
     assert "mobile app vs web app for startup" in terms
     assert "ai strategy consultant" not in terms
     assert output.buyer_problems[0].keyword_seed == "mobile app vs web app for startup"
-    assert all(keyword.source == "gemini_serpapi" for keyword in keywords)
+    assert all(keyword.source == "gemini_problem" for keyword in keywords)
     assert all(keyword.lifecycle_status == KeywordLifecycleStatus.DISCOVERED for keyword in keywords)
     assert all(keyword.locale == "en" for keyword in keywords)
     assert all(keyword.market == "North America" for keyword in keywords)
-    assert all(keyword.metrics_source == "gemini_serpapi" for keyword in keywords)
+    assert all(keyword.metrics_source == "gemini_problem" for keyword in keywords)
+
+
+async def test_keyword_agent_prompts_are_not_hardcoded_to_web_developer_context():
+    repository = _repository()
+
+    class RecordingGemini:
+        def __init__(self):
+            self.prompts: list[str] = []
+
+        async def analyze(self, system_prompt: str, user_content: str):
+            self.prompts.append(system_prompt)
+            if "identify REAL buyer problems" in system_prompt:
+                return {
+                    "items": [
+                        {
+                            "problem": "Restaurant owners struggle with food cost control.",
+                            "audience": "restaurant owners",
+                            "why_now": "Margins are shrinking.",
+                            "article_angle": "operational guide",
+                            "keyword_seed": "restaurant food cost control",
+                            "evidence_queries": [],
+                        }
+                    ]
+                }
+            if "Generate article-worthy keyword" in system_prompt:
+                return {"items": [{"keyword": "how to reduce food cost in a restaurant"}]}
+            return {"items": [{"keyword": "how to reduce food cost in a restaurant", "intent": "informational"}]}
+
+    gemini = RecordingGemini()
+    agent = KeywordAgent(
+        settings=Settings(),
+        gemini_client=gemini,
+        serpapi_client=FakeSerpAPIClient(),
+        repository=repository,
+    )
+
+    await agent.run(
+        KeywordAgentInput(
+            seed_keyword="how to reduce food cost in a restaurant",
+            site_config={
+                "site_description": "Restaurant operations platform for independent restaurants",
+                "target_audience": "restaurant owners and operators",
+                "target_persona": "independent restaurant owner trying to control margins",
+                "geographic_focus": ["North America"],
+                "services": ["restaurant operations analytics", "inventory control"],
+            },
+        )
+    )
+
+    joined = "\n".join(gemini.prompts)
+    assert "hire a web developer" not in joined
+    assert "freelance developer/consultant in Montreal" not in joined
+    assert "independent restaurant owner trying to control margins" in joined
 
 
 def test_pre_serp_shortlist_prefers_article_winnable_terms_and_caps_results():
@@ -995,6 +1056,142 @@ async def test_collect_free_article_evidence_strips_noisy_headings_questions_and
     assert "montreal web" not in summary.suggested_secondary_keywords
 
 
+async def test_collect_free_article_evidence_filters_agency_copy_secondary_keywords_and_definitional_questions():
+    validations = [
+        ExternalEvidenceValidation(
+            source="yahoo",
+            query="how to budget for a website in montreal",
+            score=8.0,
+            result_count=3,
+            top_domains=["example.com", "example.org"],
+            results=[
+                ExternalEvidenceResult(title="Budget a Website", url="https://example.com/one", content="Guide one"),
+                ExternalEvidenceResult(title="Website Cost Planning", url="https://example.org/two", content="Guide two"),
+            ],
+        )
+    ]
+
+    class Scraped:
+        def __init__(self, url, title, h1, h2_list, h3_list, clean_text, word_count):
+            self.url = url
+            self.title = title
+            self.h1 = h1
+            self.h2_list = h2_list
+            self.h3_list = h3_list
+            self.clean_text = clean_text
+            self.word_count = word_count
+
+    scraper = FakeScraper(
+        {
+            "https://example.com/one": Scraped(
+                "https://example.com/one",
+                "How to Budget for a Website in Montreal",
+                "How to Budget for a Website in Montreal",
+                ["Base Website Costs", "What is a website requirements document?"],
+                [],
+                "Montreal web design cost depends on project scope. Design cost and web design cost vary by complexity. "
+                "This guide covers guide building in the local tech scene. Complete price examples and factor that language do not help.",
+                1200,
+            ),
+            "https://example.org/two": Scraped(
+                "https://example.org/two",
+                "Website Cost Planning",
+                "Website Cost Planning",
+                ["Common Mistakes in Website Design", "What is a website requirements document?"],
+                [],
+                "A requirements document helps prevent rework. Montreal web design cost often reflects content and revisions. "
+                "This guide repeats guide building and the tech scene framing. Complete price summaries and factor that phrasing stay weak.",
+                1100,
+            ),
+        }
+    )
+
+    evidence = await collect_free_article_evidence(
+        validations,
+        scraper,
+        max_keywords=1,
+        max_pages_per_keyword=2,
+    )
+
+    assert evidence
+    summary = evidence[0]
+    assert "What is a website requirements document?" not in summary.question_bank
+    assert "montreal web design" not in summary.suggested_secondary_keywords
+    assert "design cost" not in summary.suggested_secondary_keywords
+    assert "web design cost" not in summary.suggested_secondary_keywords
+    assert "this guide" not in summary.suggested_secondary_keywords
+    assert "guide building" not in summary.suggested_secondary_keywords
+    assert "tech scene" not in summary.suggested_secondary_keywords
+    assert "complete price" not in summary.suggested_secondary_keywords
+    assert "factor that" not in summary.suggested_secondary_keywords
+
+
+async def test_collect_free_article_evidence_requires_query_family_alignment_for_secondary_keywords():
+    validations = [
+        ExternalEvidenceValidation(
+            source="yahoo",
+            query="how to budget for a website in montreal",
+            score=8.0,
+            result_count=3,
+            top_domains=["example.com", "example.org"],
+            results=[
+                ExternalEvidenceResult(title="Budget a Website", url="https://example.com/one", content="Guide one"),
+                ExternalEvidenceResult(title="Website Cost Planning", url="https://example.org/two", content="Guide two"),
+            ],
+        )
+    ]
+
+    class Scraped:
+        def __init__(self, url, title, h1, h2_list, h3_list, clean_text, word_count):
+            self.url = url
+            self.title = title
+            self.h1 = h1
+            self.h2_list = h2_list
+            self.h3_list = h3_list
+            self.clean_text = clean_text
+            self.word_count = word_count
+
+    scraper = FakeScraper(
+        {
+            "https://example.com/one": Scraped(
+                "https://example.com/one",
+                "How to Budget for a Website in Montreal",
+                "How to Budget for a Website in Montreal",
+                ["Base Website Costs"],
+                [],
+                "Mobile optimization, interactive features, and a vibrant tech scene appear in many agency pages. "
+                "Project scope planning and ongoing maintenance affect budget decisions.",
+                1200,
+            ),
+            "https://example.org/two": Scraped(
+                "https://example.org/two",
+                "Website Cost Planning",
+                "Website Cost Planning",
+                ["Common Budget Mistakes"],
+                [],
+                "This guide mentions mobile optimization and interactive features again. "
+                "Project scope planning reduces hidden costs and ongoing maintenance surprises.",
+                1100,
+            ),
+        }
+    )
+
+    evidence = await collect_free_article_evidence(
+        validations,
+        scraper,
+        max_keywords=1,
+        max_pages_per_keyword=2,
+    )
+
+    assert evidence
+    summary = evidence[0]
+    assert "mobile optimization" not in summary.suggested_secondary_keywords
+    assert "interactive feature" not in summary.suggested_secondary_keywords
+    assert "vibrant tech" not in summary.suggested_secondary_keywords
+    assert "project scope planning" in summary.suggested_secondary_keywords
+    assert "ongoing maintenance" in summary.suggested_secondary_keywords
+
+
 async def test_collect_free_article_evidence_skips_degraded_validations():
     validations = [
         ExternalEvidenceValidation(
@@ -1133,7 +1330,7 @@ def test_summarize_cross_source_patterns_falls_back_to_single_source_items():
     assert len(summaries) == 1
     summary = summaries[0]
     assert summary.agreement == "single-source"
-    assert summary.repeated_domains == ["clutch.co", "designrush.com", "sortlist.com"]
+    assert summary.repeated_domains == []
 
 
 async def test_apply_external_validation_splits_problem_seed_variants():
@@ -1236,7 +1433,7 @@ async def test_apply_external_validation_marks_degraded_payloads_unusable_for_ar
     assert validation.degraded is True
     assert validation.usable_for_article_evidence is False
     assert validation.score <= 0
-    assert "ddgs: degraded" in validation.notes
+    assert any(note.startswith("ddgs: degraded") for note in validation.notes)
 
 
 def test_free_validation_context_round_trips_shortlist(tmp_path):
@@ -1315,3 +1512,180 @@ def test_apply_overlap_confidence_uses_exact_and_family_patterns():
 
     assert adjusted[0].score > 100.0
     assert adjusted[0].breakdown["free_overlap_bonus"] > 0
+
+
+def test_noise_memory_summarizes_repeated_candidates_and_approvals(tmp_path):
+    settings = Settings(cache_dir=tmp_path / "cache")
+    site_config = {"site_name": "Test", "services": ["custom software"]}
+
+    shortlist = [
+        SimpleNamespace(term="web design cost montreal"),
+        SimpleNamespace(term="montreal web design pricing"),
+    ]
+    keyword_validations = [
+        ExternalEvidenceValidation(
+            source="bing",
+            query="web design cost montreal",
+            score=0.0,
+            result_count=3,
+            top_domains=["dictionary.com"],
+        )
+    ]
+    article_evidence = [
+        SimpleNamespace(
+            query="how much does a business website cost in montreal",
+            suggested_secondary_keywords=["mobile optimization"],
+        )
+    ]
+
+    record_validation_run(
+        settings,
+        site_config=site_config,
+        seed_keyword="how much does a business website cost in montreal",
+        location="Montreal, Quebec, Canada",
+        shortlist=shortlist,
+        keyword_validations=keyword_validations,
+        article_evidence=article_evidence,
+    )
+    record_validation_run(
+        settings,
+        site_config=site_config,
+        seed_keyword="how much does a business website cost in montreal",
+        location="Montreal, Quebec, Canada",
+        shortlist=shortlist,
+        keyword_validations=keyword_validations,
+        article_evidence=article_evidence,
+    )
+
+    candidates = summarize_noise_candidates(settings, site_config=site_config, min_runs=2, limit=10)
+    training_candidates = summarize_training_candidates(settings, site_config=site_config, min_runs=2, limit=10)
+
+    assert any(item.scope == "keyword_phrase" and item.value == "web design" for item in candidates)
+    assert any(item.scope == "domain" and item.value == "dictionary.com" for item in candidates)
+    assert any(
+        item.scope == "secondary_phrase" and item.label == "validity" and item.value == "mobile optimization"
+        for item in training_candidates
+    )
+
+    profile = approve_training_entries(
+        settings,
+        site_config=site_config,
+        noise_keyword_phrases=["web design"],
+        noise_domains=["dictionary.com"],
+        valid_secondary_phrases=["mobile optimization"],
+    )
+
+    assert "web design" in profile.keyword_phrases
+    assert "mobile optimization" in profile.valid_secondary_phrases
+    assert "dictionary.com" in profile.domains
+
+
+def test_build_pre_serp_shortlist_applies_learned_noise_penalty(tmp_path):
+    repository = _repository()
+    good = repository.upsert_keyword(
+        Keyword(
+            term="business website cost montreal",
+            seed_keyword="how much does a business website cost in montreal",
+            source="test",
+            search_intent=SearchIntent.COMMERCIAL,
+        )
+    )
+    bad = repository.upsert_keyword(
+        Keyword(
+            term="web design cost montreal",
+            seed_keyword="how much does a business website cost in montreal",
+            source="test",
+            search_intent=SearchIntent.COMMERCIAL,
+        )
+    )
+    settings = Settings(cache_dir=tmp_path / "cache")
+    site_config = {"site_name": "Test", "services": ["custom software"]}
+    approve_noise_entries(
+        settings,
+        site_config=site_config,
+        keyword_phrases=["web design"],
+    )
+    profile = load_noise_profile(settings, site_config=site_config)
+
+    shortlist = build_pre_serp_shortlist(
+        [good.id, bad.id],
+        repository,
+        site_config=site_config,
+        location="Montreal, Quebec, Canada",
+        max_keywords=2,
+        noise_profile=profile,
+    )
+
+    indexed = {item.term: item for item in shortlist}
+    assert indexed["web design cost montreal"].breakdown["learned_noise"] < 0
+    assert "learned-noise penalty" in indexed["web design cost montreal"].notes
+    assert indexed["business website cost montreal"].score > indexed["web design cost montreal"].score
+
+
+async def test_collect_free_article_evidence_respects_learned_secondary_noise(tmp_path):
+    settings = Settings(cache_dir=tmp_path / "cache")
+    site_config = {"site_name": "Test", "services": ["custom software"]}
+    approve_noise_entries(
+        settings,
+        site_config=site_config,
+        secondary_phrases=["mobile optimization"],
+    )
+    profile = load_noise_profile(settings, site_config=site_config)
+    validations = [
+        ExternalEvidenceValidation(
+            source="yahoo",
+            query="how to budget for a website in montreal",
+            score=8.0,
+            result_count=3,
+            top_domains=["example.com", "example.org"],
+            results=[
+                ExternalEvidenceResult(title="Budget a Website", url="https://example.com/one", content="Guide one"),
+                ExternalEvidenceResult(title="Website Cost Planning", url="https://example.org/two", content="Guide two"),
+            ],
+        )
+    ]
+
+    class Scraped:
+        def __init__(self, url, title, h1, h2_list, h3_list, clean_text, word_count):
+            self.url = url
+            self.title = title
+            self.h1 = h1
+            self.h2_list = h2_list
+            self.h3_list = h3_list
+            self.clean_text = clean_text
+            self.word_count = word_count
+
+    scraper = FakeScraper(
+        {
+            "https://example.com/one": Scraped(
+                "https://example.com/one",
+                "How to Budget for a Website in Montreal",
+                "How to Budget for a Website in Montreal",
+                ["Base Website Costs"],
+                [],
+                "Mobile optimization appears here, while project scope planning matters for budget.",
+                1200,
+            ),
+            "https://example.org/two": Scraped(
+                "https://example.org/two",
+                "Website Cost Planning",
+                "Website Cost Planning",
+                ["Common Budget Mistakes"],
+                [],
+                "Mobile optimization repeats, but ongoing maintenance also drives cost.",
+                1100,
+            ),
+        }
+    )
+
+    evidence = await collect_free_article_evidence(
+        validations,
+        scraper,
+        max_keywords=1,
+        max_pages_per_keyword=2,
+        noise_profile=profile,
+    )
+
+    assert evidence
+    summary = evidence[0]
+    assert "mobile optimization" not in summary.suggested_secondary_keywords

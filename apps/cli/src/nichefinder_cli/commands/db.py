@@ -3,11 +3,12 @@ import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 
-from nichefinder_core.settings import get_settings
+from nichefinder_cli.runtime import resolve_runtime_settings
 from nichefinder_db import create_db_and_tables
 from nichefinder_db.crud import SeoRepository
 from nichefinder_db.engine import get_session
 from rich.console import Console
+from typer import Option
 from typer import Typer
 
 db_app = Typer(help="Database administration commands.")
@@ -38,7 +39,7 @@ def _backup_db(settings, console: Console) -> Path | None:
 @db_app.command("init")
 def init_db() -> None:
     """Create database tables from SQLModel metadata. Backs up existing DB first."""
-    settings = get_settings()
+    settings = resolve_runtime_settings()
     console = Console()
     _backup_db(settings, console)
     try:
@@ -57,7 +58,7 @@ def init_db() -> None:
 @db_app.command("backup")
 def backup_db() -> None:
     """Copy the current database to a timestamped backup file in data/db/backups/."""
-    settings = get_settings()
+    settings = resolve_runtime_settings()
     console = Console()
     dest = _backup_db(settings, console)
     if dest:
@@ -69,7 +70,7 @@ def backup_db() -> None:
 @db_app.command("export")
 def export_db() -> None:
     """Export all keywords and articles to a timestamped JSON file in data/exports/."""
-    settings = get_settings()
+    settings = resolve_runtime_settings()
     console = Console()
     exports_dir = settings.resolve_path(Path("data/exports"))
     exports_dir.mkdir(parents=True, exist_ok=True)
@@ -118,3 +119,35 @@ def export_db() -> None:
     console.print(
         f"[green]Exported[/green] {len(keywords)} keywords + {len(articles)} articles → {out}"
     )
+
+
+@db_app.command("reset")
+def reset_db(
+    all_state: bool = Option(
+        False,
+        "--all-state",
+        help="Also remove cached validation/training state and generated outputs for the active profile.",
+    ),
+) -> None:
+    """Delete the active SQLite DB and recreate an empty schema."""
+    settings = resolve_runtime_settings()
+    console = Console()
+    db_file = _db_path(settings)
+
+    if db_file is not None:
+        for path in (db_file, db_file.with_suffix(f"{db_file.suffix}-shm"), db_file.with_suffix(f"{db_file.suffix}-wal")):
+            if path.exists():
+                path.unlink()
+
+    if all_state:
+        for path in (settings.resolved_cache_dir, settings.resolve_path(settings.outputs_dir)):
+            if path.exists():
+                shutil.rmtree(path)
+
+    create_db_and_tables(settings)
+    console.print(f"[green]Reset[/green] DB at {settings.database_url}")
+    if all_state:
+        console.print(
+            f"[green]Cleared[/green] cache at {settings.resolved_cache_dir} and outputs at "
+            f"{settings.resolve_path(settings.outputs_dir)}"
+        )

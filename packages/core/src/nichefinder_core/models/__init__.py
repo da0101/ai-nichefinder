@@ -15,6 +15,8 @@ from nichefinder_core.models.keyword import (
     SearchIntent,
     compute_opportunity_score,
 )
+from nichefinder_core.models.job import JobRecord
+from nichefinder_core.models.profile import AppStateRecord, ProfileRecord
 from nichefinder_core.models.problem import BuyerProblem
 from nichefinder_core.models.serp import CompetitorPage, SerpFeatures, SerpPage, SerpResult
 from nichefinder_core.models.site import SiteConfig, load_site_config, save_site_config
@@ -37,12 +39,15 @@ __all__ = [
     "ContentBriefRecord",
     "ContentType",
     "Keyword",
+    "JobRecord",
     "KeywordCluster",
     "KeywordClusterMembership",
     "KeywordLifecycleStatus",
     "OpportunityScore",
     "OpportunityScoreRecord",
     "PerformanceRecord",
+    "ProfileRecord",
+    "AppStateRecord",
     "RankingSnapshot",
     "SearchConsoleRecord",
     "SearchIntent",

@@ -3,7 +3,7 @@
 > Read this first — every session, every agent (Claude, Codex, Gemini).
 > 30-second orientation: what we're building, why, and where we stand.
 
-**Features:** gsc-monitoring, serp-pipeline-fix, buyer-problem-research, dashboard-rework, reddit-api-integration, google-ads-api-integration
+**Features:** gsc-monitoring, serp-pipeline-fix, buyer-problem-research, dashboard-rework, reddit-api-integration, google-ads-api-integration, rest-api-control-plane
 **Status:** mixed active states (in-progress, blocked, planning)
 
 ---
@@ -30,6 +30,7 @@ The current pipeline still proposes many commercially flavored but unwinnable qu
 - **Active:** buyer-problem-research on top of the current keyword-research flow
 - Also active: gsc-monitoring, serp-pipeline-fix, dashboard-rework
 - Newly tracked: reddit-api-integration (blocked waiting on Reddit approval), google-ads-api-integration (planning)
+- REST control-plane first slice is now at verification: typed local job APIs, SQLite-persisted job status, and loopback-or-token write guards are in place.
 - Next after this: GA4 provider → source registry → LangGraph interrupt/resume
 
 ## Relevant context
@@ -38,9 +39,11 @@ The current pipeline still proposes many commercially flavored but unwinnable qu
 - `.platform/work/buyer-problem-research.md`
 - `.platform/work/reddit-api-integration.md`
 - `.platform/work/google-ads-api-integration.md`
+- `.platform/work/rest-api-control-plane.md`
 - `.platform/domains/buyer-problem-research.md`
 - `.platform/domains/gsc-monitoring.md`
 - `.platform/domains/keyword-research.md`
+- `.platform/domains/rest-api-control-plane.md`
 - `packages/core/src/nichefinder_core/pre_serp.py` — deterministic pre-SERP shortlist scoring
 - `.platform/work/dashboard-rework.md`
 - `.platform/domains/viewer.md`

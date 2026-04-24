@@ -10,6 +10,7 @@ from nichefinder_cli.research_output import (
     print_keyword_validations,
     print_pre_serp_shortlist,
     print_problem_validations,
+    print_source_health,
 )
 from nichefinder_core.agents.keyword_agent import KeywordAgentInput
 from nichefinder_core.free_article_evidence import collect_free_article_evidence
@@ -19,6 +20,7 @@ from nichefinder_core.free_validation_context import (
     thaw_shortlist,
 )
 from nichefinder_core.models import BuyerProblem
+from nichefinder_core.noise_memory import load_noise_profile, record_validation_run
 from nichefinder_core.pre_serp_bing import apply_bing_validation
 from nichefinder_core.pre_serp_ddgs import apply_ddgs_validation
 from nichefinder_core.pre_serp_trends import build_trend_assisted_shortlist
@@ -50,6 +52,7 @@ async def run_free_validation_pipeline(
     log(f"[dim]Sources:[/dim] {', '.join(source.upper() for source in sources)}")
     log("[dim]Paid validation skipped:[/dim] Tavily, SerpAPI")
     active_sources = {source.lower() for source in sources}
+    noise_profile = load_noise_profile(services.settings, site_config=site_config)
     frozen_context = None
     if len(active_sources) == 1:
         frozen_context = load_free_validation_context(
@@ -94,6 +97,7 @@ async def run_free_validation_pipeline(
                 site_config=site_config,
                 location=location,
                 max_keywords=services.settings.max_serp_keywords,
+                noise_profile=noise_profile,
             )
         save_free_validation_context(
             services.settings,
@@ -143,6 +147,7 @@ async def run_free_validation_pipeline(
                     services.scraper,
                     max_keywords=services.settings.max_free_article_keywords,
                     max_pages_per_keyword=services.settings.max_free_article_pages_per_keyword,
+                    noise_profile=noise_profile,
                 )
             )
             article_evidence.extend(
@@ -151,6 +156,7 @@ async def run_free_validation_pipeline(
                     services.scraper,
                     max_keywords=services.settings.max_free_problem_article_queries,
                     max_pages_per_keyword=services.settings.max_free_problem_pages_per_query,
+                    noise_profile=noise_profile,
                 )
             )
 
@@ -200,6 +206,8 @@ async def run_free_validation_pipeline(
         print_keyword_validations(console, keyword_validations)
     if console and problem_validations:
         print_problem_validations(console, problem_validations)
+    if console and (keyword_validations or problem_validations):
+        print_source_health(console, [*keyword_validations, *problem_validations])
     if console and article_evidence:
         print_article_evidence(console, article_evidence)
     if console and len(active_sources) > 1:
@@ -231,6 +239,15 @@ async def run_free_validation_pipeline(
                 title="Topic-Family Buyer Problem Patterns",
                 include_research_bank=False,
             )
+    record_validation_run(
+        services.settings,
+        site_config=site_config,
+        seed_keyword=seed_keyword,
+        location=location,
+        shortlist=shortlist,
+        keyword_validations=keyword_validations,
+        article_evidence=article_evidence,
+    )
     log("[dim]Score cheat sheet:[/dim] docs/scoring-cheatsheet.md")
 
     return {

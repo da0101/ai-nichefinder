@@ -14,7 +14,7 @@ Technically, the CLI composes a set of local services around a SQLite database, 
 
 **Who uses it:** Daniil as the single local operator
 **Who deploys it:** manual local execution only
-**Hosting target:** localhost CLI on one machine, plus an optional local read-only viewer
+**Hosting target:** localhost CLI on one machine, plus an optional local viewer/testing workspace
 
 ## 2. High-level components
 
@@ -57,7 +57,7 @@ Technically, the CLI composes a set of local services around a SQLite database, 
 | Framework(s) | Typer, LangGraph, Pydantic v2, SQLModel | Rich is the terminal UI layer |
 | Build tool(s) | `uv`, Ruff, pytest | No containerized app runtime required |
 | Data store(s) | SQLite + local filesystem | Database defaults to `data/db/seo.db` |
-| Hosting | Local machine only | CLI-first, with an optional read-only localhost viewer for inspection |
+| Hosting | Local machine only | CLI-first, with an optional localhost viewer/testing workspace |
 | CI/CD | None yet | Manual local execution and verification |
 
 Per-stack conventions live in `conventions/{stack}.md`.
@@ -70,7 +70,7 @@ Per-stack conventions live in `conventions/{stack}.md`.
 4. Agents normalize those signals into `Keyword`, `SerpResult`, `CompetitorPage`, `ContentBriefRecord`, `Article`, `RankingSnapshot`, and `ApiUsageRecord` rows.
 5. Generated article content is also written to filesystem outputs so drafts remain inspectable outside the database.
 6. CLI commands render tables or structured output for the operator, who decides whether to approve or publish.
-7. The optional local viewer serves read-only dashboard and keyword-detail pages backed by the same SQLite data and markdown outputs.
+7. The optional local viewer serves dashboard/testing pages backed by the same SQLite data and markdown outputs, and may perform low-risk local actions such as switching profiles, saving profile config, approving training signals, and triggering `validate-free`.
 
 ## 5. Auth model
 

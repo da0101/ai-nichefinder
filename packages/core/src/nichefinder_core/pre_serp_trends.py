@@ -15,6 +15,7 @@ async def build_trend_assisted_shortlist(
     site_config: dict,
     location: str,
     max_keywords: int,
+    noise_profile=None,
     candidate_multiplier: int = 2,
     max_candidates: int = 12,
     concurrency: int = 3,
@@ -25,6 +26,7 @@ async def build_trend_assisted_shortlist(
         site_config=site_config,
         location=location,
         max_keywords=min(max_candidates, max(max_keywords, max_keywords * candidate_multiplier)),
+        noise_profile=noise_profile,
     )
     candidate_count = min(len(provisional), max(max_keywords, min(max_candidates, max_keywords * candidate_multiplier)))
     candidates = provisional[:candidate_count]
@@ -51,6 +53,7 @@ async def build_trend_assisted_shortlist(
         site_config=site_config,
         location=location,
         max_keywords=max_keywords,
+        noise_profile=noise_profile,
     )
 
 

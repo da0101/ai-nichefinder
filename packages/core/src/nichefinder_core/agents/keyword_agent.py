@@ -68,7 +68,9 @@ class KeywordAgent:
             BUYER_PROBLEM_DISCOVERY_PROMPT.format(
                 site_description=payload.site_config.get("site_description", ""),
                 target_audience=payload.site_config.get("target_audience", ""),
+                target_persona=payload.site_config.get("target_persona", ""),
                 services=", ".join(payload.site_config.get("services", [])),
+                geographic_focus=", ".join(payload.site_config.get("geographic_focus", [])),
                 seed_keyword=payload.seed_keyword,
                 evidence_queries_json=json.dumps(evidence_queries),
                 max_problems=min(8, payload.max_keywords),
@@ -93,7 +95,9 @@ class KeywordAgent:
                 buyer_problems_json=json.dumps([problem.model_dump() for problem in buyer_problems]),
                 site_description=payload.site_config.get("site_description", ""),
                 target_audience=payload.site_config.get("target_audience", ""),
+                target_persona=payload.site_config.get("target_persona", ""),
                 services=", ".join(payload.site_config.get("services", [])),
+                geographic_focus=", ".join(payload.site_config.get("geographic_focus", [])),
                 seed_keyword=payload.seed_keyword,
                 max_keywords=payload.max_keywords,
             ),
@@ -121,7 +125,7 @@ class KeywordAgent:
     async def run(self, payload: KeywordAgentInput) -> KeywordAgentOutput:
         metrics: list[dict] = []
         difficulties: list[dict] = []
-        source = "gemini_serpapi"
+        source = "gemini_problem"
         expanded_terms, buyer_problems = await self._expand_with_free_sources(payload)
 
         metrics_by_term = {
@@ -133,6 +137,9 @@ class KeywordAgent:
         intent_response = await self.gemini_client.analyze(
             KEYWORD_INTENT_PROMPT.format(
                 site_description=payload.site_config.get("site_description", ""),
+                target_audience=payload.site_config.get("target_audience", ""),
+                target_persona=payload.site_config.get("target_persona", ""),
+                services=", ".join(payload.site_config.get("services", [])),
                 keywords_json=json.dumps(expanded_terms),
             ),
             json.dumps(expanded_terms),

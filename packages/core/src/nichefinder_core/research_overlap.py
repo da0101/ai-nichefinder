@@ -125,9 +125,7 @@ def _unique_lower(items: list[str]) -> list[str]:
 def _rank_items(counter: Counter[str], limit: int = 3) -> list[str]:
     ranked = sorted(counter.items(), key=lambda item: (-item[1], item[0]))
     repeated = [value for value, count in ranked if count >= 2]
-    if repeated:
-        return repeated[:limit]
-    return [value for value, _ in ranked[:limit]]
+    return repeated[:limit]
 
 
 def _agreement_label(source_count: int) -> str:

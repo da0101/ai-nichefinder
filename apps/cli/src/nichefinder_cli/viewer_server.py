@@ -1,12 +1,23 @@
 import json
 from functools import partial
+from hmac import compare_digest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from ipaddress import ip_address
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 from nichefinder_core.settings import Settings
 
+from nichefinder_cli.viewer_actions import (
+    create_profile_action,
+    delete_profile_action,
+    load_profile_config,
+    run_validate_free_action,
+    save_profile_config_action,
+)
 from nichefinder_cli.viewer_data import load_dashboard, load_keyword_detail
+from nichefinder_cli.viewer_jobs import get_job, list_jobs, submit_job
+from nichefinder_cli.viewer_profile_data import approve_training_review, load_final_review, load_profiles, load_training_review, switch_active_profile
 
 
 def _dist_dir() -> Path:
@@ -248,6 +259,7 @@ class ViewerHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urlparse(self.path)
+        query = parse_qs(parsed.query)
 
         # --- API routes (unchanged) ---
         if parsed.path == "/api/dashboard":
@@ -267,6 +279,57 @@ class ViewerHandler(BaseHTTPRequestHandler):
                 self._json({"error": "keyword not found"}, status=404)
                 return
             self._json(detail)
+            return
+        if parsed.path == "/api/profiles":
+            try:
+                self._json(load_profiles())
+            except Exception as exc:
+                self._json({"error": str(exc)}, status=500)
+            return
+        if parsed.path == "/api/training-review":
+            try:
+                self._json(
+                    load_training_review(
+                        profile_slug=_single(query, "profile"),
+                        min_runs=_int_arg(query, "min_runs", default=2),
+                        limit=_int_arg(query, "limit", default=18),
+                    )
+                )
+            except Exception as exc:
+                self._json({"error": str(exc)}, status=500)
+            return
+        if parsed.path == "/api/final-review":
+            try:
+                profiles = [item for item in (_single(query, "profiles") or "").split(",") if item]
+                self._json(
+                    load_final_review(
+                        profiles=profiles or None,
+                        min_runs=_int_arg(query, "min_runs", default=2),
+                        limit=_int_arg(query, "limit", default=9),
+                    )
+                )
+            except Exception as exc:
+                self._json({"error": str(exc)}, status=500)
+            return
+        if parsed.path == "/api/profile-config":
+            try:
+                self._json(load_profile_config(profile_slug=_single(query, "profile")))
+            except Exception as exc:
+                self._json({"error": str(exc)}, status=500)
+            return
+        if parsed.path == "/api/status":
+            self._json({"status": "ok", "api": "nichefinder-local", "mode": "local"})
+            return
+        if parsed.path == "/api/jobs":
+            self._json(list_jobs(self.settings))
+            return
+        if parsed.path.startswith("/api/jobs/"):
+            job_id = parsed.path.removeprefix("/api/jobs/").strip()
+            job = get_job(job_id, self.settings)
+            if job is None:
+                self._json({"error": "job not found"}, status=404)
+                return
+            self._json(job)
             return
 
         # --- Static / React app ---
@@ -294,6 +357,122 @@ class ViewerHandler(BaseHTTPRequestHandler):
         else:
             self._json({"error": "not found"}, status=404)
 
+    def do_POST(self):
+        parsed = urlparse(self.path)
+        if parsed.path.startswith("/api/"):
+            error = self._write_access_error()
+            if error is not None:
+                self._json({"error": error}, status=403)
+                return
+        try:
+            payload = self._read_json()
+        except ValueError as exc:
+            self._json({"error": str(exc)}, status=400)
+            return
+
+        if parsed.path == "/api/profiles/active":
+            try:
+                self._json(switch_active_profile(payload.get("profile")))
+            except ValueError as exc:
+                self._json({"error": str(exc)}, status=404)
+            except Exception as exc:
+                self._json({"error": str(exc)}, status=500)
+            return
+
+        if parsed.path == "/api/training-approve":
+            try:
+                self._json(
+                    approve_training_review(
+                        profile_slug=payload.get("profile"),
+                        noise_keyword_phrases=_as_list(payload.get("noise_keyword_phrases")),
+                        noise_secondary_phrases=_as_list(payload.get("noise_secondary_phrases")),
+                        noise_domains=_as_list(payload.get("noise_domains")),
+                        valid_keyword_phrases=_as_list(payload.get("valid_keyword_phrases")),
+                        valid_secondary_phrases=_as_list(payload.get("valid_secondary_phrases")),
+                        trusted_domains=_as_list(payload.get("trusted_domains")),
+                        min_runs=int(payload.get("min_runs", 2)),
+                        limit=int(payload.get("limit", 18)),
+                    )
+                )
+            except Exception as exc:
+                self._json({"error": str(exc)}, status=400)
+            return
+        if parsed.path == "/api/profiles":
+            try:
+                self._json(
+                    create_profile_action(
+                        slug=str(payload.get("slug", "")).strip(),
+                        from_current=bool(payload.get("from_current", False)),
+                        use=bool(payload.get("use", False)),
+                        payload=payload.get("site_config"),
+                    ),
+                    status=201,
+                )
+            except Exception as exc:
+                self._json({"error": str(exc)}, status=400)
+            return
+        if parsed.path == "/api/profile-config":
+            try:
+                self._json(
+                    save_profile_config_action(
+                        profile_slug=payload.get("profile"),
+                        payload=payload.get("site_config", {}),
+                    )
+                )
+            except Exception as exc:
+                self._json({"error": str(exc)}, status=400)
+            return
+        if parsed.path == "/api/profiles/delete":
+            try:
+                self._json(
+                    delete_profile_action(
+                        profile_slug=str(payload.get("profile", "")).strip(),
+                    )
+                )
+            except Exception as exc:
+                self._json({"error": str(exc)}, status=400)
+            return
+        if parsed.path == "/api/validate-free":
+            try:
+                self._json(
+                    run_validate_free_action(
+                        profile_slug=payload.get("profile"),
+                        keyword=str(payload.get("keyword", "")).strip(),
+                        sources=tuple(_as_list(payload.get("sources")) or ["ddgs", "bing", "yahoo"]),
+                    )
+                )
+            except Exception as exc:
+                self._json({"error": str(exc)}, status=400)
+            return
+        if parsed.path == "/api/jobs":
+            try:
+                action = str(payload.get("action", "")).strip()
+                params = payload.get("params") or {}
+                if not isinstance(params, dict):
+                    raise ValueError("params must be an object")
+                self._json(submit_job(action, params, self.settings), status=202)
+            except Exception as exc:
+                self._json({"error": str(exc)}, status=400)
+            return
+
+        self._json({"error": "not found"}, status=404)
+
+    def do_DELETE(self):
+        parsed = urlparse(self.path)
+        if not parsed.path.startswith("/api/profiles/"):
+            self._json({"error": "not found"}, status=404)
+            return
+        error = self._write_access_error()
+        if error is not None:
+            self._json({"error": error}, status=403)
+            return
+
+        slug = parsed.path.removeprefix("/api/profiles/").strip()
+        try:
+            self._json(delete_profile_action(profile_slug=slug))
+        except Exception as exc:
+            self._json({"error": str(exc)}, status=400)
+
     def log_message(self, *_: object) -> None:  # suppress HTTP access logs
         pass
 
@@ -313,8 +492,93 @@ class ViewerHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _read_json(self) -> dict:
+        length = self.headers.get("Content-Length")
+        if not length:
+            return {}
+        raw = self.rfile.read(int(length))
+        try:
+            payload = json.loads(raw.decode("utf-8"))
+        except json.JSONDecodeError as exc:
+            raise ValueError("invalid json body") from exc
+        if not isinstance(payload, dict):
+            raise ValueError("json body must be an object")
+        return payload
+
+    def _write_access_error(self) -> str | None:
+        expected_token = (self.settings.viewer_api_token or "").strip()
+        provided_token = _bearer_token(self.headers.get("Authorization"))
+        if expected_token:
+            if provided_token is not None and compare_digest(provided_token, expected_token):
+                return None
+            return "write access requires Authorization: Bearer <VIEWER_API_TOKEN>"
+        if not self._client_is_loopback():
+            return "write access is limited to loopback clients unless VIEWER_API_TOKEN is configured"
+        if not self._write_origin_is_allowed():
+            return "write access origin must be loopback when VIEWER_API_TOKEN is not configured"
+        return None
+
+    def _client_is_loopback(self) -> bool:
+        return _is_loopback_host(self.client_address[0])
+
+    def _write_origin_is_allowed(self) -> bool:
+        origin = self.headers.get("Origin")
+        if origin:
+            return _origin_host_is_loopback(origin)
+        referer = self.headers.get("Referer")
+        if referer:
+            return _origin_host_is_loopback(referer)
+        return True
+
 
 def serve_viewer(settings: Settings, host: str, port: int) -> None:
     handler = partial(ViewerHandler, settings=settings)
     with ThreadingHTTPServer((host, port), handler) as server:
         server.serve_forever()
+
+
+def _single(query: dict[str, list[str]], key: str) -> str | None:
+    values = query.get(key)
+    return values[0] if values else None
+
+
+def _int_arg(query: dict[str, list[str]], key: str, *, default: int) -> int:
+    raw = _single(query, key)
+    return int(raw) if raw is not None else default
+
+
+def _as_list(value: object) -> list[str] | None:
+    if value is None:
+        return None
+    if isinstance(value, list):
+        return [str(item) for item in value if str(item).strip()]
+    if isinstance(value, str):
+        cleaned = value.strip()
+        return [cleaned] if cleaned else None
+    raise ValueError("approval payload fields must be strings or arrays")
+
+
+def _bearer_token(header_value: str | None) -> str | None:
+    if not header_value:
+        return None
+    scheme, _, token = header_value.partition(" ")
+    if scheme.lower() != "bearer":
+        return None
+    cleaned = token.strip()
+    return cleaned or None
+
+
+def _origin_host_is_loopback(origin: str) -> bool:
+    return _is_loopback_host(urlparse(origin).hostname)
+
+
+def _is_loopback_host(host: str | None) -> bool:
+    if not host:
+        return False
+    cleaned = host.strip().strip("[]").split("%", 1)[0].lower()
+    if cleaned == "localhost":
+        return True
+    try:
+        return ip_address(cleaned).is_loopback
+    except ValueError:
+        return False

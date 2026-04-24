@@ -4,6 +4,7 @@ from datetime import date, datetime, timezone
 from sqlmodel import Session, func, select
 
 from nichefinder_core.models import (
+    AppStateRecord,
     AnalyticsRecord,
     ApiUsageRecord,
     Article,
@@ -11,11 +12,13 @@ from nichefinder_core.models import (
     CompetitorPage,
     ContentBrief,
     ContentBriefRecord,
+    JobRecord,
     Keyword,
     KeywordCluster,
     KeywordClusterMembership,
     OpportunityScore,
     OpportunityScoreRecord,
+    ProfileRecord,
     RankingSnapshot,
     SearchConsoleRecord,
     SerpResult,
@@ -40,6 +43,100 @@ class SeoRepository:
         self.session.commit()
         self.session.refresh(keyword)
         return keyword
+
+    def list_profiles(self) -> list[ProfileRecord]:
+        statement = select(ProfileRecord).order_by(ProfileRecord.is_default.desc(), ProfileRecord.slug.asc())
+        return list(self.session.exec(statement).all())
+
+    def get_profile(self, slug: str) -> ProfileRecord | None:
+        return self.session.get(ProfileRecord, slug)
+
+    def upsert_profile(
+        self,
+        *,
+        slug: str,
+        site_name: str,
+        site_url: str,
+        site_description: str,
+        site_config_json: str,
+        is_default: bool = False,
+    ) -> ProfileRecord:
+        existing = self.get_profile(slug)
+        if existing is None:
+            record = ProfileRecord(
+                slug=slug,
+                site_name=site_name,
+                site_url=site_url,
+                site_description=site_description,
+                site_config_json=site_config_json,
+                is_default=is_default,
+            )
+            self.session.add(record)
+            self.session.commit()
+            self.session.refresh(record)
+            return record
+        existing.site_name = site_name
+        existing.site_url = site_url
+        existing.site_description = site_description
+        existing.site_config_json = site_config_json
+        existing.is_default = is_default
+        existing.updated_at = datetime.now(timezone.utc)
+        self.session.add(existing)
+        self.session.commit()
+        self.session.refresh(existing)
+        return existing
+
+    def delete_profile(self, slug: str) -> None:
+        record = self.get_profile(slug)
+        if record is None:
+            raise ValueError(f"Profile not found: {slug}")
+        self.session.delete(record)
+        self.session.commit()
+
+    def create_job(self, *, action: str, params_json: str) -> JobRecord:
+        record = JobRecord(action=action, status="queued", params_json=params_json)
+        self.session.add(record)
+        self.session.commit()
+        self.session.refresh(record)
+        return record
+
+    def list_jobs(self, *, limit: int = 100) -> list[JobRecord]:
+        statement = select(JobRecord).order_by(JobRecord.created_at.desc()).limit(limit)
+        return list(self.session.exec(statement).all())
+
+    def get_job(self, job_id: str) -> JobRecord | None:
+        return self.session.get(JobRecord, job_id)
+
+    def update_job(self, job_id: str, **updates) -> JobRecord:
+        record = self.get_job(job_id)
+        if record is None:
+            raise ValueError(f"Job not found: {job_id}")
+        for field, value in updates.items():
+            setattr(record, field, value)
+        record.updated_at = datetime.now(timezone.utc)
+        self.session.add(record)
+        self.session.commit()
+        self.session.refresh(record)
+        return record
+
+    def get_app_state(self) -> AppStateRecord:
+        record = self.session.get(AppStateRecord, 1)
+        if record is not None:
+            return record
+        record = AppStateRecord(id=1)
+        self.session.add(record)
+        self.session.commit()
+        self.session.refresh(record)
+        return record
+
+    def set_active_profile(self, slug: str | None) -> AppStateRecord:
+        record = self.get_app_state()
+        record.active_profile_slug = slug
+        record.updated_at = datetime.now(timezone.utc)
+        self.session.add(record)
+        self.session.commit()
+        self.session.refresh(record)
+        return record
 
     def get_keyword_by_term(self, term: str) -> Keyword | None:
         return self.session.exec(select(Keyword).where(Keyword.term == term)).first()

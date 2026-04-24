@@ -52,6 +52,107 @@ _Overwritten by `agentboard checkpoint` — the compact payload the next agent r
 
 ---
 
-## 🔍 Audit Report
+## 🔍 Audit — 2026-04-24
 
-_Status: not yet run_
+> Run via Stream / Feature Analysis Protocol — 6 parallel/rotated agents.
+
+# 📋 Reddit API Integration — Audit Snapshot
+
+> **Stream:** `reddit-api-integration` · **Date:** 2026-04-24 · **Status:** 🔴 Blocked / not ready to close
+> **Repos touched:** `repo-primary`
+
+---
+
+## ⚡ At-a-Glance Scorecard
+
+| | 🖥️ repo-primary |
+|---|:---:|
+| **Implementation** | 🔴 |
+| **Tests**          | 🔴 |
+| **Security**       | 🟡 |
+| **Code Quality**   | 🟡 |
+
+> **Bottom line:** No Reddit API integration code exists yet; current Reddit behavior is only legacy SERP-domain scoring for `reddit.com`.
+
+---
+
+## 🔄 How the Feature Works (End-to-End)
+
+```text
+Current:
+SERP result pages -> estimate_difficulty() -> reddit.com treated as high-authority domain
+
+Missing target:
+Reddit OAuth settings -> Reddit Data API client -> posts/comments fetch
+  -> structured buyer evidence -> brief enrichment
+```
+
+---
+
+## 🛡️ Security
+
+| Severity | Repo | Finding |
+|:---:|---|---|
+| 🟡 Medium | repo-primary | Reddit OAuth credentials are not modeled in settings/env yet. [packages/core/src/nichefinder_core/settings.py:27](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/packages/core/src/nichefinder_core/settings.py:27), [.env.example:4](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.env.example:4) |
+| 🟢 Clean | repo-primary | No hardcoded Reddit secrets found; no Reddit client exists yet to leak tokens. |
+| 🟡 Medium | repo-primary | Existing generic HTML search User-Agent is browser-like, not a descriptive Reddit API User-Agent. [packages/core/src/nichefinder_core/sources/html_search_engine.py:13](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/packages/core/src/nichefinder_core/sources/html_search_engine.py:13) |
+
+---
+
+## 🧪 Test Coverage
+
+### repo-primary
+| Area | Tested? | File |
+|---|:---:|---|
+| Legacy SERP Reddit domain scoring | ✅ Good | [tests/test_serp_signals.py:54](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/tests/test_serp_signals.py:54) |
+| Reddit API source/client | 🔴 None | Missing |
+| Reddit OAuth/settings readiness | 🔴 None | Missing |
+| Reddit posts/comments parsing | 🔴 None | Missing |
+| Reddit buyer-signal/brief enrichment | 🔴 None | Missing |
+
+---
+
+## ✅ Implementation Status
+
+### repo-primary
+| Component | Status | Location |
+|---|:---:|---|
+| Stream registration | ✅ Done | [.platform/work/reddit-api-integration.md:1](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.platform/work/reddit-api-integration.md:1) |
+| Reddit API approval/credentials | ❌ Blocked | [.platform/work/reddit-api-integration.md:26](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.platform/work/reddit-api-integration.md:26) |
+| Reddit source module | ❌ Missing | [apps/cli/src/nichefinder_cli/runtime.py:26](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/apps/cli/src/nichefinder_cli/runtime.py:26) |
+| Reddit service wiring | ❌ Missing | [apps/cli/src/nichefinder_cli/runtime.py:64](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/apps/cli/src/nichefinder_cli/runtime.py:64) |
+| Reddit enrichment in research pipeline | ❌ Missing | [apps/cli/src/nichefinder_cli/workflows.py:98](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/apps/cli/src/nichefinder_cli/workflows.py:98) |
+| Legacy Reddit SERP scoring | ✅ Existing, not this integration | [packages/core/src/nichefinder_core/utils/serp_signals.py:4](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/packages/core/src/nichefinder_core/utils/serp_signals.py:4) |
+
+---
+
+## 🔧 Open Issues
+
+### 🔴 Must Fix (blocking)
+| # | Repo | Issue |
+|---|---|---|
+| 1 | repo-primary | Stream done criteria are all unchecked and `closure_approved: false`. [.platform/work/reddit-api-integration.md:13](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.platform/work/reddit-api-integration.md:13), [.platform/work/reddit-api-integration.md:25](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.platform/work/reddit-api-integration.md:25) |
+| 2 | repo-primary | No Reddit API client/source exists and DI has no Reddit service slot. [apps/cli/src/nichefinder_cli/runtime.py:26](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/apps/cli/src/nichefinder_cli/runtime.py:26) |
+| 3 | repo-primary | Research pipeline has DDGS/Bing/Yahoo/Tavily validation paths but no Reddit enrichment bucket. [apps/cli/src/nichefinder_cli/workflows.py:98](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/apps/cli/src/nichefinder_cli/workflows.py:98) |
+
+### 🟡 Should Fix Soon
+| # | Repo | Issue | Location |
+|---|---|---|---|
+| 1 | repo-primary | Add Reddit settings with local-secret handling, readiness check, rate/budget limits, and descriptive User-Agent. | [packages/core/src/nichefinder_core/settings.py:27](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/packages/core/src/nichefinder_core/settings.py:27) |
+| 2 | repo-primary | Add structured evidence fields/path for buyer signals, questions, phrases, and source URLs without treating Reddit as primary keyword validation. | [packages/core/src/nichefinder_core/agents/synthesis_agent.py:129](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/packages/core/src/nichefinder_core/agents/synthesis_agent.py:129) |
+| 3 | repo-primary | Keep new Reddit code out of already-large files. | [packages/core/src/nichefinder_core/pre_serp_external.py:1](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/packages/core/src/nichefinder_core/pre_serp_external.py:1) |
+
+### ⚪ Known Limitations (document, not block)
+| # | Limitation |
+|---|---|
+| 1 | Current branch is `feature/serp-pipeline-fix`; no local `feature/reddit-api-integration` branch was observed. |
+| 2 | Existing Reddit code mention is only `reddit.com` as a SERP domain signal, not Reddit Data API access. |
+
+---
+
+## 🎯 Close Checklist / Priority Order
+
+  □  1. 🔐  Get Reddit Data API approval and local credentials
+  □  2. ⚙️  Add Reddit settings/env handling, cache/rate limits, and read-only source client
+  □  3. 🧪  Add tests for fetch, parsing, error/rate handling, and brief evidence integration
+  □  4. ✅  Run manual verification, update decisions/log, and request owner closure approval

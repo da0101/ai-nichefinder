@@ -193,6 +193,44 @@ def print_cross_source_patterns(console: Console, patterns: list, *, title: str,
                     ", ".join(_list_value(item, "repeated_secondary_keywords")[:3]) or "none",
                     ", ".join(_list_value(item, "repeated_questions")[:2]) or "none",
                 ]
-            )
+        )
         table.add_row(*row)
+    console.print(table)
+
+
+def print_source_health(console: Console, validations: list[Any]) -> None:
+    if not validations:
+        return
+    grouped = _group_by_source(validations)
+    table = Table(title="Source Health")
+    table.add_column("Source")
+    table.add_column("Status")
+    table.add_column("Healthy", justify="right")
+    table.add_column("Degraded", justify="right")
+    table.add_column("Unavailable", justify="right")
+    table.add_column("Top signal")
+    for group in grouped:
+        source = str(_value(group[0], "source", "external")).upper()
+        healthy = 0
+        degraded = 0
+        unavailable = 0
+        note_counts: dict[str, int] = {}
+        for item in group:
+            notes = _list_value(item, "notes")
+            note = notes[0] if notes else "—"
+            note_counts[note] = note_counts.get(note, 0) + 1
+            if bool(_value(item, "degraded", False)):
+                degraded += 1
+            elif int(_value(item, "result_count", 0)) == 0 or any("unavailable" in str(n).lower() for n in notes):
+                unavailable += 1
+            else:
+                healthy += 1
+        if healthy and not degraded and not unavailable:
+            status = "[green]healthy[/green]"
+        elif degraded or unavailable:
+            status = "[yellow]mixed[/yellow]" if healthy else "[red]degraded[/red]"
+        else:
+            status = "[green]healthy[/green]"
+        top_signal = sorted(note_counts.items(), key=lambda item: (-item[1], item[0]))[0][0]
+        table.add_row(source, status, str(healthy), str(degraded), str(unavailable), top_signal)
     console.print(table)

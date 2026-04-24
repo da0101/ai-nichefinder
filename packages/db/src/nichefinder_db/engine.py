@@ -7,17 +7,20 @@ from sqlalchemy.engine import make_url
 from sqlmodel import Session, SQLModel, create_engine
 
 from nichefinder_core.models import (
+    AppStateRecord,
     AnalyticsRecord,
     ApiUsageRecord,
     Article,
     ArticleVersion,
     CompetitorPage,
     ContentBriefRecord,
+    JobRecord,
     Keyword,
     KeywordCluster,
     KeywordClusterMembership,
     OpportunityScoreRecord,
     PerformanceRecord,
+    ProfileRecord,
     RankingSnapshot,
     SearchConsoleRecord,
     SerpResult,
@@ -26,17 +29,20 @@ from nichefinder_core.settings import Settings, get_settings
 from nichefinder_db.migrations import apply_additive_sqlite_migrations
 
 _REGISTERED_MODELS = (
+    AppStateRecord,
     AnalyticsRecord,
     ApiUsageRecord,
     Article,
     ArticleVersion,
     CompetitorPage,
     ContentBriefRecord,
+    JobRecord,
     Keyword,
     KeywordCluster,
     KeywordClusterMembership,
     OpportunityScoreRecord,
     PerformanceRecord,
+    ProfileRecord,
     RankingSnapshot,
     SearchConsoleRecord,
     SerpResult,

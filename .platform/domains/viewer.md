@@ -7,7 +7,7 @@ last_updated: 2026-04-20
 
 # viewer — Local Web Viewer
 
-The local web viewer (`seo view`) is a Python HTTP server that serves a React + shadcn/ui dashboard for exploring pipeline results stored in SQLite. It is the only non-CLI surface in the project.
+The local web viewer (`seo view`) is a Python HTTP server that serves a React + shadcn/ui dashboard for exploring pipeline results stored in SQLite and running limited profile-testing actions from the browser. It is the only non-CLI surface in the project.
 
 ## Cross-layer touch-points
 
@@ -23,7 +23,7 @@ The local web viewer (`seo view`) is a Python HTTP server that serves a React + 
 
 ## Invariants
 
-1. The viewer is **read-only** — it must never write to the DB.
+1. The viewer is local-only and may perform only low-risk testing actions: switching profiles, creating profiles, saving profile config, approving training signals, and triggering `validate-free`.
 2. It starts on `localhost:8765` by default; port is configurable.
 3. All data is served from local SQLite — no external API calls from the viewer.
 4. `apps/dashboard/dist/` is committed to git so `seo view` works without running `npm install`.
@@ -38,14 +38,33 @@ The local web viewer (`seo view`) is a Python HTTP server that serves a React + 
 | `GET /assets/*` | `viewer_server.py` | Serves static assets from `dist/assets/` |
 | `GET /api/dashboard` | `viewer_data.load_dashboard()` | JSON: summary + keywords + articles + usage |
 | `GET /api/keywords/:id` | `viewer_data.load_keyword_detail()` | JSON: full keyword analysis |
+| `GET /api/profiles` | `viewer_profile_data.load_profiles()` | JSON: active profile + profile summaries |
+| `POST /api/profiles/active` | `viewer_profile_data.switch_active_profile()` | JSON: updated active profile summary |
+| `POST /api/profiles` | `viewer_actions.create_profile_action()` | JSON: created profile metadata |
+| `GET /api/profile-config` | `viewer_actions.load_profile_config()` | JSON: editable site config for a profile |
+| `POST /api/profile-config` | `viewer_actions.save_profile_config_action()` | JSON: saved site config |
+| `GET /api/training-review` | `viewer_profile_data.load_training_review()` | JSON: training candidates + approved signals |
+| `POST /api/training-approve` | `viewer_profile_data.approve_training_review()` | JSON: updated training review payload |
+| `GET /api/final-review` | `viewer_profile_data.load_final_review()` | JSON: cross-profile summary |
+| `POST /api/validate-free` | `viewer_actions.run_validate_free_action()` | JSON: structured validation result bundle |
 
 ## React app structure (`apps/dashboard/src/`)
 
 | File | Role |
 |---|---|
 | `App.tsx` | Layout shell — header, stats bar, sidebar, detail pane |
+| `components/ProfileSwitcher.tsx` | Active profile selector and profile summary cards |
+| `components/ProfileConfigPanel.tsx` | In-browser profile creation + editable business context |
+| `components/TrainingReviewPanel.tsx` | Training candidate review + approval actions |
+| `components/ValidationLabPanel.tsx` | Trigger `validate-free` and inspect result bundles |
+| `components/FinalReviewPanel.tsx` | Cross-profile comparison summary |
 | `hooks/useDashboard.ts` | Polls `/api/dashboard` every 30s |
 | `hooks/useKeywordDetail.ts` | Fetches `/api/keywords/:id` with AbortController |
+| `hooks/useProfiles.ts` | Loads/switches/creates profiles |
+| `hooks/useProfileConfig.ts` | Loads and saves profile config |
+| `hooks/useTrainingReview.ts` | Polls training candidates and posts approvals |
+| `hooks/useValidateFreeAction.ts` | Triggers `validate-free` from the browser |
+| `hooks/useFinalReview.ts` | Polls cross-profile review summary |
 | `components/KeywordList.tsx` | Sidebar — scrollable list with search filter |
 | `components/KeywordDetail.tsx` | Right panel — score, breakdown, brief, SERP |
 | `components/ScoreBreakdown.tsx` | 5-factor weighted score bars |
@@ -68,3 +87,4 @@ The local web viewer (`seo view`) is a Python HTTP server that serves a React + 
 - Live refresh — DB updates visible within 30s without server restart
 - Score breakdown per keyword visible at a glance
 - Priority/action visible without needing to know SEO jargon
+- The browser workflow should reduce CLI dependence for profile setup and testing, but it must not become a full publish/admin surface

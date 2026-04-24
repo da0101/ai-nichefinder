@@ -4,6 +4,14 @@ One line per completed task. Newest at the top. Append-only.
 
 Format: `YYYY-MM-DD — <task> — <outcome> — <takeaway>`
 
+2026-04-22 — dashboard interactive testing workspace — extended the React viewer into a browser-driven SEO testing surface with profile management, config editing, training approval, final review, and validate-free actions; viewer/backend tests green at 48 and Vite build green — once profile-scoped SEO workflows exist, the browser must drive them directly or the CLI remains the bottleneck
+
+2026-04-21 — multi-business training isolation — added profile-scoped runtime state, hard reset command, positive/negative training memory, and cross-profile final review; focused pytest suites green at 43 passed — training is only trustworthy when each business learns in its own sandbox and the operator can inspect the final summary before trusting it
+
+2026-04-21 — buyer-problem learned-noise memory — added site-scoped observation capture, review/approval CLI, and soft memory-aware demotions; focused pytest suites green at 27 + 12 passed — repeated validation runs are useful only if learning stays reviewable and per-site instead of auto-blacklisting globally
+
+2026-04-21 — cross-stream audit cleanup — closed the audited code gaps around free-validation recurrence, source health, GSC CLI coverage, viewer refresh/open behavior, and SERP shortlist caps; full pytest green at 93 passed — audit snapshots need fast reconciliation or they become stale faster than the code
+
 2026-04-20 — DDGS evidence layer before SERP — added bounded DDGS cross-checking on top of deterministic scoring, Trends, and Tavily; full pytest green at 61/61 — free research sources help only when their weight stays below seed fidelity and drift controls
 
 2026-04-20 — dashboard-rework — React 18 + shadcn/ui dashboard built and served by Python; live 30s polling eliminates server restart requirement — inline HTML in Python strings doesn't scale; dist/ committed to git keeps CLI-first UX intact
@@ -61,3 +69,9 @@ Format: `YYYY-MM-DD — <task> — <outcome> — <takeaway>`
 2026-04-20 — Free multi-engine research buckets — added bounded Bing and Yahoo research adapters alongside DDGS, grouped validation output by source, and extended `seo validate-free` to scrape engine-backed articles into separate keyword-bank evidence buckets before Tavily/SerpAPI
 
 2026-04-20 — debug: Bing validation always returned no evidence — fixed root cause: Bing HTML SERP was serving a challenge page, so the adapter now uses the RSS feed with XML parsing and keeps empty-result HTML snapshots for inspection
+2026-04-22 — debug: dashboard profile CRUD instability — fixed root cause: the browser was hitting a stale viewer server, and the current viewer also mis-routed default profile runtime reads through the active profile while failing on empty profile DBs — local viewer debugging needs both process freshness checks and explicit default-vs-active runtime tests
+2026-04-24 — debug: profile delete resurrection — fixed root cause: bootstrap reimported leftover profile directories after deletion — deleted profiles now remove site_config marker and bootstrap ignores partial profile dirs
+2026-04-24 — rest-api-control-plane — added typed local REST status/jobs API with allowlisted validate-free job and shell-action rejection — future cloud API must wrap app actions, not commands
+2026-04-24 — rest-api-control-plane — added allowlisted research jobs through REST without shell execution — API can now launch validation and research workflows by job id
+2026-04-24 — rest-api-control-plane — persisted REST job state in SQLite and added restart-survival coverage — job ids can now be inspected after local server restart instead of disappearing with process memory
+2026-04-24 — rest-api-control-plane — added token-or-loopback write guards for mutating endpoints and denial-path coverage — localhost stays usable by default while configured token mode protects cloud-style deployments from open write access

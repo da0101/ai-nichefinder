@@ -23,6 +23,7 @@ class Settings(BaseSettings):
         default="sqlite:///data/db/seo.db",
         validation_alias=AliasChoices("NICHEFINDER_DB_URL", "DATABASE_URL"),
     )
+    viewer_api_token: str | None = Field(default=None, alias="VIEWER_API_TOKEN")
 
     google_gemini_api_key: str | None = Field(default=None, alias="GOOGLE_GEMINI_API_KEY")
     serpapi_key: str | None = Field(default=None, alias="SERPAPI_KEY")
@@ -74,6 +75,12 @@ class Settings(BaseSettings):
     robots_fetch_fail_open: bool = Field(default=False, alias="ROBOTS_FETCH_FAIL_OPEN")
 
     site_config_path: Path = Field(default=Path("data/site_config.json"), alias="SITE_CONFIG_PATH")
+    profiles_dir: Path = Field(default=Path("data/profiles"), alias="PROFILES_DIR")
+    active_profile_path: Path = Field(
+        default=Path("data/profiles/.active"),
+        alias="ACTIVE_PROFILE_PATH",
+    )
+    profile_name: str | None = Field(default=None, alias="NICHEFINDER_PROFILE")
     cache_dir: Path = Field(default=Path("data/cache"), alias="CACHE_DIR")
     content_templates_dir: Path = Field(
         default=Path("data/content_templates"),
@@ -136,6 +143,14 @@ class Settings(BaseSettings):
     @property
     def resolved_site_config_path(self) -> Path:
         return self.resolve_path(self.site_config_path)
+
+    @property
+    def resolved_profiles_dir(self) -> Path:
+        return self.resolve_path(self.profiles_dir)
+
+    @property
+    def resolved_active_profile_path(self) -> Path:
+        return self.resolve_path(self.active_profile_path)
 
     @property
     def resolved_cache_dir(self) -> Path:

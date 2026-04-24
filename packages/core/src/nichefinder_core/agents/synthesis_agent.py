@@ -14,6 +14,7 @@ from nichefinder_core.models import (
 from nichefinder_core.utils.serp_signals import avg_interest_to_volume_score
 
 OPPORTUNITY_SCORE_FORMULA_VERSION = "opportunity_v2"
+FREE_DISCOVERY_SOURCES = {"gemini_serpapi", "gemini_problem"}
 
 
 class SynthesisAgentInput(BaseModel):
@@ -57,7 +58,7 @@ class SynthesisAgent:
         source: str,
         avg_interest: float | None = None,
     ) -> float:
-        if volume is None and source == "gemini_serpapi":
+        if volume is None and source in FREE_DISCOVERY_SOURCES:
             if avg_interest is not None:
                 return avg_interest_to_volume_score(avg_interest)
             return self.settings.unknown_free_source_volume_score
@@ -72,7 +73,7 @@ class SynthesisAgent:
         source: str,
         difficulty_estimate: int | None = None,
     ) -> float:
-        if value is None and source == "gemini_serpapi":
+        if value is None and source in FREE_DISCOVERY_SOURCES:
             if difficulty_estimate is not None:
                 return float(max(0, 100 - difficulty_estimate))
             return self.settings.unknown_free_source_difficulty_score

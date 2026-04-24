@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from sqlmodel import func, select
 
 from nichefinder_core.models import Keyword, SearchConsoleRecord, SearchIntent
+from nichefinder_core.noise_memory import LearnedNoiseProfile, phrase_matches_text
 
 STOP_WORDS = {
     "a",
@@ -193,6 +194,7 @@ def build_pre_serp_shortlist(
     site_config: dict,
     location: str,
     max_keywords: int,
+    noise_profile: LearnedNoiseProfile | None = None,
 ) -> list[PreSerpCandidateScore]:
     location_terms = {_normalize_token(token) for token in _tokenize(location)} | LOCAL_TERMS
     service_terms = _service_terms(site_config)
@@ -207,6 +209,7 @@ def build_pre_serp_shortlist(
             repository,
             service_terms=service_terms,
             location_terms=location_terms,
+            noise_profile=noise_profile,
         )
         scored.append(
             PreSerpCandidateScore(
@@ -251,6 +254,7 @@ def _score_keyword(
     *,
     service_terms: set[str],
     location_terms: set[str],
+    noise_profile: LearnedNoiseProfile | None = None,
 ) -> tuple[dict[str, float], list[str]]:
     tokens = {_normalize_token(token) for token in _tokenize(keyword.term)}
     breakdown = {
@@ -263,6 +267,8 @@ def _score_keyword(
         "query_drift": _query_drift_penalty(keyword.term, keyword.seed_keyword or ""),
         "query_penalty": _query_penalty(keyword.term),
         "developer_penalty": _developer_penalty(keyword.term),
+        "learned_validity": _learned_validity_boost(keyword.term, noise_profile),
+        "learned_noise": _learned_noise_penalty(keyword.term, noise_profile),
         "historical_trend": _historical_trend_score(keyword),
         "gsc_history": _gsc_history_score(keyword.term, repository),
     }
@@ -273,6 +279,10 @@ def _score_keyword(
     ]
     if breakdown["developer_penalty"] < 0:
         notes.append("developer-education penalty")
+    if breakdown["learned_validity"] > 0:
+        notes.append("learned-validity boost")
+    if breakdown["learned_noise"] < 0:
+        notes.append("learned-noise penalty")
     if breakdown["query_drift"] < 0:
         notes.append("query-drift penalty")
     return breakdown, notes
@@ -379,6 +389,24 @@ def _historical_trend_score(keyword: Keyword) -> float:
     if keyword.trend_direction == "declining":
         return -2.0
     return 0.0
+
+
+def _learned_noise_penalty(term: str, noise_profile: LearnedNoiseProfile | None) -> float:
+    if noise_profile is None or not noise_profile.keyword_phrases:
+        return 0.0
+    matches = [phrase for phrase in noise_profile.keyword_phrases if phrase_matches_text(phrase, term)]
+    if not matches:
+        return 0.0
+    return -float(min(24, len(matches) * 12))
+
+
+def _learned_validity_boost(term: str, noise_profile: LearnedNoiseProfile | None) -> float:
+    if noise_profile is None or not noise_profile.valid_keyword_phrases:
+        return 0.0
+    matches = [phrase for phrase in noise_profile.valid_keyword_phrases if phrase_matches_text(phrase, term)]
+    if not matches:
+        return 0.0
+    return float(min(18, len(matches) * 6))
 
 
 def _gsc_history_score(term: str, repository) -> float:

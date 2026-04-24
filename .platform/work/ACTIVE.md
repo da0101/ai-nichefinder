@@ -11,6 +11,7 @@
 | dashboard-rework | feature | in-progress | claude-code | 2026-04-20 |
 | reddit-api-integration | feature | blocked | codex | 2026-04-21 |
 | google-ads-api-integration | feature | planning | codex | 2026-04-21 |
+| rest-api-control-plane | feature | awaiting-verification | codex | 2026-04-24 |
 
 ---
 

@@ -9,7 +9,7 @@ repo_ids: [repo-primary]
 base_branch: develop
 git_branch: feature/serp-pipeline-fix
 created_at: 2026-04-19
-updated_at: 2026-04-20
+updated_at: 2026-04-21
 closure_approved: false
 ---
 
@@ -215,12 +215,12 @@ Place it near `serpapi_calls_per_month` (line 45).
 ## Done Criteria
 
 - [ ] A single `seo research "web developer montreal"` run uses ≤10 SerpAPI calls (verify via usage log or Rich output)
-- [ ] `keyword_agent.py` no longer calls `serpapi_client.get_related_searches()` anywhere in `_expand_with_free_sources`
-- [ ] `graph.py` parallel analysis caps at 8 keywords, preferring commercial/transactional intent
-- [ ] `MAX_SERP_KEYWORDS=8` is a configurable setting in `settings.py`
-- [ ] `KEYWORD_EXPANSION_PROMPT` explicitly instructs Gemini to generate local commercial keywords for Montreal clients
-- [ ] All existing tests pass (`uv run pytest`)
-- [ ] No new test failures introduced
+- [x] `keyword_agent.py` no longer calls `serpapi_client.get_related_searches()` anywhere in `_expand_with_free_sources`
+- [x] `graph.py` parallel analysis caps at 8 keywords, preferring commercial/transactional intent
+- [x] `MAX_SERP_KEYWORDS=8` is a configurable setting in `settings.py`
+- [x] `KEYWORD_EXPANSION_PROMPT` explicitly instructs Gemini to generate local commercial keywords for Montreal clients
+- [x] All existing tests pass (`uv run pytest`)
+- [x] No new test failures introduced
 
 ## Out of scope
 
@@ -253,10 +253,10 @@ then run `uv run pytest` and fix any failures before finishing.
 ## Resume state
 _Overwritten by `agentboard checkpoint` — the compact payload the next agent reads first. Keep this block under ~10 lines._
 
-- **Last updated:** 2026-04-20 by danilulmashev
-- **What just happened:** Fixed SQLite path resolution so relative database URLs resolve from the repo root and the CLI works from subdirectories like apps/dashboard.
-- **Current focus:** —
-- **Next action:** Continue calibrating the free-evidence stack now that local research commands are stable regardless of current working directory.
+- **Last updated:** 2026-04-21 by codex
+- **What just happened:** Added workflow-level shortlist-cap coverage on top of the graph regression and restored full-suite green at 93 passed.
+- **Current focus:** One live usage verification to record the actual SerpAPI session count.
+- **Next action:** Run a live `seo research` seed with usage output and record the observed call count here.
 - **Blockers:** none
 
 ## Progress log
@@ -273,3 +273,111 @@ _Append-only. Auto-trimmed by `agentboard checkpoint` to last 10 entries._
 2026-04-19 21:44 — Replaced the intent-only SERP shortlist with deterministic pre-SERP scoring, wired it into CLI and graph paths, added shortlist visibility, and covered duplicate and GSC-boost behavior in tests.
 
 2026-04-19 21:13 — Removed redundant SerpAPI expansion, capped research SERP analysis at 8 keywords, refocused prompts to Montreal commercial intent, and added regression coverage.
+
+2026-04-21 12:10 — Added graph- and workflow-level regressions proving shortlist selection and `MAX_SERP_KEYWORDS` propagation; full suite green at 93 passed.
+
+## Audit follow-up — 2026-04-21
+
+- The audit's red test-suite blocker is resolved: `uv run pytest -q` is green at `93 passed`.
+- Dedicated regression coverage now exists for both the graph path and the CLI workflow path that feed the capped SERP stage.
+- The remaining closure blocker is operational evidence, not code: a live run still needs to record that the real SerpAPI session stays at or below the intended budget.
+
+---
+
+## 🔍 Audit — 2026-04-24
+
+> Supersedes previous audit. Run via Stream / Feature Analysis Protocol — 6 parallel/rotated agents.
+
+# 📋 serp-pipeline-fix — Audit Snapshot
+
+> **Stream:** `serp-pipeline-fix` · **Date:** 2026-04-24 · **Status:** 🟡 Implementation done, closure evidence missing
+> **Repos touched:** `repo-primary`
+
+---
+
+## ⚡ At-a-Glance Scorecard
+
+| | 🖥️ repo-primary |
+|---|:---:|
+| **Implementation** | 🟢 |
+| **Tests**          | 🟢 |
+| **Security**       | 🟢 |
+| **Code Quality**   | 🟡 |
+
+> **Bottom line:** The default research path is capped to 8 SerpAPI calls and tests are green, but the live `≤10` usage proof and owner closure approval are still missing.
+
+---
+
+## 🔄 How the Feature Works (End-to-End)
+
+```text
+seo research
+  -> Gemini-only keyword expansion
+  -> pre-SERP shortlist capped by settings.max_serp_keywords
+  -> selected keywords only
+  -> SerpAgent.run
+  -> one SerpAPI search per selected keyword
+```
+
+---
+
+## 🛡️ Security
+
+| Severity | Repo | Finding |
+|:---:|---|---|
+| 🟢 Clean | repo-primary | `SERPAPI_KEY` remains settings/env-driven, with no hardcoded secret found. [packages/core/src/nichefinder_core/settings.py:28](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/packages/core/src/nichefinder_core/settings.py:28) |
+| 🟢 Clean | repo-primary | No direct `google.com/search` scraping was added in the audited path. |
+
+---
+
+## 🧪 Test Coverage
+
+### repo-primary
+| Area | Tested? | File |
+|---|:---:|---|
+| Keyword expansion avoids SerpAPI related-search expansion | ✅ Strong | [tests/test_keyword_agent.py:128](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/tests/test_keyword_agent.py:128) |
+| CLI research analyzes only selected shortlist IDs | ✅ Strong | [tests/test_cli_phase1.py:748](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/tests/test_cli_phase1.py:748) |
+| LangGraph analysis analyzes only selected shortlist IDs | ✅ Strong | [tests/test_graph.py:41](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/tests/test_graph.py:41) |
+| SerpAPI usage counter / cap behavior | ✅ Good | [tests/test_serp_agent.py:61](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/tests/test_serp_agent.py:61) |
+| Full regression gate | ✅ Strong | `uv run pytest -q` -> `107 passed, 1 warning` |
+
+---
+
+## ✅ Implementation Status
+
+### repo-primary
+| Component | Status | Location |
+|---|:---:|---|
+| Removed `get_related_searches()` expansion | ✅ Done | [packages/core/src/nichefinder_core/agents/keyword_agent.py:89](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/packages/core/src/nichefinder_core/agents/keyword_agent.py:89) |
+| CLI path uses capped shortlist | ✅ Done | [apps/cli/src/nichefinder_cli/workflows.py:71](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/apps/cli/src/nichefinder_cli/workflows.py:71) |
+| Graph path uses capped shortlist | ✅ Done | [packages/core/src/nichefinder_core/orchestrator/graph.py:68](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/packages/core/src/nichefinder_core/orchestrator/graph.py:68) |
+| `MAX_SERP_KEYWORDS=8` default | ✅ Done | [packages/core/src/nichefinder_core/settings.py:50](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/packages/core/src/nichefinder_core/settings.py:50) |
+| Live `≤10` call proof recorded | ❌ Missing | [.platform/work/serp-pipeline-fix.md:217](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.platform/work/serp-pipeline-fix.md:217) |
+
+---
+
+## 🔧 Open Issues
+
+### 🔴 Must Fix (blocking)
+| # | Repo | Issue |
+|---|---|---|
+| 1 | repo-primary | No recorded live `seo research "web developer montreal"` run proving `≤10` SerpAPI calls. [.platform/work/serp-pipeline-fix.md:217](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.platform/work/serp-pipeline-fix.md:217) |
+| 2 | repo-primary | Closure is not owner-approved: `closure_approved: false`. [.platform/work/serp-pipeline-fix.md:13](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.platform/work/serp-pipeline-fix.md:13) |
+
+### 🟡 Should Fix Soon
+| # | Repo | Issue | Location |
+|---|---|---|---|
+| 1 | repo-primary | `MAX_SERP_KEYWORDS` is configurable above 10, so the budget invariant assumes the default value unless guarded or documented. | [packages/core/src/nichefinder_core/settings.py:50](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/packages/core/src/nichefinder_core/settings.py:50) |
+| 2 | repo-primary | Stream criterion names `KEYWORD_EXPANSION_PROMPT`, but runtime uses `PROBLEM_KEYWORD_EXPANSION_PROMPT`; reconcile wording before sign-off. | [packages/core/src/nichefinder_core/agents/keyword_agent.py:93](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/packages/core/src/nichefinder_core/agents/keyword_agent.py:93) |
+
+### ⚪ Known Limitations (document, not block)
+| # | Limitation |
+|---|---|
+| 1 | No live SerpAPI run was executed during the audit to avoid spending API calls and mutating usage state. |
+
+---
+
+## 🎯 Close Checklist / Priority Order
+
+  □  1. 🔍  Run one live `seo research "web developer montreal"` and record SerpAPI before/after delta
+  □  2. ✅  Confirm observed calls are `≤10`, update the stream evidence, and request owner closure approval

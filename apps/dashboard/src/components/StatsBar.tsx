@@ -1,4 +1,5 @@
 import type { DashboardResponse } from '@/types/api'
+import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 
 interface Props {
@@ -14,21 +15,20 @@ const STATS = [
 
 export function StatsBar({ data }: Props) {
   return (
-    <div className="flex border-b border-slate-200 bg-white">
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       {STATS.map(({ key, label }, i) => (
-        <div
-          key={key}
-          className={`flex flex-col px-6 py-3 ${i < STATS.length - 1 ? 'border-r border-slate-200' : ''}`}
-        >
-          {data ? (
-            <span className="font-mono text-2xl font-bold text-blue-700">
-              {data.summary[key]}
-            </span>
-          ) : (
-            <Skeleton className="h-7 w-10" />
-          )}
-          <span className="mt-0.5 text-[11px] text-slate-500">{label}</span>
-        </div>
+        <Card key={key} className={i === 0 ? 'border-blue-200 bg-blue-50/40' : ''}>
+          <CardContent className="px-5 py-4">
+            {data ? (
+              <span className="font-mono text-3xl font-bold text-blue-700">
+                {data.summary[key]}
+              </span>
+            ) : (
+              <Skeleton className="h-8 w-12" />
+            )}
+            <div className="mt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">{label}</div>
+          </CardContent>
+        </Card>
       ))}
     </div>
   )
