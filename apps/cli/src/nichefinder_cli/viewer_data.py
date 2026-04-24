@@ -83,6 +83,62 @@ def load_dashboard(settings: Settings) -> dict:
         }
 
 
+def load_articles(settings: Settings) -> dict:
+    with get_session(settings) as session:
+        repository = SeoRepository(session)
+        articles = repository.list_articles()
+        return {
+            "articles": [_article_payload(session, repository, article) for article in articles],
+            "summary": {
+                "total_articles": len(articles),
+                "published_articles": len(repository.get_published_articles()),
+            },
+        }
+
+
+def load_report(settings: Settings) -> dict:
+    with get_session(settings) as session:
+        repository = SeoRepository(session)
+        top_keywords = repository.get_top_opportunities(limit=10)
+        return {
+            "top_keywords": [
+                {
+                    "id": keyword.id,
+                    "term": keyword.term,
+                    "score": keyword.opportunity_score,
+                    "volume": keyword.monthly_volume,
+                    "difficulty": keyword.difficulty_score,
+                }
+                for keyword in top_keywords
+            ],
+            "summary": {
+                "total_keywords": len(repository.list_keywords()),
+                "articles": len(repository.list_articles()),
+                "published_articles": len(repository.get_published_articles()),
+                "content_performance": repository.get_content_performance_by_type(),
+            },
+        }
+
+
+def load_budget(settings: Settings) -> dict:
+    with get_session(settings) as session:
+        repository = SeoRepository(session)
+        providers = ["serpapi", "tavily", "ddgs", "bing", "yahoo", "gemini"]
+        usage = []
+        for provider in providers:
+            row = repository.get_api_usage(provider)
+            usage.append(
+                {
+                    "provider": provider,
+                    "calls": row.call_count if row else 0,
+                    "spend_usd": row.spend_usd if row else 0.0,
+                    "tokens_in": row.tokens_in if row else 0,
+                    "tokens_out": row.tokens_out if row else 0,
+                }
+            )
+        return {"usage": usage}
+
+
 def _score_breakdown(repository, keyword_id: str) -> dict | None:
     record = repository.get_latest_opportunity_score(keyword_id)
     if record is None:
@@ -172,11 +228,14 @@ def _article_payload(session, repository: SeoRepository, article: Article) -> di
         "id": article.id,
         "title": article.title,
         "status": article.status,
+        "keyword_term": keyword.term if (keyword := repository.get_keyword(article.keyword_id)) else None,
         "slug": article.slug,
         "word_count": article.word_count,
         "file_path": article.file_path,
         "published_url": article.published_url,
         "created_at": _stamp(article.created_at),
+        "approved_at": _stamp(article.approved_at),
+        "published_at": _stamp(article.published_at),
         "latest_rank_position": latest_rank.position if latest_rank else None,
         "content_preview": (latest_version.content[:4000] if latest_version else None),
     }

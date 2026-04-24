@@ -10,8 +10,10 @@ from urllib.request import Request, urlopen
 
 from nichefinder_cli.commands.viewer import view
 from nichefinder_cli.viewer_server import ViewerHandler
+from nichefinder_core.models import Article, ContentType, Keyword
 from nichefinder_core.settings import Settings
 from http.server import ThreadingHTTPServer
+from nichefinder_db import SeoRepository, create_db_and_tables, get_session
 
 
 def _start_server(settings: Settings):
@@ -19,6 +21,35 @@ def _start_server(settings: Settings):
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     return server, thread
+
+
+def _seed_article(settings: Settings, tmp_path: Path, *, status: str, title: str) -> str:
+    create_db_and_tables(settings)
+    with get_session(settings) as session:
+        repository = SeoRepository(session)
+        keyword = repository.upsert_keyword(
+            Keyword(
+                term=f"{title.lower()} keyword",
+                seed_keyword=f"{title.lower()} keyword",
+                source="manual",
+                monthly_volume=500,
+                difficulty_score=35,
+                opportunity_score=68.0,
+            )
+        )
+        article = repository.create_article(
+            Article(
+                keyword_id=keyword.id,
+                title=title,
+                slug=title.lower().replace(" ", "-"),
+                content_type=ContentType.HOW_TO,
+                status=status,
+                word_count=1200,
+                file_path=str(tmp_path / f"{title.lower().replace(' ', '-')}.md"),
+            ),
+            "# Article",
+        )
+        return article.id
 
 
 def test_viewer_command_opens_browser(monkeypatch, tmp_path: Path):
@@ -279,7 +310,7 @@ def test_viewer_server_rejects_invalid_training_payload(monkeypatch, tmp_path: P
 def test_viewer_server_exposes_status_and_validate_free_job(monkeypatch, tmp_path: Path):
     settings = Settings(database_url=f"sqlite:///{tmp_path / 'seo.db'}")
 
-    def fake_validate(profile_slug=None, keyword="", sources=("ddgs", "bing", "yahoo")):
+    def fake_validate(profile_slug=None, keyword="", sources=("ddgs", "bing", "yahoo"), settings_override=None):
         return {
             "profile": profile_slug or "default",
             "keyword": keyword,
@@ -341,7 +372,7 @@ def test_viewer_server_exposes_status_and_validate_free_job(monkeypatch, tmp_pat
 def test_viewer_server_runs_research_job(monkeypatch, tmp_path: Path):
     settings = Settings(database_url=f"sqlite:///{tmp_path / 'seo.db'}")
 
-    def fake_research(profile_slug=None, keyword=""):
+    def fake_research(profile_slug=None, keyword="", settings_override=None):
         return {
             "profile": profile_slug or "default",
             "keyword": keyword,
@@ -409,7 +440,7 @@ def test_viewer_server_runs_research_job(monkeypatch, tmp_path: Path):
 def test_viewer_server_job_result_survives_restart(monkeypatch, tmp_path: Path):
     settings = Settings(database_url=f"sqlite:///{tmp_path / 'seo.db'}")
 
-    def fake_research(profile_slug=None, keyword=""):
+    def fake_research(profile_slug=None, keyword="", settings_override=None):
         return {
             "profile": profile_slug or "default",
             "keyword": keyword,
@@ -567,6 +598,227 @@ def test_viewer_server_requires_token_for_writes_when_configured(monkeypatch, tm
         assert response.status == 202
         submitted = json.loads(response.read().decode("utf-8"))
         assert submitted["action"] == "validate-free"
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+
+def test_viewer_server_exposes_articles_report_and_budget(tmp_path: Path):
+    settings = Settings(database_url=f"sqlite:///{tmp_path / 'seo.db'}")
+    article_id = _seed_article(settings, tmp_path, status="published", title="Report Ready")
+    with get_session(settings) as session:
+        repository = SeoRepository(session)
+        repository.record_api_usage(provider="gemini", tokens_in=12, tokens_out=34)
+
+    server, thread = _start_server(settings)
+    base = f"http://127.0.0.1:{server.server_port}"
+    try:
+        articles = json.loads(urlopen(f"{base}/api/articles").read().decode("utf-8"))
+        assert articles["summary"]["total_articles"] == 1
+        assert articles["articles"][0]["id"] == article_id
+        assert articles["articles"][0]["status"] == "published"
+        assert articles["articles"][0]["keyword_term"] == "report ready keyword"
+
+        report = json.loads(urlopen(f"{base}/api/report").read().decode("utf-8"))
+        assert report["summary"]["published_articles"] == 1
+        assert report["top_keywords"][0]["term"] == "report ready keyword"
+
+        budget = json.loads(urlopen(f"{base}/api/budget").read().decode("utf-8"))
+        gemini = next(item for item in budget["usage"] if item["provider"] == "gemini")
+        assert gemini["tokens_in"] == 12
+        assert gemini["tokens_out"] == 34
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+
+def test_viewer_server_article_approve_and_publish_endpoints(tmp_path: Path):
+    settings = Settings(database_url=f"sqlite:///{tmp_path / 'seo.db'}")
+    draft_article_id = _seed_article(settings, tmp_path, status="draft", title="Needs Approval")
+    approved_article_id = _seed_article(settings, tmp_path, status="approved", title="Ready To Publish")
+
+    server, thread = _start_server(settings)
+    base = f"http://127.0.0.1:{server.server_port}"
+    try:
+        approve_req = Request(
+            f"{base}/api/articles/{draft_article_id}/approve",
+            data=b"{}",
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        approved = json.loads(urlopen(approve_req).read().decode("utf-8"))
+        assert approved["article"]["status"] == "approved"
+
+        publish_draft_req = Request(
+            f"{base}/api/articles/{draft_article_id}/publish",
+            data=b'{"url":"https://example.com/draft"}',
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        published_from_approved = json.loads(urlopen(publish_draft_req).read().decode("utf-8"))
+        assert published_from_approved["article"]["status"] == "published"
+        assert published_from_approved["article"]["published_url"] == "https://example.com/draft"
+
+        publish_req = Request(
+            f"{base}/api/articles/{approved_article_id}/publish",
+            data=b'{"url":"https://example.com/post"}',
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        published = json.loads(urlopen(publish_req).read().decode("utf-8"))
+        assert published["article"]["status"] == "published"
+        assert published["article"]["published_url"] == "https://example.com/post"
+
+        blocked_article_id = _seed_article(settings, tmp_path, status="draft", title="Still Draft")
+        blocked_req = Request(
+            f"{base}/api/articles/{blocked_article_id}/publish",
+            data=b'{"url":"https://example.com/blocked"}',
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            urlopen(blocked_req)
+            assert False, "expected publish without approval to fail"
+        except HTTPError as exc:
+            assert exc.code == 400
+            body = json.loads(exc.read().decode("utf-8"))
+            assert "must be approved before it can be published" in body["error"]
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+
+def test_viewer_server_runs_brief_job(monkeypatch, tmp_path: Path):
+    settings = Settings(database_url=f"sqlite:///{tmp_path / 'seo.db'}")
+
+    def fake_generate_brief(profile_slug=None, keyword_id="", force=False, settings_override=None):
+        return {
+            "profile": profile_slug or "default",
+            "keyword_id": keyword_id,
+            "force": force,
+            "brief": {
+                "should_create_content": True,
+                "content_angle": "Practical guide",
+                "content_brief": {
+                    "target_keyword": "food cost percentage",
+                    "secondary_keywords": ["restaurant food cost formula"],
+                    "content_type": "how_to",
+                    "suggested_title": "Food Cost Percentage Guide",
+                    "suggested_h2_structure": ["What it is", "How to calculate it"],
+                    "questions_to_answer": ["How do you calculate food cost percentage?"],
+                    "word_count_target": 1400,
+                    "tone": "practical",
+                    "cta_type": "consultation",
+                    "competing_urls": [],
+                    "is_rewrite": False,
+                    "existing_article_url": None,
+                    "existing_article_content": None,
+                },
+            },
+        }
+
+    monkeypatch.setattr("nichefinder_cli.viewer_jobs.run_generate_brief_action", fake_generate_brief)
+
+    server, thread = _start_server(settings)
+    base = f"http://127.0.0.1:{server.server_port}"
+    try:
+        submit_req = Request(
+            f"{base}/api/jobs",
+            data=b'{"action":"brief","params":{"profile":"restaurant","keyword_id":"kw_1","force":true}}',
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        submitted = json.loads(urlopen(submit_req).read().decode("utf-8"))
+        assert submitted["action"] == "brief"
+        assert submitted["params"]["keyword_id"] == "kw_1"
+        assert submitted["params"]["force"] is True
+
+        job = submitted
+        for _ in range(20):
+            job = json.loads(urlopen(f"{base}/api/jobs/{submitted['id']}").read().decode("utf-8"))
+            if job["status"] == "succeeded":
+                break
+            time.sleep(0.05)
+
+        assert job["status"] == "succeeded"
+        assert job["result"]["brief"]["content_brief"]["target_keyword"] == "food cost percentage"
+        assert job["result"]["force"] is True
+
+        invalid_req = Request(
+            f"{base}/api/jobs",
+            data=b'{"action":"brief","params":{"keyword":"missing keyword id"}}',
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            urlopen(invalid_req)
+            assert False, "expected missing keyword_id to fail"
+        except HTTPError as exc:
+            assert exc.code == 400
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+
+def test_viewer_server_runs_write_job(monkeypatch, tmp_path: Path):
+    settings = Settings(database_url=f"sqlite:///{tmp_path / 'seo.db'}")
+
+    def fake_write_article(profile_slug=None, keyword_id="", force=False, settings_override=None):
+        return {
+            "profile": profile_slug or "default",
+            "keyword_id": keyword_id,
+            "force": force,
+            "article": {
+                "article_id": "article_1",
+                "file_path": "/tmp/article.md",
+                "word_count": 1520,
+                "title": "Reduce Restaurant Food Costs",
+                "meta_description": "A practical guide to food cost control.",
+                "slug": "reduce-restaurant-food-costs",
+            },
+        }
+
+    monkeypatch.setattr("nichefinder_cli.viewer_jobs.run_write_article_action", fake_write_article)
+
+    server, thread = _start_server(settings)
+    base = f"http://127.0.0.1:{server.server_port}"
+    try:
+        submit_req = Request(
+            f"{base}/api/jobs",
+            data=b'{"action":"write","params":{"profile":"restaurant","keyword_id":"kw_1"}}',
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        submitted = json.loads(urlopen(submit_req).read().decode("utf-8"))
+        assert submitted["action"] == "write"
+        assert submitted["params"]["keyword_id"] == "kw_1"
+
+        job = submitted
+        for _ in range(20):
+            job = json.loads(urlopen(f"{base}/api/jobs/{submitted['id']}").read().decode("utf-8"))
+            if job["status"] == "succeeded":
+                break
+            time.sleep(0.05)
+
+        assert job["status"] == "succeeded"
+        assert job["result"]["article"]["article_id"] == "article_1"
+        assert job["result"]["article"]["slug"] == "reduce-restaurant-food-costs"
+
+        invalid_req = Request(
+            f"{base}/api/jobs",
+            data=b'{"action":"write","params":{"keyword_id":"kw_1","force":"yes"}}',
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            urlopen(invalid_req)
+            assert False, "expected non-boolean force to fail"
+        except HTTPError as exc:
+            assert exc.code == 400
     finally:
         server.shutdown()
         server.server_close()

@@ -2,7 +2,7 @@
 stream_id: stream-rest-api-control-plane
 slug: rest-api-control-plane
 type: feature
-status: awaiting-verification
+status: in-progress
 agent_owner: codex
 domain_slugs: [rest-api-control-plane]
 repo_ids: [repo-primary]
@@ -46,14 +46,20 @@ closure_approved: false
 _Overwritten by `agentboard checkpoint` — the compact payload the next agent reads first. Keep this block under ~10 lines._
 
 - **Last updated:** 2026-04-24 by danilulmashev
-- **What just happened:** Completed the first REST control-plane slice: typed jobs, SQLite-persisted job state, and token-or-loopback guards for mutating endpoints; full pytest and dashboard build pass.
+- **What just happened:** Added articles/report/budget endpoints, article approve/publish mutations, and settings-aware direct actions; full pytest and dashboard build pass.
 - **Current focus:** —
-- **Next action:** Get human verification and commit this slice, or extend the API into the next typed workflow/job surface.
+- **Next action:** Choose the next typed surface: rewrite and monitoring jobs, or additional article/content review mutations.
 - **Blockers:** none
 
 ## Progress log
 
+2026-04-24 17:47 — Added articles/report/budget endpoints, article approve/publish mutations, and settings-aware direct actions; full pytest and dashboard build pass.
+
+2026-04-24 17:39 — Extended the REST control plane with allowlisted brief and write jobs, persisted job results, and full test/build verification.
+2026-04-24 18:02 — Added `articles`, `report`, and `budget` read endpoints plus article `approve`/`publish` mutations with real DB-backed HTTP coverage; full suite green at 118 passed.
+
 2026-04-24 17:22 — Completed the first REST control-plane slice: typed jobs, SQLite-persisted job state, and token-or-loopback guards for mutating endpoints; full pytest and dashboard build pass.
+2026-04-24 17:42 — Added allowlisted `brief` and `write` REST jobs with persisted status/results and HTTP coverage; full suite green at 116 passed.
 
 2026-04-24 17:03 — Added SQLite-backed JobRecord persistence for REST jobs, repository CRUD, settings-aware job API wiring, and restart-survival coverage; uv pytest and dashboard build pass.
 2026-04-24 17:21 — Added write guards for mutating REST endpoints: loopback-only by default, mandatory bearer token when `VIEWER_API_TOKEN` is configured; documented the policy and added denial-path tests.
@@ -61,11 +67,9 @@ _Overwritten by `agentboard checkpoint` — the compact payload the next agent r
 2026-04-24 — Stream registered; domain file created; ACTIVE.md and BRIEF.md updated.
 2026-04-24 — Added the first typed REST job API slice: local status, job listing/detail, allowlisted `validate-free` jobs, shell-action rejection, tests, and decision #21.
 2026-04-24 — Added allowlisted `research` jobs that call `run_full_pipeline()` through a JSON-safe action wrapper instead of shelling out; full suite green at 110 passed.
-2026-04-24 — Persisted REST job rows in SQLite via `JobRecord` and repository CRUD; added restart-survival API test; full suite green at 111 passed.
-
 ## Open questions
 
-- Should the next stream extend this control plane into more typed workflow jobs, or stop here and close the first slice?
+- Which remaining CLI surface should be exposed next: rewrite/monitoring jobs, article review mutations, or more dashboard-facing reads?
 
 ---
 

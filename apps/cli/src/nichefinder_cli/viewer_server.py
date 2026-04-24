@@ -9,13 +9,15 @@ from urllib.parse import parse_qs, urlparse
 from nichefinder_core.settings import Settings
 
 from nichefinder_cli.viewer_actions import (
+    approve_article_action,
     create_profile_action,
     delete_profile_action,
     load_profile_config,
+    publish_article_action,
     run_validate_free_action,
     save_profile_config_action,
 )
-from nichefinder_cli.viewer_data import load_dashboard, load_keyword_detail
+from nichefinder_cli.viewer_data import load_articles, load_budget, load_dashboard, load_keyword_detail, load_report
 from nichefinder_cli.viewer_jobs import get_job, list_jobs, submit_job
 from nichefinder_cli.viewer_profile_data import approve_training_review, load_final_review, load_profiles, load_training_review, switch_active_profile
 
@@ -320,6 +322,24 @@ class ViewerHandler(BaseHTTPRequestHandler):
         if parsed.path == "/api/status":
             self._json({"status": "ok", "api": "nichefinder-local", "mode": "local"})
             return
+        if parsed.path == "/api/articles":
+            try:
+                self._json(load_articles(self.settings))
+            except Exception as exc:
+                self._json({"error": str(exc)}, status=500)
+            return
+        if parsed.path == "/api/report":
+            try:
+                self._json(load_report(self.settings))
+            except Exception as exc:
+                self._json({"error": str(exc)}, status=500)
+            return
+        if parsed.path == "/api/budget":
+            try:
+                self._json(load_budget(self.settings))
+            except Exception as exc:
+                self._json({"error": str(exc)}, status=500)
+            return
         if parsed.path == "/api/jobs":
             self._json(list_jobs(self.settings))
             return
@@ -454,6 +474,32 @@ class ViewerHandler(BaseHTTPRequestHandler):
             except Exception as exc:
                 self._json({"error": str(exc)}, status=400)
             return
+        article_id, article_action = _article_mutation(parsed.path)
+        if article_id is not None and article_action == "approve":
+            try:
+                self._json(
+                    approve_article_action(
+                        profile_slug=payload.get("profile"),
+                        article_id=article_id,
+                        settings_override=self.settings,
+                    )
+                )
+            except Exception as exc:
+                self._json({"error": str(exc)}, status=400)
+            return
+        if article_id is not None and article_action == "publish":
+            try:
+                self._json(
+                    publish_article_action(
+                        profile_slug=payload.get("profile"),
+                        article_id=article_id,
+                        url=str(payload.get("url", "")).strip(),
+                        settings_override=self.settings,
+                    )
+                )
+            except Exception as exc:
+                self._json({"error": str(exc)}, status=400)
+            return
 
         self._json({"error": "not found"}, status=404)
 
@@ -556,6 +602,16 @@ def _as_list(value: object) -> list[str] | None:
         cleaned = value.strip()
         return [cleaned] if cleaned else None
     raise ValueError("approval payload fields must be strings or arrays")
+
+
+def _article_mutation(path: str) -> tuple[str | None, str | None]:
+    parts = [part for part in path.split("/") if part]
+    if len(parts) == 4 and parts[0] == "api" and parts[1] == "articles":
+        article_id = parts[2].strip()
+        action = parts[3].strip()
+        if article_id and action in {"approve", "publish"}:
+            return article_id, action
+    return None, None
 
 
 def _bearer_token(header_value: str | None) -> str | None:

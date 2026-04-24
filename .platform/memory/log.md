@@ -17,6 +17,7 @@ Format: `YYYY-MM-DD — <task> — <outcome> — <takeaway>`
 2026-04-20 — dashboard-rework — React 18 + shadcn/ui dashboard built and served by Python; live 30s polling eliminates server restart requirement — inline HTML in Python strings doesn't scale; dist/ committed to git keeps CLI-first UX intact
 
 ---
+- 2026-04-24 — commit `318a1f9`: update — auto-logged
 - 2026-04-21 — commit `d8adaff`: chore: absorb log auto-update — auto-logged
 - 2026-04-21 — commit `41ec9e8`: feat: harden free validation and track API integrations — auto-logged
 - 2026-04-20 — commit `61eb5c1`: updated engins — auto-logged
@@ -75,3 +76,5 @@ Format: `YYYY-MM-DD — <task> — <outcome> — <takeaway>`
 2026-04-24 — rest-api-control-plane — added allowlisted research jobs through REST without shell execution — API can now launch validation and research workflows by job id
 2026-04-24 — rest-api-control-plane — persisted REST job state in SQLite and added restart-survival coverage — job ids can now be inspected after local server restart instead of disappearing with process memory
 2026-04-24 — rest-api-control-plane — added token-or-loopback write guards for mutating endpoints and denial-path coverage — localhost stays usable by default while configured token mode protects cloud-style deployments from open write access
+2026-04-24 — rest-api-control-plane — added allowlisted brief and write jobs with persisted results — content generation can now run through the REST job layer instead of only through the CLI
+2026-04-24 — rest-api-control-plane — added articles/report/budget endpoints plus article approve/publish mutations and settings-aware direct actions — the API now covers more of the non-interactive CLI surface with real DB-backed tests

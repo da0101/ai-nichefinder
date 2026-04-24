@@ -30,7 +30,7 @@ The current pipeline still proposes many commercially flavored but unwinnable qu
 - **Active:** buyer-problem-research on top of the current keyword-research flow
 - Also active: gsc-monitoring, serp-pipeline-fix, dashboard-rework
 - Newly tracked: reddit-api-integration (blocked waiting on Reddit approval), google-ads-api-integration (planning)
-- REST control-plane first slice is now at verification: typed local job APIs, SQLite-persisted job status, and loopback-or-token write guards are in place.
+- REST control-plane is active again: typed local jobs now cover validation, research, brief generation, and article writing, and the API also exposes article/report/budget reads plus approve/publish mutations, with SQLite-persisted job status and loopback-or-token write guards.
 - Next after this: GA4 provider → source registry → LangGraph interrupt/resume
 
 ## Relevant context

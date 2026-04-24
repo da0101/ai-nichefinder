@@ -5,7 +5,12 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from datetime import datetime, timezone
 
-from nichefinder_cli.viewer_actions import run_research_action, run_validate_free_action
+from nichefinder_cli.viewer_actions import (
+    run_generate_brief_action,
+    run_research_action,
+    run_validate_free_action,
+    run_write_article_action,
+)
 from nichefinder_core.models import JobRecord
 from nichefinder_core.settings import Settings, get_settings
 from nichefinder_db import SeoRepository, create_db_and_tables, get_session
@@ -44,11 +49,27 @@ def _run_job(job_id: str, action: str, params: dict, settings: Settings) -> None
                 profile_slug=params.get("profile"),
                 keyword=str(params.get("keyword", "")).strip(),
                 sources=tuple(params.get("sources") or ["ddgs", "bing", "yahoo"]),
+                settings_override=settings,
             )
         elif action == "research":
             result = run_research_action(
                 profile_slug=params.get("profile"),
                 keyword=str(params.get("keyword", "")).strip(),
+                settings_override=settings,
+            )
+        elif action == "brief":
+            result = run_generate_brief_action(
+                profile_slug=params.get("profile"),
+                keyword_id=str(params.get("keyword_id", "")).strip(),
+                force=bool(params.get("force", False)),
+                settings_override=settings,
+            )
+        elif action == "write":
+            result = run_write_article_action(
+                profile_slug=params.get("profile"),
+                keyword_id=str(params.get("keyword_id", "")).strip(),
+                force=bool(params.get("force", False)),
+                settings_override=settings,
             )
         else:
             raise ValueError(f"unsupported job action: {action}")
@@ -59,14 +80,24 @@ def _run_job(job_id: str, action: str, params: dict, settings: Settings) -> None
 
 
 def _validate_action(action: str, params: dict) -> None:
-    if action not in {"validate-free", "research"}:
+    if action not in {"validate-free", "research", "brief", "write"}:
         raise ValueError(f"unsupported job action: {action}")
-    keyword = str(params.get("keyword", "")).strip()
-    if not keyword:
-        raise ValueError("keyword is required")
+    if action in {"validate-free", "research"}:
+        keyword = str(params.get("keyword", "")).strip()
+        if not keyword:
+            raise ValueError("keyword is required")
+    if action in {"brief", "write"}:
+        keyword_id = str(params.get("keyword_id", "")).strip()
+        if not keyword_id:
+            raise ValueError("keyword_id is required")
     sources = params.get("sources")
     if action == "research" and sources is not None:
         raise ValueError("sources are only supported for validate-free jobs")
+    if action in {"brief", "write"} and sources is not None:
+        raise ValueError("sources are only supported for validate-free jobs")
+    force = params.get("force")
+    if force is not None and not isinstance(force, bool):
+        raise ValueError("force must be a boolean")
     if sources is not None and not isinstance(sources, list):
         raise ValueError("sources must be a list")
     if sources is not None and not all(isinstance(item, str) and item for item in sources):
@@ -94,9 +125,12 @@ def _public_job(job: JobRecord) -> dict:
 
 
 def _public_params(params: dict) -> dict:
-    allowed = {"profile", "keyword", "sources"}
+    allowed = {"profile", "keyword", "keyword_id", "sources", "force"}
     public = {key: value for key, value in params.items() if key in allowed}
-    public["keyword"] = str(public.get("keyword", "")).strip()
+    if "keyword" in public or "keyword" in params:
+        public["keyword"] = str(public.get("keyword", "")).strip()
+    if "keyword_id" in public or "keyword_id" in params:
+        public["keyword_id"] = str(public.get("keyword_id", "")).strip()
     return public
 
 

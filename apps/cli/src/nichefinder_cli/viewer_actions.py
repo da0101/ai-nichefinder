@@ -1,18 +1,21 @@
 import asyncio
+from datetime import datetime, timezone
 
 from nichefinder_cli.free_validation import run_free_validation_pipeline
 from nichefinder_cli.runtime import (
     build_services,
     create_profile,
     delete_profile,
+    ensure_site_config,
     get_active_profile,
     get_runtime,
     resolve_runtime_settings,
     save_profile_site_config,
 )
-from nichefinder_cli.workflows import run_full_pipeline
+from nichefinder_cli.workflows import generate_brief, run_full_pipeline, write_article
 from nichefinder_core.models.site import SiteConfig
-from nichefinder_db import SeoRepository
+from nichefinder_core.settings import Settings
+from nichefinder_db import SeoRepository, create_db_and_tables, get_session
 
 
 def create_profile_action(*, slug: str, from_current: bool = False, use: bool = False, payload: dict | None = None) -> dict:
@@ -59,16 +62,84 @@ def delete_profile_action(*, profile_slug: str) -> dict:
     return {"deleted": slug, "active_profile": active}
 
 
+def approve_article_action(
+    *,
+    profile_slug: str | None = None,
+    article_id: str,
+    settings_override: Settings | None = None,
+) -> dict:
+    if not article_id.strip():
+        raise ValueError("article_id is required")
+    slug, _, _, session_context = _session_runtime(profile_slug, settings_override)
+    with session_context as session:
+        repository = SeoRepository(session)
+        article = repository.update_article(
+            article_id.strip(),
+            status="approved",
+            approved_at=datetime.now(timezone.utc),
+        )
+        keyword = repository.get_keyword(article.keyword_id)
+    return {
+        "profile": slug,
+        "article": {
+            "id": article.id,
+            "title": article.title,
+            "status": article.status,
+            "keyword_term": keyword.term if keyword else None,
+            "approved_at": article.approved_at.isoformat() if article.approved_at else None,
+        },
+    }
+
+
+def publish_article_action(
+    *,
+    profile_slug: str | None = None,
+    article_id: str,
+    url: str,
+    settings_override: Settings | None = None,
+) -> dict:
+    if not article_id.strip():
+        raise ValueError("article_id is required")
+    if not url.strip():
+        raise ValueError("url is required")
+    slug, _, _, session_context = _session_runtime(profile_slug, settings_override)
+    with session_context as session:
+        repository = SeoRepository(session)
+        article = repository.get_article(article_id.strip())
+        if article is None:
+            raise ValueError(f"Article not found: {article_id.strip()}")
+        if article.status != "approved":
+            raise ValueError(f"Article '{article.title}' must be approved before it can be published.")
+        article = repository.update_article(
+            article_id.strip(),
+            status="published",
+            published_at=datetime.now(timezone.utc),
+            published_url=url.strip(),
+        )
+        keyword = repository.get_keyword(article.keyword_id)
+    return {
+        "profile": slug,
+        "article": {
+            "id": article.id,
+            "title": article.title,
+            "status": article.status,
+            "keyword_term": keyword.term if keyword else None,
+            "published_url": article.published_url,
+            "published_at": article.published_at.isoformat() if article.published_at else None,
+        },
+    }
+
+
 def run_validate_free_action(
     *,
     profile_slug: str | None = None,
     keyword: str,
     sources: tuple[str, ...] = ("ddgs", "bing", "yahoo"),
+    settings_override: Settings | None = None,
 ) -> dict:
     if not keyword.strip():
         raise ValueError("keyword is required")
-    slug, settings, site_config = _profile_runtime(profile_slug)
-    _, _, session_context = get_runtime(slug)
+    slug, settings, site_config, session_context = _session_runtime(profile_slug, settings_override)
     with session_context as session:
         repository = SeoRepository(session)
         services = build_services(settings, repository)
@@ -130,11 +201,15 @@ def run_validate_free_action(
     }
 
 
-def run_research_action(*, profile_slug: str | None = None, keyword: str) -> dict:
+def run_research_action(
+    *,
+    profile_slug: str | None = None,
+    keyword: str,
+    settings_override: Settings | None = None,
+) -> dict:
     if not keyword.strip():
         raise ValueError("keyword is required")
-    slug, settings, site_config = _profile_runtime(profile_slug)
-    _, _, session_context = get_runtime(slug)
+    slug, settings, site_config, session_context = _session_runtime(profile_slug, settings_override)
     with session_context as session:
         repository = SeoRepository(session)
         services = build_services(settings, repository)
@@ -170,6 +245,84 @@ def run_research_action(*, profile_slug: str | None = None, keyword: str) -> dic
             for item in getattr(result["keyword_output"], "buyer_problems", [])
         ],
         "analyses": [_analysis_payload(item) for item in analyses],
+    }
+
+
+def run_generate_brief_action(
+    *,
+    profile_slug: str | None = None,
+    keyword_id: str,
+    force: bool = False,
+    settings_override: Settings | None = None,
+) -> dict:
+    if not keyword_id.strip():
+        raise ValueError("keyword_id is required")
+    slug, settings, site_config, session_context = _session_runtime(profile_slug, settings_override)
+    with session_context as session:
+        repository = SeoRepository(session)
+        services = build_services(settings, repository)
+        try:
+            output = asyncio.run(
+                generate_brief(
+                    keyword_id.strip(),
+                    site_config.model_dump(),
+                    services,
+                    repository,
+                    force=force,
+                )
+            )
+            usage = services.gemini.get_usage_stats()
+            repository.record_api_usage(
+                provider="gemini",
+                tokens_in=usage["prompt_tokens"],
+                tokens_out=usage["response_tokens"],
+            )
+        finally:
+            asyncio.run(services.scraper.close())
+    return {
+        "profile": slug,
+        "keyword_id": keyword_id.strip(),
+        "force": force,
+        "brief": output.model_dump(),
+    }
+
+
+def run_write_article_action(
+    *,
+    profile_slug: str | None = None,
+    keyword_id: str,
+    force: bool = False,
+    settings_override: Settings | None = None,
+) -> dict:
+    if not keyword_id.strip():
+        raise ValueError("keyword_id is required")
+    slug, settings, site_config, session_context = _session_runtime(profile_slug, settings_override)
+    with session_context as session:
+        repository = SeoRepository(session)
+        services = build_services(settings, repository)
+        try:
+            output = asyncio.run(
+                write_article(
+                    keyword_id.strip(),
+                    site_config.model_dump(),
+                    services,
+                    repository,
+                    force=force,
+                )
+            )
+            usage = services.gemini.get_usage_stats()
+            repository.record_api_usage(
+                provider="gemini",
+                tokens_in=usage["prompt_tokens"],
+                tokens_out=usage["response_tokens"],
+            )
+        finally:
+            asyncio.run(services.scraper.close())
+    return {
+        "profile": slug,
+        "keyword_id": keyword_id.strip(),
+        "force": force,
+        "article": output.model_dump(),
     }
 
 
@@ -217,3 +370,19 @@ def _profile_runtime(profile_slug: str | None) -> tuple[str, object, SiteConfig]
         slug = profile_slug
     settings, site_config, _ = get_runtime(slug)
     return slug, settings, site_config
+
+
+def _session_runtime(
+    profile_slug: str | None,
+    settings_override: Settings | None = None,
+) -> tuple[str, Settings, SiteConfig, object]:
+    if settings_override is None:
+        slug, settings, site_config = _profile_runtime(profile_slug)
+        return slug, settings, site_config, get_runtime(slug)[2]
+    expected_slug = settings_override.profile_name or "default"
+    if profile_slug in (None, "", expected_slug) or (profile_slug == "default" and expected_slug == "default"):
+        create_db_and_tables(settings_override)
+        site_config = ensure_site_config(settings_override)
+        return expected_slug, settings_override, site_config, get_session(settings_override)
+    slug, settings, site_config = _profile_runtime(profile_slug)
+    return slug, settings, site_config, get_runtime(slug)[2]
