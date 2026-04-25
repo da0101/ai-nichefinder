@@ -41,12 +41,16 @@ closure_approved: false
 _Overwritten by `agentboard checkpoint` — the compact payload the next agent reads first. Keep this block under ~10 lines._
 
 - **Last updated:** 2026-04-24 by danilulmashev
-- **What just happened:** Completed Phase 1 of the repo split: moved the dashboard to frontend/dashboard, moved the Python workspace under backend/, updated path/config references, and re-verified pytest, dashboard build, and seo view.
-- **Current focus:** repo topology phase 1 verification
-- **Next action:** Decide whether to keep backend/{apps,packages} as the stable long-term boundary or do a smaller root-config cleanup follow-up.
+- **What just happened:** Completed frontend Phase 2A: added a shared typed HTTP client, moved dashboard hooks under feature-owned folders, deleted the generic hooks layer, and introduced Vitest hook/API tests.
+- **Current focus:** frontend features/shared API boundary
+- **Next action:** Split the backend FastAPI viewer surface into smaller route and service modules while keeping the new frontend API boundary stable.
 - **Blockers:** none
 
 ## Progress log
+
+2026-04-24 20:56 — Completed frontend Phase 2A: added a shared typed HTTP client, moved dashboard hooks under feature-owned folders, deleted the generic hooks layer, and introduced Vitest hook/API tests.
+
+2026-04-24 20:58 — Completed Phase 2A of the frontend cleanup: added `src/shared/api`, moved hook logic into `src/features/*`, removed the old generic `src/hooks` layer, added Vitest + Testing Library, and verified `npm run test:run`, `npm run build`, and `uv run pytest -q`.
 
 2026-04-24 20:14 — Completed Phase 1 of the repo split: moved the dashboard to frontend/dashboard, moved the Python workspace under backend/, updated path/config references, and re-verified pytest, dashboard build, and seo view.
 

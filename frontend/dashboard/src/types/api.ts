@@ -137,6 +137,17 @@ export interface ProfilesResponse {
   profiles: ProfileSummary[]
 }
 
+export interface CreateProfileRequest {
+  slug: string
+  site_config: SiteConfigDto
+  use?: boolean
+}
+
+export interface SaveProfileConfigRequest {
+  profile: string | null
+  site_config: SiteConfigDto
+}
+
 export interface SiteConfigDto {
   site_url: string
   site_name: string
@@ -283,6 +294,12 @@ export interface ValidateFreeResponse {
     question_bank: string[]
     suggested_secondary_keywords: string[]
   }>
+}
+
+export interface ValidateFreeRequest {
+  profile: string
+  keyword: string
+  sources?: string[]
 }
 
 export interface ValidationRow {

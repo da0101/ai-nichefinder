@@ -1,5 +1,9 @@
 import { useState } from 'react'
+
 import type { ValidateFreeResponse } from '@/types/api'
+import { toErrorMessage } from '@/shared/api/http'
+
+import { runValidateFree } from '../api'
 
 interface UseValidateFreeActionResult {
   data: ValidateFreeResponse | null
@@ -16,21 +20,12 @@ export function useValidateFreeAction(): UseValidateFreeActionResult {
   async function run(profile: string, keyword: string) {
     setRunning(true)
     try {
-      const response = await fetch('/api/validate-free', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ profile, keyword }),
-      })
-      if (!response.ok) {
-        const body = await response.json().catch(() => ({}))
-        throw new Error(body.error ?? `HTTP ${response.status}`)
-      }
-      const json: ValidateFreeResponse = await response.json()
+      const json = await runValidateFree({ profile, keyword })
       setData(json)
       setError(null)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unknown error')
-      throw e
+    } catch (error) {
+      setError(toErrorMessage(error))
+      throw error
     } finally {
       setRunning(false)
     }

@@ -4,6 +4,8 @@ One line per completed task. Newest at the top. Append-only.
 
 Format: `YYYY-MM-DD — <task> — <outcome> — <takeaway>`
 
+2026-04-24 — repo-topology-reorg frontend Phase 2A — introduced `src/features/*`, `src/shared/api`, and Vitest hook/API coverage; frontend build and backend pytest stayed green — enterprise structure comes from enforced boundaries plus tests, not from folder churn alone
+
 2026-04-24 — repo-topology-reorg Phase 1 — moved the dashboard to `frontend/dashboard` and the Python workspace to `backend/{apps,packages}`; pytest, frontend build, and `seo view` smoke verification all passed after path updates — a topology reorg is safe only when the runtime entrypoints are re-verified from the new tree, not just when files are moved
 
 2026-04-22 — dashboard interactive testing workspace — extended the React viewer into a browser-driven SEO testing surface with profile management, config editing, training approval, final review, and validate-free actions; viewer/backend tests green at 48 and Vite build green — once profile-scoped SEO workflows exist, the browser must drive them directly or the CLI remains the bottleneck
@@ -19,6 +21,7 @@ Format: `YYYY-MM-DD — <task> — <outcome> — <takeaway>`
 2026-04-20 — dashboard-rework — React 18 + shadcn/ui dashboard built and served by Python; live 30s polling eliminates server restart requirement — inline HTML in Python strings doesn't scale; dist/ committed to git keeps CLI-first UX intact
 
 ---
+- 2026-04-24 — commit `50df18a`: pl;atform flatening — auto-logged
 - 2026-04-24 — commit `4129e12`: update — auto-logged
 - 2026-04-24 — commit `318a1f9`: update — auto-logged
 - 2026-04-21 — commit `d8adaff`: chore: absorb log auto-update — auto-logged

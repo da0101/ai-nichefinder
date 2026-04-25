@@ -27,6 +27,7 @@ It covers where frontend code lives, where backend code lives, which build/runti
 
 - React dashboard currently lives in `frontend/dashboard/`.
 - Built frontend assets are still served by the backend viewer/API layer.
+- Frontend layering now uses `src/components/ui` for reusable primitives, `src/features/*` for feature-owned hooks/API logic, and `src/shared/*` for cross-feature infrastructure such as the typed HTTP client and test setup.
 - Stable frontend invariants: dashboard build still works, API route assumptions stay unchanged, and the future frontend repo boundary is obvious from the directory tree.
 
 ## API contract locked
@@ -40,6 +41,8 @@ It covers where frontend code lives, where backend code lives, which build/runti
 - `pyproject.toml`
 - `backend/apps/cli/pyproject.toml`
 - `frontend/dashboard/`
+- `frontend/dashboard/src/features/`
+- `frontend/dashboard/src/shared/api/`
 - `backend/packages/core/`
 - `backend/packages/db/`
 - `.platform/architecture.md`

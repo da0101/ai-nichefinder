@@ -1,12 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+
 import type { DashboardResponse } from '@/types/api'
+import { toErrorMessage } from '@/shared/api/http'
+
+import { fetchDashboard } from '../api'
 
 interface UseDashboardResult {
   data: DashboardResponse | null
   loading: boolean
   error: string | null
   lastUpdated: Date | null
-  refresh: () => void
+  refresh: () => Promise<void>
 }
 
 export function useDashboard(intervalMs = 30_000): UseDashboardResult {
@@ -16,31 +20,26 @@ export function useDashboard(intervalMs = 30_000): UseDashboardResult {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  const fetch_ = useCallback(async () => {
+  const refresh = useCallback(async () => {
     try {
-      const res = await fetch('/api/dashboard')
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}))
-        throw new Error(body.error ?? `HTTP ${res.status}`)
-      }
-      const json: DashboardResponse = await res.json()
+      const json = await fetchDashboard()
       setData(json)
       setError(null)
       setLastUpdated(new Date())
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unknown error')
+    } catch (error) {
+      setError(toErrorMessage(error))
     } finally {
       setLoading(false)
     }
   }, [])
 
   useEffect(() => {
-    fetch_()
-    timerRef.current = setInterval(fetch_, intervalMs)
+    void refresh()
+    timerRef.current = setInterval(() => void refresh(), intervalMs)
     return () => {
       if (timerRef.current) clearInterval(timerRef.current)
     }
-  }, [fetch_, intervalMs])
+  }, [intervalMs, refresh])
 
-  return { data, loading, error, lastUpdated, refresh: fetch_ }
+  return { data, loading, error, lastUpdated, refresh }
 }

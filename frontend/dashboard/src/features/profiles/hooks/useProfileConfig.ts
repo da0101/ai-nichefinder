@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
+
 import type { ProfileConfigResponse } from '@/types/api'
+import { toErrorMessage } from '@/shared/api/http'
+
+import { fetchProfileConfig, saveProfileConfig } from '../api'
 
 interface UseProfileConfigResult {
   data: ProfileConfigResponse | null
@@ -22,17 +26,13 @@ export function useProfileConfig(profile: string | null): UseProfileConfigResult
       setLoading(false)
       return
     }
+
     try {
-      const response = await fetch(`/api/profile-config?profile=${encodeURIComponent(profile)}`)
-      if (!response.ok) {
-        const body = await response.json().catch(() => ({}))
-        throw new Error(body.error ?? `HTTP ${response.status}`)
-      }
-      const json: ProfileConfigResponse = await response.json()
+      const json = await fetchProfileConfig(profile)
       setData(json)
       setError(null)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unknown error')
+    } catch (error) {
+      setError(toErrorMessage(error))
     } finally {
       setLoading(false)
     }
@@ -41,21 +41,12 @@ export function useProfileConfig(profile: string | null): UseProfileConfigResult
   const save = useCallback(async (siteConfig: ProfileConfigResponse['site_config']) => {
     setSaving(true)
     try {
-      const response = await fetch('/api/profile-config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ profile, site_config: siteConfig }),
-      })
-      if (!response.ok) {
-        const body = await response.json().catch(() => ({}))
-        throw new Error(body.error ?? `HTTP ${response.status}`)
-      }
-      const json: ProfileConfigResponse = await response.json()
+      const json = await saveProfileConfig(profile, siteConfig)
       setData(json)
       setError(null)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unknown error')
-      throw e
+    } catch (error) {
+      setError(toErrorMessage(error))
+      throw error
     } finally {
       setSaving(false)
     }

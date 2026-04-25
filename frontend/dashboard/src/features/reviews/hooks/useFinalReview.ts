@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
+
 import type { FinalReviewResponse } from '@/types/api'
+import { toErrorMessage } from '@/shared/api/http'
+
+import { fetchFinalReview } from '../api'
 
 interface UseFinalReviewResult {
   data: FinalReviewResponse | null
@@ -20,17 +24,11 @@ export function useFinalReview(profiles: string[], intervalMs = 30_000): UseFina
       return
     }
     try {
-      const query = encodeURIComponent(profiles.join(','))
-      const response = await fetch(`/api/final-review?profiles=${query}`)
-      if (!response.ok) {
-        const body = await response.json().catch(() => ({}))
-        throw new Error(body.error ?? `HTTP ${response.status}`)
-      }
-      const json: FinalReviewResponse = await response.json()
+      const json = await fetchFinalReview(profiles)
       setData(json)
       setError(null)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unknown error')
+    } catch (error) {
+      setError(toErrorMessage(error))
     } finally {
       setLoading(false)
     }
