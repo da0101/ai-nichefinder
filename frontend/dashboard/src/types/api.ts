@@ -24,6 +24,10 @@ export interface KeywordSummary {
   priority: string | null
 }
 
+export interface KeywordsResponse {
+  keywords: KeywordSummary[]
+}
+
 // GET /api/keywords/:id
 export interface KeywordDetailResponse {
   keyword: {
@@ -47,6 +51,18 @@ export interface KeywordDetailResponse {
   competitors: CompetitorPage[]
   brief: ContentBrief | null
   articles: ArticleDetail[]
+}
+
+export interface KeywordClusterResponse {
+  cluster_name: string
+  total_cluster_volume: number
+  primary_keyword_id: string
+  keyword_ids: string[]
+  keyword_terms: string[]
+}
+
+export interface KeywordClustersResponse {
+  clusters: KeywordClusterResponse[]
 }
 
 export interface ScoreBreakdown {
@@ -152,33 +168,6 @@ export interface ProfileSummary {
   approved_legitimacy: number
 }
 
-export interface TrainingReviewResponse {
-  profile: {
-    slug: string
-    site_name: string
-    site_url: string
-    runs: number
-    approved_noise: number
-    approved_validity: number
-    approved_legitimacy: number
-  }
-  approved: {
-    noise: {
-      keyword_phrases: string[]
-      secondary_phrases: string[]
-      domains: string[]
-    }
-    validity: {
-      keyword_phrases: string[]
-      secondary_phrases: string[]
-    }
-    legitimacy: {
-      domains: string[]
-    }
-  }
-  candidates: TrainingCandidate[]
-}
-
 export interface TrainingCandidate {
   scope: 'domain' | 'keyword_phrase' | 'secondary_phrase'
   label: 'noise' | 'validity' | 'legitimacy'
@@ -188,17 +177,75 @@ export interface TrainingCandidate {
   examples: string[]
 }
 
+export interface ReviewProfileSummary {
+  slug: string
+  site_name: string
+  site_url: string
+  runs: number
+  approved_noise: number
+  approved_validity: number
+  approved_legitimacy: number
+}
+
+export interface ApprovedNoiseResponse {
+  keyword_phrases: string[]
+  secondary_phrases: string[]
+  domains: string[]
+}
+
+export interface ApprovedValidityResponse {
+  keyword_phrases: string[]
+  secondary_phrases: string[]
+}
+
+export interface ApprovedLegitimacyResponse {
+  domains: string[]
+}
+
+export interface ApprovedTrainingResponse {
+  noise: ApprovedNoiseResponse
+  validity: ApprovedValidityResponse
+  legitimacy: ApprovedLegitimacyResponse
+}
+
+export interface NoiseReviewResponse {
+  profile: ReviewProfileSummary
+  approved: ApprovedNoiseResponse
+  candidates: TrainingCandidate[]
+}
+
+export interface TrainingReviewResponse {
+  profile: ReviewProfileSummary
+  approved: ApprovedTrainingResponse
+  candidates: TrainingCandidate[]
+}
+
 export interface FinalReviewResponse {
-  summary: Array<{
-    slug: string
-    runs: number
-    approved_noise: number
-    approved_validity: number
-    approved_legitimacy: number
-  }>
+  summary: ReviewProfileSummary[]
   shared_valid_keywords: string[]
   shared_trusted_domains: string[]
   profiles: TrainingReviewResponse[]
+}
+
+export interface NoiseApprovalRequest {
+  profile?: string | null
+  keyword_phrases?: string[]
+  secondary_phrases?: string[]
+  domains?: string[]
+  min_runs?: number
+  limit?: number
+}
+
+export interface TrainingApprovalRequest {
+  profile?: string | null
+  noise_keyword_phrases?: string[]
+  noise_secondary_phrases?: string[]
+  noise_domains?: string[]
+  valid_keyword_phrases?: string[]
+  valid_secondary_phrases?: string[]
+  trusted_domains?: string[]
+  min_runs?: number
+  limit?: number
 }
 
 export interface ProfileConfigResponse {
@@ -247,4 +294,139 @@ export interface ValidationRow {
   result_count: number
   top_domains: string[]
   notes: string[]
+}
+
+export interface ArticlesResponse {
+  articles: ArticleDetail[]
+  summary: {
+    total_articles: number
+    published_articles: number
+  }
+}
+
+export interface StatusDetailResponse {
+  active_profile: string
+  environment: string
+  database_url: string
+  site_config_path: string
+  articles_dir: string
+  reports_dir: string
+  cache_dir: string
+  site_url: string
+  primary_language: string
+  gemini_configured: boolean
+  serpapi_configured: boolean
+}
+
+export interface ReportResponse {
+  top_keywords: Array<{
+    id: string
+    term: string
+    score: number | null
+    volume: number | null
+    difficulty: number | null
+  }>
+  summary: {
+    total_keywords: number
+    articles: number
+    published_articles: number
+    content_performance: Array<{
+      content_type: string
+      article_count: number
+    }>
+  }
+}
+
+export interface BudgetResponse {
+  usage: BudgetUsageRow[]
+}
+
+export interface BudgetUsageRow {
+  provider: string
+  calls: number
+  spend_usd: number
+  tokens_in: number
+  tokens_out: number
+}
+
+export interface ArticleMutationResponse {
+  profile: string
+  article: {
+    id: string
+    title: string
+    status: string
+    keyword_term: string | null
+    approved_at?: string | null
+    published_url?: string | null
+    published_at?: string | null
+  }
+}
+
+export type JobAction =
+  | 'validate-free'
+  | 'research'
+  | 'brief'
+  | 'write'
+  | 'rewrite'
+  | 'monitor-sync'
+  | 'rank-check'
+
+export type JobStatus = 'queued' | 'running' | 'succeeded' | 'failed'
+
+export interface ValidateFreeJobParams {
+  profile?: string
+  keyword: string
+  sources?: string[]
+}
+
+export interface ResearchJobParams {
+  profile?: string
+  keyword: string
+}
+
+export interface KeywordIdJobParams {
+  profile?: string
+  keyword_id: string
+  force?: boolean
+}
+
+export interface RewriteJobParams {
+  profile?: string
+  url: string
+}
+
+export interface MonitorSyncJobParams {
+  profile?: string
+  days?: number
+  property_url?: string
+}
+
+export interface RankCheckJobParams {
+  profile?: string
+  skip_recent?: boolean
+}
+
+export type JobParams =
+  | ValidateFreeJobParams
+  | ResearchJobParams
+  | KeywordIdJobParams
+  | RewriteJobParams
+  | MonitorSyncJobParams
+  | RankCheckJobParams
+
+export interface JobRecordResponse {
+  id: string
+  action: JobAction
+  status: JobStatus
+  params: JobParams
+  result: unknown
+  error: string | null
+  created_at: string
+  updated_at: string
+  started_at: string | null
+  finished_at: string | null
+}
+
+export interface JobListResponse {
+  jobs: JobRecordResponse[]
 }

@@ -18,9 +18,9 @@ Single repo — `github.com/da0101/ai-nichefinder`. Workspace members:
 
 | Path | Role |
 |---|---|
-| `apps/cli` | Typer entrypoint (`nichefinder` / `seo`) and command groups |
-| `packages/core` | settings, models, agents, adapters, orchestration |
-| `packages/db` | persistence models, repository, engine/session helpers |
+| `backend/apps/cli` | Typer entrypoint (`nichefinder` / `seo`) and command groups |
+| `backend/packages/core` | settings, models, agents, adapters, orchestration |
+| `backend/packages/db` | persistence models, repository, engine/session helpers |
 | `data/` | local DB, site config, templates, cache inputs |
 | `outputs/` | generated articles, reports, and audits |
 | `docs/` | project notes and legacy design docs |

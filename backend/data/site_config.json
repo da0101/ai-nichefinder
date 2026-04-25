@@ -1,0 +1,25 @@
+{
+  "site_url": "https://danilulmashev.com",
+  "site_name": "Daniil Ulmashev",
+  "site_description": "Personal portfolio - AI tools, SaaS, mobile apps, web design, consulting",
+  "target_audience": "startups, SMBs, entrepreneurs looking for technical help",
+  "services": [
+    "AI tool development",
+    "SaaS development",
+    "mobile app development",
+    "landing pages",
+    "web design",
+    "technical consulting"
+  ],
+  "primary_language": "en",
+  "blog_url": "https://danilulmashev.com/en/blog/",
+  "existing_articles": [],
+  "seed_keywords": [],
+  "target_persona": "technical founder or business owner who needs a development partner",
+  "competitors": [],
+  "geographic_focus": [
+    "global",
+    "north_america",
+    "europe"
+  ]
+}

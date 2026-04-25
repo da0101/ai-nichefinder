@@ -1,25 +1,66 @@
 from __future__ import annotations
 
 import json
+import socket
 import threading
 import time
-from functools import partial
 from pathlib import Path
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
+import uvicorn
 from nichefinder_cli.commands.viewer import view
-from nichefinder_cli.viewer_server import ViewerHandler
-from nichefinder_core.models import Article, ContentType, Keyword
+from nichefinder_cli.viewer_api_models import (
+    ApprovedLegitimacyResponse,
+    ApprovedNoiseResponse,
+    ApprovedTrainingResponse,
+    FinalReviewResponse,
+    NoiseReviewResponse,
+    ReviewCandidate,
+    ReviewProfileSummary,
+    TrainingReviewResponse,
+)
+from nichefinder_cli.viewer_server import create_viewer_app
+from nichefinder_core.models import (
+    Article,
+    CompetitorPage,
+    ContentBrief,
+    ContentType,
+    Keyword,
+    SearchIntent,
+    SerpResult,
+)
 from nichefinder_core.settings import Settings
-from http.server import ThreadingHTTPServer
 from nichefinder_db import SeoRepository, create_db_and_tables, get_session
 
 
+class _LiveServer:
+    def __init__(self, settings: Settings):
+        app = create_viewer_app(settings)
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.bind(("127.0.0.1", 0))
+            self.server_port = sock.getsockname()[1]
+        config = uvicorn.Config(app, host="127.0.0.1", port=self.server_port, log_level="warning", access_log=False)
+        self._server = uvicorn.Server(config)
+
+    def serve_forever(self) -> None:
+        self._server.run()
+
+    def shutdown(self) -> None:
+        self._server.should_exit = True
+
+    def server_close(self) -> None:
+        pass
+
+
 def _start_server(settings: Settings):
-    server = ThreadingHTTPServer(("127.0.0.1", 0), partial(ViewerHandler, settings=settings))
+    server = _LiveServer(settings)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
+    for _ in range(50):
+        if server._server.started:
+            break
+        time.sleep(0.02)
     return server, thread
 
 
@@ -134,20 +175,80 @@ def test_viewer_server_profile_and_training_endpoints(monkeypatch, tmp_path: Pat
     )
     monkeypatch.setattr(
         "nichefinder_cli.viewer_server.load_training_review",
-        lambda profile_slug=None, min_runs=2, limit=18: {
-            "profile": {"slug": profile_slug or "restaurant", "site_name": "Restaurant", "site_url": "https://example.com", "runs": 3, "approved_noise": 1, "approved_validity": 2, "approved_legitimacy": 1},
-            "approved": {"noise": {"keyword_phrases": [], "secondary_phrases": [], "domains": []}, "validity": {"keyword_phrases": [], "secondary_phrases": []}, "legitimacy": {"domains": []}},
-            "candidates": [{"scope": "keyword_phrase", "label": "validity", "value": "food cost percentage", "support_runs": 2, "support_count": 2, "examples": ["food cost percentage restaurant"]}],
-        },
+        lambda profile_slug=None, min_runs=2, limit=18: TrainingReviewResponse(
+            profile=ReviewProfileSummary(
+                slug=profile_slug or "restaurant",
+                site_name="Restaurant",
+                site_url="https://example.com",
+                runs=3,
+                approved_noise=1,
+                approved_validity=2,
+                approved_legitimacy=1,
+            ),
+            approved=ApprovedTrainingResponse(
+                noise=ApprovedNoiseResponse(keyword_phrases=[], secondary_phrases=[], domains=[]),
+                validity={"keyword_phrases": [], "secondary_phrases": []},
+                legitimacy=ApprovedLegitimacyResponse(domains=[]),
+            ),
+            candidates=[
+                ReviewCandidate(
+                    scope="keyword_phrase",
+                    label="validity",
+                    value="food cost percentage",
+                    support_runs=2,
+                    support_count=2,
+                    examples=["food cost percentage restaurant"],
+                )
+            ],
+        ),
+    )
+    monkeypatch.setattr(
+        "nichefinder_cli.viewer_server.load_noise_review",
+        lambda profile_slug=None, min_runs=2, limit=12: NoiseReviewResponse(
+            profile=ReviewProfileSummary(
+                slug=profile_slug or "restaurant",
+                site_name="Restaurant",
+                site_url="https://example.com",
+                runs=3,
+                approved_noise=1,
+                approved_validity=2,
+                approved_legitimacy=1,
+            ),
+            approved=ApprovedNoiseResponse(
+                keyword_phrases=["web design"],
+                secondary_phrases=[],
+                domains=["dictionary.com"],
+            ),
+            candidates=[
+                ReviewCandidate(
+                    scope="domain",
+                    label="noise",
+                    value="dictionary.com",
+                    support_runs=2,
+                    support_count=2,
+                    examples=["food cost percentage definition"],
+                )
+            ],
+        ),
     )
     monkeypatch.setattr(
         "nichefinder_cli.viewer_server.load_final_review",
-        lambda profiles=None, min_runs=2, limit=9: {
-            "summary": [{"slug": "restaurant", "runs": 3, "approved_noise": 1, "approved_validity": 2, "approved_legitimacy": 1}],
-            "shared_valid_keywords": ["food cost percentage"],
-            "shared_trusted_domains": ["restaurant.org"],
-            "profiles": [],
-        },
+        lambda profiles=None, min_runs=2, limit=9: FinalReviewResponse(
+            summary=[
+                ReviewProfileSummary(
+                    slug="restaurant",
+                    site_name="Restaurant",
+                    site_url="https://example.com",
+                    runs=3,
+                    approved_noise=1,
+                    approved_validity=2,
+                    approved_legitimacy=1,
+                )
+            ],
+            shared_valid_keywords=["food cost percentage"],
+            shared_trusted_domains=["restaurant.org"],
+            profiles=[],
+        ),
     )
     monkeypatch.setattr(
         "nichefinder_cli.viewer_server.switch_active_profile",
@@ -155,7 +256,43 @@ def test_viewer_server_profile_and_training_endpoints(monkeypatch, tmp_path: Pat
     )
     monkeypatch.setattr(
         "nichefinder_cli.viewer_server.approve_training_review",
-        lambda **kwargs: {"profile": {"slug": kwargs["profile_slug"], "site_name": "Restaurant", "site_url": "https://example.com", "runs": 3, "approved_noise": 1, "approved_validity": 3, "approved_legitimacy": 1}, "approved": {"noise": {"keyword_phrases": [], "secondary_phrases": [], "domains": []}, "validity": {"keyword_phrases": ["food cost percentage"], "secondary_phrases": []}, "legitimacy": {"domains": []}}, "candidates": []},
+        lambda **kwargs: TrainingReviewResponse(
+            profile=ReviewProfileSummary(
+                slug=kwargs["profile_slug"],
+                site_name="Restaurant",
+                site_url="https://example.com",
+                runs=3,
+                approved_noise=1,
+                approved_validity=3,
+                approved_legitimacy=1,
+            ),
+            approved=ApprovedTrainingResponse(
+                noise=ApprovedNoiseResponse(keyword_phrases=[], secondary_phrases=[], domains=[]),
+                validity={"keyword_phrases": ["food cost percentage"], "secondary_phrases": []},
+                legitimacy=ApprovedLegitimacyResponse(domains=[]),
+            ),
+            candidates=[],
+        ),
+    )
+    monkeypatch.setattr(
+        "nichefinder_cli.viewer_server.approve_noise_review",
+        lambda **kwargs: NoiseReviewResponse(
+            profile=ReviewProfileSummary(
+                slug=kwargs["profile_slug"],
+                site_name="Restaurant",
+                site_url="https://example.com",
+                runs=3,
+                approved_noise=2,
+                approved_validity=2,
+                approved_legitimacy=1,
+            ),
+            approved=ApprovedNoiseResponse(
+                keyword_phrases=["web design"],
+                secondary_phrases=["mobile optimization"],
+                domains=["dictionary.com"],
+            ),
+            candidates=[],
+        ),
     )
     monkeypatch.setattr(
         "nichefinder_cli.viewer_server.load_profile_config",
@@ -211,6 +348,9 @@ def test_viewer_server_profile_and_training_endpoints(monkeypatch, tmp_path: Pat
         training = urlopen(f"{base}/api/training-review?profile=restaurant").read().decode("utf-8")
         assert "food cost percentage" in training
 
+        noise_review = urlopen(f"{base}/api/noise-review?profile=restaurant").read().decode("utf-8")
+        assert "dictionary.com" in noise_review
+
         final_review = urlopen(f"{base}/api/final-review?profiles=restaurant").read().decode("utf-8")
         assert "restaurant.org" in final_review
 
@@ -220,8 +360,8 @@ def test_viewer_server_profile_and_training_endpoints(monkeypatch, tmp_path: Pat
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-        switched = urlopen(switch_req).read().decode("utf-8")
-        assert '"active_profile": "restaurant"' in switched
+        switched = json.loads(urlopen(switch_req).read().decode("utf-8"))
+        assert switched["active_profile"] == "restaurant"
 
         approve_req = Request(
             f"{base}/api/training-approve",
@@ -229,11 +369,20 @@ def test_viewer_server_profile_and_training_endpoints(monkeypatch, tmp_path: Pat
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-        approved = urlopen(approve_req).read().decode("utf-8")
-        assert '"approved_validity": 3' in approved
+        approved = json.loads(urlopen(approve_req).read().decode("utf-8"))
+        assert approved["profile"]["approved_validity"] == 3
 
-        config = urlopen(f"{base}/api/profile-config?profile=restaurant").read().decode("utf-8")
-        assert '"profile": "restaurant"' in config
+        noise_req = Request(
+            f"{base}/api/noise-approve",
+            data=b'{"profile":"restaurant","keyword_phrases":["web design"]}',
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        noise_approved = json.loads(urlopen(noise_req).read().decode("utf-8"))
+        assert noise_approved["profile"]["approved_noise"] == 2
+
+        config = json.loads(urlopen(f"{base}/api/profile-config?profile=restaurant").read().decode("utf-8"))
+        assert config["profile"] == "restaurant"
 
         create_req = Request(
             f"{base}/api/profiles",
@@ -241,15 +390,15 @@ def test_viewer_server_profile_and_training_endpoints(monkeypatch, tmp_path: Pat
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-        created = urlopen(create_req).read().decode("utf-8")
-        assert '"slug": "salon"' in created
+        created = json.loads(urlopen(create_req).read().decode("utf-8"))
+        assert created["slug"] == "salon"
 
         delete_req = Request(
             f"{base}/api/profiles/salon",
             method="DELETE",
         )
-        deleted = urlopen(delete_req).read().decode("utf-8")
-        assert '"deleted": "salon"' in deleted
+        deleted = json.loads(urlopen(delete_req).read().decode("utf-8"))
+        assert deleted["deleted"] == "salon"
 
         delete_post_req = Request(
             f"{base}/api/profiles/delete",
@@ -257,8 +406,8 @@ def test_viewer_server_profile_and_training_endpoints(monkeypatch, tmp_path: Pat
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-        deleted_post = urlopen(delete_post_req).read().decode("utf-8")
-        assert '"deleted": "salon"' in deleted_post
+        deleted_post = json.loads(urlopen(delete_post_req).read().decode("utf-8"))
+        assert deleted_post["deleted"] == "salon"
 
         save_req = Request(
             f"{base}/api/profile-config",
@@ -293,6 +442,30 @@ def test_viewer_server_rejects_invalid_training_payload(monkeypatch, tmp_path: P
         bad_req = Request(
             f"{base}/api/training-approve",
             data=b'{"profile":"restaurant","valid_keyword_phrases":{"bad":"shape"}}',
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            urlopen(bad_req)
+            assert False, "expected invalid payload request to fail"
+        except HTTPError as exc:
+            assert exc.code == 400
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+
+def test_viewer_server_rejects_invalid_noise_payload(monkeypatch, tmp_path: Path):
+    settings = Settings(database_url=f"sqlite:///{tmp_path / 'seo.db'}")
+    monkeypatch.setattr("nichefinder_cli.viewer_server.approve_noise_review", lambda **kwargs: kwargs)
+
+    server, thread = _start_server(settings)
+    base = f"http://127.0.0.1:{server.server_port}"
+    try:
+        bad_req = Request(
+            f"{base}/api/noise-approve",
+            data=b'{"profile":"restaurant","keyword_phrases":{"bad":"shape"}}',
             headers={"Content-Type": "application/json"},
             method="POST",
         )
@@ -490,8 +663,8 @@ def test_viewer_server_rejects_non_loopback_write_without_token(monkeypatch, tmp
     settings = Settings(database_url=f"sqlite:///{tmp_path / 'seo.db'}")
 
     monkeypatch.setattr(
-        "nichefinder_cli.viewer_server.ViewerHandler._client_is_loopback",
-        lambda self: False,
+        "nichefinder_cli.viewer_server._client_is_loopback",
+        lambda request: False,
     )
 
     server, thread = _start_server(settings)
@@ -628,6 +801,118 @@ def test_viewer_server_exposes_articles_report_and_budget(tmp_path: Path):
         gemini = next(item for item in budget["usage"] if item["provider"] == "gemini")
         assert gemini["tokens_in"] == 12
         assert gemini["tokens_out"] == 34
+
+        status_detail = json.loads(urlopen(f"{base}/api/status/detail").read().decode("utf-8"))
+        assert status_detail["active_profile"] == "default"
+        assert status_detail["database_url"] == settings.database_url
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+
+def test_viewer_server_exposes_typed_keyword_reads(tmp_path: Path):
+    settings = Settings(database_url=f"sqlite:///{tmp_path / 'seo.db'}")
+    create_db_and_tables(settings)
+    with get_session(settings) as session:
+        repository = SeoRepository(session)
+        primary = repository.upsert_keyword(
+            Keyword(
+                term="ai roadmap consulting",
+                seed_keyword="ai roadmap consulting",
+                source="manual",
+                search_intent=SearchIntent.COMMERCIAL,
+                trend_direction="up",
+                monthly_volume=700,
+                difficulty_score=28,
+                opportunity_score=72.0,
+            )
+        )
+        primary_id = primary.id
+        repository.upsert_keyword(
+            Keyword(
+                term="ai product strategy",
+                seed_keyword="ai product strategy",
+                source="manual",
+                search_intent=SearchIntent.INFORMATIONAL,
+                trend_direction="stable",
+                monthly_volume=450,
+                difficulty_score=31,
+                opportunity_score=66.0,
+            )
+        )
+        repository.save_content_brief(
+            primary_id,
+            ContentBrief(
+                target_keyword=primary.term,
+                secondary_keywords=["ai strategy consultant"],
+                content_type=ContentType.HOW_TO,
+                suggested_title="AI roadmap consulting guide",
+                suggested_h2_structure=["Roadmap basics"],
+                questions_to_answer=["What goes into a roadmap?"],
+                word_count_target=1800,
+                tone="practical",
+                cta_type="contact_form",
+                competing_urls=["https://example.com"],
+                is_rewrite=False,
+            ),
+        )
+        serp = repository.create_serp_result(
+            SerpResult(
+                keyword_id=primary_id,
+                features_json="{}",
+                pages_json=json.dumps(
+                    [{"position": 1, "domain": "example.com", "title": "Example", "url": "https://example.com"}]
+                ),
+                competition_analysis=json.dumps({"rankable": True, "competition_level": "medium"}),
+            )
+        )
+        repository.create_competitor_page(
+            CompetitorPage(
+                serp_result_id=serp.id,
+                url="https://example.com",
+                title="Example",
+                word_count=1300,
+                h1="Example",
+                h2_list="[]",
+                h3_list="[]",
+                questions_answered="[]",
+                internal_link_count=3,
+                external_link_count=1,
+                has_schema_markup=False,
+                estimated_reading_time_min=7,
+                content_summary="Compact summary",
+            )
+        )
+        repository.create_article(
+            Article(
+                keyword_id=primary_id,
+                title="AI roadmap consulting guide",
+                slug="ai-roadmap-consulting-guide",
+                content_type=ContentType.HOW_TO,
+                status="draft",
+                word_count=1400,
+                file_path=str(tmp_path / "article.md"),
+            ),
+            "# Draft body",
+        )
+
+    server, thread = _start_server(settings)
+    base = f"http://127.0.0.1:{server.server_port}"
+    try:
+        keywords = json.loads(urlopen(f"{base}/api/keywords").read().decode("utf-8"))
+        assert len(keywords["keywords"]) == 2
+        assert keywords["keywords"][0]["term"] == "ai roadmap consulting"
+
+        clusters = json.loads(urlopen(f"{base}/api/keyword-clusters").read().decode("utf-8"))
+        assert clusters["clusters"][0]["cluster_name"] == "ai"
+        assert len(clusters["clusters"][0]["keyword_ids"]) == 2
+
+        detail = json.loads(urlopen(f"{base}/api/keywords/{primary_id}").read().decode("utf-8"))
+        assert detail["keyword"]["term"] == "ai roadmap consulting"
+        assert detail["serp"]["competition"]["competition_level"] == "medium"
+        assert detail["brief"]["title"] == "AI roadmap consulting guide"
+        assert detail["articles"][0]["content_preview"] == "# Draft body"
     finally:
         server.shutdown()
         server.server_close()
@@ -817,6 +1102,187 @@ def test_viewer_server_runs_write_job(monkeypatch, tmp_path: Path):
         try:
             urlopen(invalid_req)
             assert False, "expected non-boolean force to fail"
+        except HTTPError as exc:
+            assert exc.code == 400
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+
+def test_viewer_server_runs_rewrite_job(monkeypatch, tmp_path: Path):
+    settings = Settings(database_url=f"sqlite:///{tmp_path / 'seo.db'}")
+
+    def fake_rewrite(profile_slug=None, url="", settings_override=None):
+        return {
+            "profile": profile_slug or "default",
+            "url": url,
+            "article": {
+                "article_id": "article_rewrite",
+                "file_path": "/tmp/rewrite.md",
+                "word_count": 1337,
+                "title": "Rewritten Article",
+                "meta_description": "Rewrite description",
+                "slug": "rewritten-article",
+            },
+        }
+
+    monkeypatch.setattr("nichefinder_cli.viewer_jobs.run_rewrite_article_action", fake_rewrite)
+
+    server, thread = _start_server(settings)
+    base = f"http://127.0.0.1:{server.server_port}"
+    try:
+        submit_req = Request(
+            f"{base}/api/jobs",
+            data=b'{"action":"rewrite","params":{"profile":"restaurant","url":"https://example.com/post"}}',
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        submitted = json.loads(urlopen(submit_req).read().decode("utf-8"))
+        assert submitted["action"] == "rewrite"
+        assert submitted["params"]["url"] == "https://example.com/post"
+
+        job = submitted
+        for _ in range(20):
+            job = json.loads(urlopen(f"{base}/api/jobs/{submitted['id']}").read().decode("utf-8"))
+            if job["status"] == "succeeded":
+                break
+            time.sleep(0.05)
+
+        assert job["status"] == "succeeded"
+        assert job["result"]["article"]["article_id"] == "article_rewrite"
+
+        invalid_req = Request(
+            f"{base}/api/jobs",
+            data=b'{"action":"rewrite","params":{"url":""}}',
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            urlopen(invalid_req)
+            assert False, "expected empty rewrite url to fail"
+        except HTTPError as exc:
+            assert exc.code == 400
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+
+def test_viewer_server_runs_monitor_sync_job(monkeypatch, tmp_path: Path):
+    settings = Settings(database_url=f"sqlite:///{tmp_path / 'seo.db'}")
+
+    def fake_monitor_sync(profile_slug=None, days=7, property_url=None, settings_override=None):
+        return {
+            "profile": profile_slug or "default",
+            "days": days,
+            "property_url": property_url or "sc-domain:example.com",
+            "start_date": "2026-04-15",
+            "end_date": "2026-04-21",
+            "total_rows": 12,
+            "inserted": 9,
+            "updated": 3,
+        }
+
+    monkeypatch.setattr("nichefinder_cli.viewer_jobs.run_monitor_sync_action", fake_monitor_sync)
+
+    server, thread = _start_server(settings)
+    base = f"http://127.0.0.1:{server.server_port}"
+    try:
+        submit_req = Request(
+            f"{base}/api/jobs",
+            data=b'{"action":"monitor-sync","params":{"days":14,"property_url":"sc-domain:example.com"}}',
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        submitted = json.loads(urlopen(submit_req).read().decode("utf-8"))
+        assert submitted["action"] == "monitor-sync"
+        assert submitted["params"]["days"] == 14
+
+        job = submitted
+        for _ in range(20):
+            job = json.loads(urlopen(f"{base}/api/jobs/{submitted['id']}").read().decode("utf-8"))
+            if job["status"] == "succeeded":
+                break
+            time.sleep(0.05)
+
+        assert job["status"] == "succeeded"
+        assert job["result"]["inserted"] == 9
+        assert job["result"]["updated"] == 3
+
+        invalid_req = Request(
+            f"{base}/api/jobs",
+            data=b'{"action":"monitor-sync","params":{"days":0}}',
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            urlopen(invalid_req)
+            assert False, "expected invalid monitor-sync days to fail"
+        except HTTPError as exc:
+            assert exc.code == 400
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+
+def test_viewer_server_runs_rank_check_job(monkeypatch, tmp_path: Path):
+    settings = Settings(database_url=f"sqlite:///{tmp_path / 'seo.db'}")
+
+    def fake_rank_check(profile_slug=None, skip_recent=True, settings_override=None):
+        return {
+            "profile": profile_slug or "default",
+            "skip_recent": skip_recent,
+            "rows": [
+                {
+                    "article_id": "article_1",
+                    "article_title": "AI Guide",
+                    "keyword_id": "kw_1",
+                    "keyword_term": "ai consultant",
+                    "last_position": 8,
+                    "current_position": 5,
+                    "change": 3,
+                    "checked_at": "2026-04-24T18:35:00+00:00",
+                }
+            ],
+        }
+
+    monkeypatch.setattr("nichefinder_cli.viewer_jobs.run_rank_check_action", fake_rank_check)
+
+    server, thread = _start_server(settings)
+    base = f"http://127.0.0.1:{server.server_port}"
+    try:
+        submit_req = Request(
+            f"{base}/api/jobs",
+            data=b'{"action":"rank-check","params":{"skip_recent":false}}',
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        submitted = json.loads(urlopen(submit_req).read().decode("utf-8"))
+        assert submitted["action"] == "rank-check"
+        assert submitted["params"]["skip_recent"] is False
+
+        job = submitted
+        for _ in range(20):
+            job = json.loads(urlopen(f"{base}/api/jobs/{submitted['id']}").read().decode("utf-8"))
+            if job["status"] == "succeeded":
+                break
+            time.sleep(0.05)
+
+        assert job["status"] == "succeeded"
+        assert job["result"]["rows"][0]["current_position"] == 5
+        assert job["result"]["rows"][0]["change"] == 3
+
+        invalid_req = Request(
+            f"{base}/api/jobs",
+            data=b'{"action":"rank-check","params":{"skip_recent":"no"}}',
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            urlopen(invalid_req)
+            assert False, "expected non-boolean skip_recent to fail"
         except HTTPError as exc:
             assert exc.code == 400
     finally:

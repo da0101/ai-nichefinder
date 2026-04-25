@@ -1,7 +1,13 @@
 import json
 from pathlib import Path
 
-from nichefinder_cli.viewer_data import load_dashboard, load_keyword_detail
+from nichefinder_cli.viewer_data import (
+    load_dashboard,
+    load_keyword_clusters,
+    load_keyword_detail,
+    load_keywords,
+    load_status,
+)
 from nichefinder_core.models import (
     Article,
     CompetitorPage,
@@ -105,17 +111,24 @@ def test_keyword_detail_payload_includes_saved_work(tmp_path: Path):
         keyword_id = keyword.id
 
     dashboard = load_dashboard(settings)
+    keywords = load_keywords(settings)
+    clusters = load_keyword_clusters(settings)
     detail = load_keyword_detail(settings, keyword_id)
 
     assert dashboard["summary"]["total_keywords"] == 1
     assert dashboard["summary"]["articles"] == 1
     assert dashboard["keywords"][0]["term"] == "ai roadmap consulting"
+    assert keywords.keywords[0].term == "ai roadmap consulting"
+    assert clusters.clusters[0].cluster_name == "ai"
+    assert clusters.clusters[0].keyword_terms == ["ai roadmap consulting"]
     assert detail is not None
-    assert detail["keyword"]["term"] == "ai roadmap consulting"
-    assert detail["serp"]["competition"]["competition_level"] == "medium"
-    assert detail["brief"]["title"] == "AI roadmap consulting guide"
-    assert detail["articles"][0]["content_preview"] == "# Draft body"
-    assert len(detail["competitors"]) == 1
+    assert detail.keyword.term == "ai roadmap consulting"
+    assert detail.serp is not None
+    assert detail.serp.competition.competition_level == "medium"
+    assert detail.brief is not None
+    assert detail.brief.title == "AI roadmap consulting guide"
+    assert detail.articles[0].content_preview == "# Draft body"
+    assert len(detail.competitors) == 1
 
 
 def test_keyword_detail_returns_none_for_missing_id(tmp_path: Path):
@@ -124,3 +137,16 @@ def test_keyword_detail_returns_none_for_missing_id(tmp_path: Path):
     detail = load_keyword_detail(settings, "missing")
 
     assert detail is None
+
+
+def test_status_payload_reflects_runtime_settings(tmp_path: Path):
+    settings = _settings(tmp_path)
+
+    payload = load_status(settings)
+
+    assert payload.active_profile == "default"
+    assert payload.environment == settings.app_env
+    assert payload.database_url == settings.database_url
+    assert payload.site_config_path.endswith("data/site_config.json")
+    assert payload.gemini_configured == settings.gemini_ready
+    assert payload.serpapi_configured == settings.serpapi_ready

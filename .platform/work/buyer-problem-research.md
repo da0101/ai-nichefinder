@@ -130,8 +130,8 @@ seed / profile context
 
 | Severity | Repo | Finding |
 |:---:|---|---|
-| 🟢 Clean | repo-primary | Article fetching still routes through bounded source/scraper paths rather than direct Google scraping. [packages/core/src/nichefinder_core/sources/scraper.py:47](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/packages/core/src/nichefinder_core/sources/scraper.py:47) |
-| 🟡 Medium | repo-primary | Local viewer mutating endpoints have no Origin/Content-Type guard if bound beyond localhost. [apps/cli/src/nichefinder_cli/commands/viewer.py:10](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/apps/cli/src/nichefinder_cli/commands/viewer.py:10), [apps/cli/src/nichefinder_cli/viewer_server.py:351](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/apps/cli/src/nichefinder_cli/viewer_server.py:351) |
+| 🟢 Clean | repo-primary | Article fetching still routes through bounded source/scraper paths rather than direct Google scraping. [backend/packages/core/src/nichefinder_core/sources/scraper.py:47](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/packages/core/src/nichefinder_core/sources/scraper.py:47) |
+| 🟡 Medium | repo-primary | Local viewer mutating endpoints have no Origin/Content-Type guard if bound beyond localhost. [backend/apps/cli/src/nichefinder_cli/commands/viewer.py:10](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/apps/cli/src/nichefinder_cli/commands/viewer.py:10), [backend/apps/cli/src/nichefinder_cli/viewer_server.py:351](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/apps/cli/src/nichefinder_cli/viewer_server.py:351) |
 
 ---
 
@@ -143,7 +143,7 @@ seed / profile context
 | Buyer-problem discovery and keyword expansion | ✅ Strong | [tests/test_keyword_agent.py:120](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/tests/test_keyword_agent.py:120) |
 | Shortlist scoring / drift control / external validation | ✅ Good | [tests/test_keyword_agent.py:158](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/tests/test_keyword_agent.py:158) |
 | Profile commands, training approval, final review | ✅ Good | [tests/test_cli_phase1.py:349](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/tests/test_cli_phase1.py:349) |
-| Viewer `validate-free` real serialization | 🔴 None | [apps/cli/src/nichefinder_cli/viewer_actions.py:132](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/apps/cli/src/nichefinder_cli/viewer_actions.py:132) |
+| Viewer `validate-free` real serialization | 🔴 None | [backend/apps/cli/src/nichefinder_cli/viewer_actions.py:132](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/apps/cli/src/nichefinder_cli/viewer_actions.py:132) |
 | Full regression gate | ✅ Strong | `uv run pytest -q` -> `107 passed, 1 warning` |
 
 ---
@@ -153,10 +153,10 @@ seed / profile context
 ### repo-primary
 | Component | Status | Location |
 |---|:---:|---|
-| Structured buyer-problem discovery | ✅ Done | [packages/core/src/nichefinder_core/agents/keyword_agent.py:65](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/packages/core/src/nichefinder_core/agents/keyword_agent.py:65) |
-| Problem-led keyword expansion | ✅ Done | [packages/core/src/nichefinder_core/agents/keyword_agent.py:89](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/packages/core/src/nichefinder_core/agents/keyword_agent.py:89) |
-| Article-fit vs business-fit scoring | ✅ Done | [packages/core/src/nichefinder_core/pre_serp.py:251](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/packages/core/src/nichefinder_core/pre_serp.py:251) |
-| Profile-scoped runtime isolation | ✅ Mostly done | [apps/cli/src/nichefinder_cli/runtime.py:245](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/apps/cli/src/nichefinder_cli/runtime.py:245) |
+| Structured buyer-problem discovery | ✅ Done | [backend/packages/core/src/nichefinder_core/agents/keyword_agent.py:65](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/packages/core/src/nichefinder_core/agents/keyword_agent.py:65) |
+| Problem-led keyword expansion | ✅ Done | [backend/packages/core/src/nichefinder_core/agents/keyword_agent.py:89](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/packages/core/src/nichefinder_core/agents/keyword_agent.py:89) |
+| Article-fit vs business-fit scoring | ✅ Done | [backend/packages/core/src/nichefinder_core/pre_serp.py:251](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/packages/core/src/nichefinder_core/pre_serp.py:251) |
+| Profile-scoped runtime isolation | ✅ Mostly done | [backend/apps/cli/src/nichefinder_cli/runtime.py:245](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/apps/cli/src/nichefinder_cli/runtime.py:245) |
 | Operator two-profile setup / final-review evidence | ❌ Missing | [.platform/work/buyer-problem-research.md:41](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.platform/work/buyer-problem-research.md:41) |
 
 ---
@@ -166,7 +166,7 @@ seed / profile context
 ### 🔴 Must Fix (blocking)
 | # | Repo | Issue |
 |---|---|---|
-| 1 | repo-primary | Viewer `validate-free` response serialization references `item.unavailable`, but `ExternalEvidenceValidation` has no such field. [apps/cli/src/nichefinder_cli/viewer_actions.py:132](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/apps/cli/src/nichefinder_cli/viewer_actions.py:132), [packages/core/src/nichefinder_core/pre_serp_external.py:16](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/packages/core/src/nichefinder_core/pre_serp_external.py:16) |
+| 1 | repo-primary | Viewer `validate-free` response serialization references `item.unavailable`, but `ExternalEvidenceValidation` has no such field. [backend/apps/cli/src/nichefinder_cli/viewer_actions.py:132](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/apps/cli/src/nichefinder_cli/viewer_actions.py:132), [backend/packages/core/src/nichefinder_core/pre_serp_external.py:16](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/packages/core/src/nichefinder_core/pre_serp_external.py:16) |
 | 2 | repo-primary | Stream resume state still lists operator profile setup, 3-5 probes per profile, approval, and `final-review` as the next action. [.platform/work/buyer-problem-research.md:41](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.platform/work/buyer-problem-research.md:41) |
 | 3 | repo-primary | Closure is not owner-approved: `closure_approved: false`. [.platform/work/buyer-problem-research.md:13](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.platform/work/buyer-problem-research.md:13) |
 
@@ -174,8 +174,8 @@ seed / profile context
 | # | Repo | Issue | Location |
 |---|---|---|---|
 | 1 | repo-primary | `data/profiles/` runtime artifacts are untracked and not clearly ignored/owned. | [.gitignore:22](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.gitignore:22) |
-| 2 | repo-primary | LangGraph Tavily path appears to unpack `apply_tavily_validation()` as 2 values while the helper returns 3. | [packages/core/src/nichefinder_core/orchestrator/graph.py:76](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/packages/core/src/nichefinder_core/orchestrator/graph.py:76) |
-| 3 | repo-primary | Several touched files exceed the ~300-line guideline. | [packages/core/src/nichefinder_core/free_article_evidence.py:1](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/packages/core/src/nichefinder_core/free_article_evidence.py:1), [apps/cli/src/nichefinder_cli/runtime.py:1](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/apps/cli/src/nichefinder_cli/runtime.py:1) |
+| 2 | repo-primary | LangGraph Tavily path appears to unpack `apply_tavily_validation()` as 2 values while the helper returns 3. | [backend/packages/core/src/nichefinder_core/orchestrator/graph.py:76](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/packages/core/src/nichefinder_core/orchestrator/graph.py:76) |
+| 3 | repo-primary | Several touched files exceed the ~300-line guideline. | [backend/packages/core/src/nichefinder_core/free_article_evidence.py:1](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/packages/core/src/nichefinder_core/free_article_evidence.py:1), [backend/apps/cli/src/nichefinder_cli/runtime.py:1](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/apps/cli/src/nichefinder_cli/runtime.py:1) |
 
 ### ⚪ Known Limitations (document, not block)
 | # | Limitation |

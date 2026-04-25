@@ -4,6 +4,8 @@ One line per completed task. Newest at the top. Append-only.
 
 Format: `YYYY-MM-DD — <task> — <outcome> — <takeaway>`
 
+2026-04-24 — repo-topology-reorg Phase 1 — moved the dashboard to `frontend/dashboard` and the Python workspace to `backend/{apps,packages}`; pytest, frontend build, and `seo view` smoke verification all passed after path updates — a topology reorg is safe only when the runtime entrypoints are re-verified from the new tree, not just when files are moved
+
 2026-04-22 — dashboard interactive testing workspace — extended the React viewer into a browser-driven SEO testing surface with profile management, config editing, training approval, final review, and validate-free actions; viewer/backend tests green at 48 and Vite build green — once profile-scoped SEO workflows exist, the browser must drive them directly or the CLI remains the bottleneck
 
 2026-04-21 — multi-business training isolation — added profile-scoped runtime state, hard reset command, positive/negative training memory, and cross-profile final review; focused pytest suites green at 43 passed — training is only trustworthy when each business learns in its own sandbox and the operator can inspect the final summary before trusting it
@@ -17,6 +19,7 @@ Format: `YYYY-MM-DD — <task> — <outcome> — <takeaway>`
 2026-04-20 — dashboard-rework — React 18 + shadcn/ui dashboard built and served by Python; live 30s polling eliminates server restart requirement — inline HTML in Python strings doesn't scale; dist/ committed to git keeps CLI-first UX intact
 
 ---
+- 2026-04-24 — commit `4129e12`: update — auto-logged
 - 2026-04-24 — commit `318a1f9`: update — auto-logged
 - 2026-04-21 — commit `d8adaff`: chore: absorb log auto-update — auto-logged
 - 2026-04-21 — commit `41ec9e8`: feat: harden free validation and track API integrations — auto-logged
@@ -78,3 +81,6 @@ Format: `YYYY-MM-DD — <task> — <outcome> — <takeaway>`
 2026-04-24 — rest-api-control-plane — added token-or-loopback write guards for mutating endpoints and denial-path coverage — localhost stays usable by default while configured token mode protects cloud-style deployments from open write access
 2026-04-24 — rest-api-control-plane — added allowlisted brief and write jobs with persisted results — content generation can now run through the REST job layer instead of only through the CLI
 2026-04-24 — rest-api-control-plane — added articles/report/budget endpoints plus article approve/publish mutations and settings-aware direct actions — the API now covers more of the non-interactive CLI surface with real DB-backed tests
+2026-04-24 — rest-api-control-plane — added explicit Python API models, matching TypeScript interfaces, and typed rewrite/monitor-sync jobs — the control-plane contract is now much harder to drift between backend, tests, and dashboard code
+2026-04-24 — rest-api-control-plane — added typed noise/training/final review contracts plus noise review/approval REST routes, and fixed default-profile resolution in the review layer — approval workflows need the same explicit contract discipline as jobs and data reads
+2026-04-24 — rest-api-control-plane — replaced the custom viewer HTTP transport with a FastAPI + uvicorn app while keeping the typed action/job layer intact — cloud-ready transport should be standard ASGI, but the application core must stay separate from route handlers

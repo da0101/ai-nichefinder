@@ -36,15 +36,15 @@ Finds keyword opportunities worth considering for `danilulmashev.com` and ranks 
 
 ## Key files
 
-- `apps/cli/src/nichefinder_cli/main.py`
-- `apps/cli/src/nichefinder_cli/workflows.py`
-- `apps/cli/src/nichefinder_cli/commands/keywords.py`
-- `packages/core/src/nichefinder_core/agents/keyword_agent.py`
-- `packages/core/src/nichefinder_core/agents/serp_agent.py`
-- `packages/core/src/nichefinder_core/agents/trend_agent.py`
-- `packages/core/src/nichefinder_core/agents/ads_agent.py`
-- `packages/core/src/nichefinder_core/models/keyword.py`
-- `packages/db/src/nichefinder_db/crud.py`
+- `backend/apps/cli/src/nichefinder_cli/main.py`
+- `backend/apps/cli/src/nichefinder_cli/workflows.py`
+- `backend/apps/cli/src/nichefinder_cli/commands/keywords.py`
+- `backend/packages/core/src/nichefinder_core/agents/keyword_agent.py`
+- `backend/packages/core/src/nichefinder_core/agents/serp_agent.py`
+- `backend/packages/core/src/nichefinder_core/agents/trend_agent.py`
+- `backend/packages/core/src/nichefinder_core/agents/ads_agent.py`
+- `backend/packages/core/src/nichefinder_core/models/keyword.py`
+- `backend/packages/db/src/nichefinder_db/crud.py`
 
 ## Decisions locked
 

@@ -7,9 +7,21 @@ from datetime import datetime, timezone
 
 from nichefinder_cli.viewer_actions import (
     run_generate_brief_action,
+    run_monitor_sync_action,
+    run_rank_check_action,
     run_research_action,
+    run_rewrite_article_action,
     run_validate_free_action,
     run_write_article_action,
+)
+from nichefinder_cli.viewer_api_models import (
+    JobEnvelope,
+    KeywordIdJobParams,
+    MonitorSyncJobParams,
+    RankCheckJobParams,
+    ResearchJobParams,
+    RewriteJobParams,
+    ValidateFreeJobParams,
 )
 from nichefinder_core.models import JobRecord
 from nichefinder_core.settings import Settings, get_settings
@@ -32,8 +44,7 @@ def get_job(job_id: str, settings: Settings | None = None) -> dict | None:
 
 def submit_job(action: str, payload: dict | None = None, settings: Settings | None = None) -> dict:
     params = payload or {}
-    _validate_action(action, params)
-    job_params = _public_params(params)
+    job_params = _validated_job_params(action, params)
     resolved_settings = settings or get_settings()
     with _repository(resolved_settings) as repository:
         job = repository.create_job(action=action, params_json=_json_dump(job_params))
@@ -71,6 +82,25 @@ def _run_job(job_id: str, action: str, params: dict, settings: Settings) -> None
                 force=bool(params.get("force", False)),
                 settings_override=settings,
             )
+        elif action == "rewrite":
+            result = run_rewrite_article_action(
+                profile_slug=params.get("profile"),
+                url=str(params.get("url", "")).strip(),
+                settings_override=settings,
+            )
+        elif action == "monitor-sync":
+            result = run_monitor_sync_action(
+                profile_slug=params.get("profile"),
+                days=int(params.get("days", 7)),
+                property_url=params.get("property_url"),
+                settings_override=settings,
+            )
+        elif action == "rank-check":
+            result = run_rank_check_action(
+                profile_slug=params.get("profile"),
+                skip_recent=bool(params.get("skip_recent", True)),
+                settings_override=settings,
+            )
         else:
             raise ValueError(f"unsupported job action: {action}")
     except Exception as exc:
@@ -79,29 +109,23 @@ def _run_job(job_id: str, action: str, params: dict, settings: Settings) -> None
     _update_job(settings, job_id, status="succeeded", result_json=_json_dump(result), finished_at=_utcnow())
 
 
-def _validate_action(action: str, params: dict) -> None:
-    if action not in {"validate-free", "research", "brief", "write"}:
+def _validated_job_params(action: str, params: dict) -> dict:
+    if action == "validate-free":
+        validated = ValidateFreeJobParams.model_validate(params)
+    elif action == "research":
+        validated = ResearchJobParams.model_validate(params)
+    elif action in {"brief", "write"}:
+        validated = KeywordIdJobParams.model_validate(params)
+    elif action == "rewrite":
+        validated = RewriteJobParams.model_validate(params)
+    elif action == "monitor-sync":
+        validated = MonitorSyncJobParams.model_validate(params)
+    elif action == "rank-check":
+        validated = RankCheckJobParams.model_validate(params)
+    else:
         raise ValueError(f"unsupported job action: {action}")
-    if action in {"validate-free", "research"}:
-        keyword = str(params.get("keyword", "")).strip()
-        if not keyword:
-            raise ValueError("keyword is required")
-    if action in {"brief", "write"}:
-        keyword_id = str(params.get("keyword_id", "")).strip()
-        if not keyword_id:
-            raise ValueError("keyword_id is required")
-    sources = params.get("sources")
-    if action == "research" and sources is not None:
-        raise ValueError("sources are only supported for validate-free jobs")
-    if action in {"brief", "write"} and sources is not None:
-        raise ValueError("sources are only supported for validate-free jobs")
-    force = params.get("force")
-    if force is not None and not isinstance(force, bool):
-        raise ValueError("force must be a boolean")
-    if sources is not None and not isinstance(sources, list):
-        raise ValueError("sources must be a list")
-    if sources is not None and not all(isinstance(item, str) and item for item in sources):
-        raise ValueError("sources must contain non-empty strings")
+    envelope = JobEnvelope(action=action, params=validated)
+    return envelope.params.model_dump(exclude_none=True)
 
 
 def _update_job(settings: Settings, job_id: str, **changes) -> None:
@@ -125,7 +149,7 @@ def _public_job(job: JobRecord) -> dict:
 
 
 def _public_params(params: dict) -> dict:
-    allowed = {"profile", "keyword", "keyword_id", "sources", "force"}
+    allowed = {"profile", "keyword", "keyword_id", "sources", "force", "url", "days", "property_url", "skip_recent"}
     public = {key: value for key, value in params.items() if key in allowed}
     if "keyword" in public or "keyword" in params:
         public["keyword"] = str(public.get("keyword", "")).strip()
@@ -143,6 +167,8 @@ def _repository(settings: Settings | None = None):
 
 
 def _json_dump(value: object) -> str:
+    if hasattr(value, "model_dump"):
+        return json.dumps(value.model_dump(mode="json"))
     return json.dumps(value)
 
 

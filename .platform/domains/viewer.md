@@ -13,20 +13,20 @@ The local web viewer (`seo view`) is a Python HTTP server that serves a React + 
 
 | Layer | Path | Role |
 |---|---|---|
-| CLI command | `apps/cli/src/nichefinder_cli/commands/viewer.py` | `seo view` entrypoint, launches server |
-| Data layer | `apps/cli/src/nichefinder_cli/viewer_data.py` | Reads from SQLite via `SeoRepository`, returns JSON |
-| Server | `apps/cli/src/nichefinder_cli/viewer_server.py` | HTTP server — serves React dist/ + JSON API |
-| React app | `apps/dashboard/` | Vite + React 18 + TypeScript + Tailwind + shadcn/ui |
-| Built assets | `apps/dashboard/dist/` | Pre-built, committed — served by Python server |
-| Repository | `packages/db/src/nichefinder_db/crud.py` | `SeoRepository` methods consumed by viewer_data |
-| Models | `packages/db/src/nichefinder_db/models.py` | ORM tables; viewer reads `OpportunityScoreRecord`, `Keyword`, `Article` |
+| CLI command | `backend/apps/cli/src/nichefinder_cli/commands/viewer.py` | `seo view` entrypoint, launches server |
+| Data layer | `backend/apps/cli/src/nichefinder_cli/viewer_data.py` | Reads from SQLite via `SeoRepository`, returns JSON |
+| Server | `backend/apps/cli/src/nichefinder_cli/viewer_server.py` | HTTP server — serves React dist/ + JSON API |
+| React app | `frontend/dashboard/` | Vite + React 18 + TypeScript + Tailwind + shadcn/ui |
+| Built assets | `frontend/dashboard/dist/` | Pre-built, committed — served by Python server |
+| Repository | `backend/packages/db/src/nichefinder_db/crud.py` | `SeoRepository` methods consumed by viewer_data |
+| Models | `backend/packages/db/src/nichefinder_db/models.py` | ORM tables; viewer reads `OpportunityScoreRecord`, `Keyword`, `Article` |
 
 ## Invariants
 
 1. The viewer is local-only and may perform only low-risk testing actions: switching profiles, creating profiles, saving profile config, approving training signals, and triggering `validate-free`.
 2. It starts on `localhost:8765` by default; port is configurable.
 3. All data is served from local SQLite — no external API calls from the viewer.
-4. `apps/dashboard/dist/` is committed to git so `seo view` works without running `npm install`.
+4. `frontend/dashboard/dist/` is committed to git so `seo view` works without running `npm install`.
 5. If `dist/index.html` is missing, the server falls back to the legacy inline HTML — `seo view` never hard-fails.
 6. All `/api/` routes are handled by Python; the React app calls them via `fetch('/api/...')`.
 
@@ -48,7 +48,7 @@ The local web viewer (`seo view`) is a Python HTTP server that serves a React + 
 | `GET /api/final-review` | `viewer_profile_data.load_final_review()` | JSON: cross-profile summary |
 | `POST /api/validate-free` | `viewer_actions.run_validate_free_action()` | JSON: structured validation result bundle |
 
-## React app structure (`apps/dashboard/src/`)
+## React app structure (`frontend/dashboard/src/`)
 
 | File | Role |
 |---|---|
@@ -73,8 +73,8 @@ The local web viewer (`seo view`) is a Python HTTP server that serves a React + 
 
 ## Dev loop
 
-- **Prod (`seo view`):** Python serves `dist/`. Rebuild with `cd apps/dashboard && npm run build` when frontend changes.
-- **Dev (frontend):** `cd apps/dashboard && npm run dev` — Vite on :5173 proxies `/api/` to :8765. Run Python server separately.
+- **Prod (`seo view`):** Python serves `dist/`. Rebuild with `cd frontend/dashboard && npm run build` when frontend changes.
+- **Dev (frontend):** `cd frontend/dashboard && npm run dev` — Vite on :5173 proxies `/api/` to :8765. Run Python server separately.
 
 ## Score sub-components
 

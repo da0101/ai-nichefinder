@@ -35,12 +35,12 @@ Measures whether published articles are actually improving search visibility and
 
 ## Key files
 
-- `apps/cli/src/nichefinder_cli/commands/ranks.py`
-- `apps/cli/src/nichefinder_cli/main.py`
-- `apps/cli/src/nichefinder_cli/workflows.py`
-- `packages/core/src/nichefinder_core/models/tracking.py`
-- `packages/core/src/nichefinder_core/sources/serpapi.py`
-- `packages/db/src/nichefinder_db/crud.py`
+- `backend/apps/cli/src/nichefinder_cli/commands/ranks.py`
+- `backend/apps/cli/src/nichefinder_cli/main.py`
+- `backend/apps/cli/src/nichefinder_cli/workflows.py`
+- `backend/packages/core/src/nichefinder_core/models/tracking.py`
+- `backend/packages/core/src/nichefinder_core/sources/serpapi.py`
+- `backend/packages/db/src/nichefinder_db/crud.py`
 
 ## Decisions locked
 

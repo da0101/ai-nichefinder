@@ -8,7 +8,7 @@ This repo consumes external HTTP APIs and now exposes a local REST control-plane
 
 ## Rules
 
-- Every outbound provider gets a dedicated adapter client in `packages/core/src/nichefinder_core/sources/` or `packages/core/src/nichefinder_core/gemini/`.
+- Every outbound provider gets a dedicated adapter client in `backend/packages/core/src/nichefinder_core/sources/` or `backend/packages/core/src/nichefinder_core/gemini/`.
 - Budget checks, rate limiting, and response parsing belong in the adapter or the domain agent, not in CLI commands.
 - Commands and workflows should operate on normalized models or simple domain dicts rather than raw provider payloads.
 - If a provider can incur cost, usage must be recorded or at least be easy to add to `ApiUsageRecord`.

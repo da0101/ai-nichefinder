@@ -3,7 +3,7 @@
 > Read this first — every session, every agent (Claude, Codex, Gemini).
 > 30-second orientation: what we're building, why, and where we stand.
 
-**Features:** gsc-monitoring, serp-pipeline-fix, buyer-problem-research, dashboard-rework, reddit-api-integration, google-ads-api-integration, rest-api-control-plane
+**Features:** gsc-monitoring, serp-pipeline-fix, buyer-problem-research, dashboard-rework, reddit-api-integration, google-ads-api-integration, rest-api-control-plane, repo-topology-reorg
 **Status:** mixed active states (in-progress, blocked, planning)
 
 ---
@@ -30,7 +30,8 @@ The current pipeline still proposes many commercially flavored but unwinnable qu
 - **Active:** buyer-problem-research on top of the current keyword-research flow
 - Also active: gsc-monitoring, serp-pipeline-fix, dashboard-rework
 - Newly tracked: reddit-api-integration (blocked waiting on Reddit approval), google-ads-api-integration (planning)
-- REST control-plane is active again: typed local jobs now cover validation, research, brief generation, and article writing, and the API also exposes article/report/budget reads plus approve/publish mutations, with SQLite-persisted job status and loopback-or-token write guards.
+- REST control-plane is active again: the transport boundary now runs on FastAPI, typed local jobs cover validation, research, brief generation, article writing, rewrite, GSC monitor sync, and rank checks, and the API also exposes article/report/budget/status plus keyword reads, typed training/noise/final review routes, approve/publish mutations, SQLite-persisted job status, and loopback-or-token write guards.
+- Repo-topology reorg is now in progress: Phase 1 moved the dashboard to `frontend/dashboard` and the Python workspace to `backend/{apps,packages}`, with pytest, dashboard build, and `seo view` smoke verification green.
 - Next after this: GA4 provider → source registry → LangGraph interrupt/resume
 
 ## Relevant context
@@ -40,16 +41,18 @@ The current pipeline still proposes many commercially flavored but unwinnable qu
 - `.platform/work/reddit-api-integration.md`
 - `.platform/work/google-ads-api-integration.md`
 - `.platform/work/rest-api-control-plane.md`
+- `.platform/work/repo-topology-reorg.md`
 - `.platform/domains/buyer-problem-research.md`
 - `.platform/domains/gsc-monitoring.md`
 - `.platform/domains/keyword-research.md`
 - `.platform/domains/rest-api-control-plane.md`
-- `packages/core/src/nichefinder_core/pre_serp.py` — deterministic pre-SERP shortlist scoring
+- `.platform/domains/repo-topology.md`
+- `backend/packages/core/src/nichefinder_core/pre_serp.py` — deterministic pre-SERP shortlist scoring
 - `.platform/work/dashboard-rework.md`
 - `.platform/domains/viewer.md`
-- `apps/cli/src/nichefinder_cli/viewer_server.py`
-- `apps/dashboard/` — React + shadcn/ui dashboard (new)
-- `packages/core/src/nichefinder_core/models/tracking.py` — SearchConsoleRecord model
-- `packages/db/src/nichefinder_db/crud.py` — save_search_console_record / list_search_console_records
+- `backend/apps/cli/src/nichefinder_cli/viewer_server.py`
+- `frontend/dashboard/` — React + shadcn/ui dashboard (new)
+- `backend/packages/core/src/nichefinder_core/models/tracking.py` — SearchConsoleRecord model
+- `backend/packages/db/src/nichefinder_db/crud.py` — save_search_console_record / list_search_console_records
 
 **Never load:** `work/archive/*`

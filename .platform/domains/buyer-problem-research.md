@@ -36,12 +36,12 @@ Finds real buyer problems that can turn into rankable article opportunities befo
 
 ## Key files
 
-- `apps/cli/src/nichefinder_cli/workflows.py`
-- `packages/core/src/nichefinder_core/agents/keyword_agent.py`
-- `packages/core/src/nichefinder_core/gemini/prompts.py`
-- `packages/core/src/nichefinder_core/pre_serp.py`
-- `packages/core/src/nichefinder_core/models/site.py`
-- `packages/db/src/nichefinder_db/crud.py`
+- `backend/apps/cli/src/nichefinder_cli/workflows.py`
+- `backend/packages/core/src/nichefinder_core/agents/keyword_agent.py`
+- `backend/packages/core/src/nichefinder_core/gemini/prompts.py`
+- `backend/packages/core/src/nichefinder_core/pre_serp.py`
+- `backend/packages/core/src/nichefinder_core/models/site.py`
+- `backend/packages/db/src/nichefinder_db/crud.py`
 
 ## Decisions locked
 

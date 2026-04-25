@@ -17,7 +17,7 @@ closure_approved: false
 
 ## Scope
 
-- Replace the inline HTML/JS viewer with a React 18 + shadcn/ui + Tailwind app at `apps/dashboard/`
+- Replace the inline HTML/JS viewer with a React 18 + shadcn/ui + Tailwind app at `frontend/dashboard/`
 - Add live polling (30s interval) so DB updates are visible without restarting the server
 - Python server serves built `dist/` static files; all existing `/api/` routes unchanged
 - Built `dist/` committed to git so `seo view` works without a node build step
@@ -25,7 +25,7 @@ closure_approved: false
 
 ## Done criteria
 
-- [x] `apps/dashboard/` scaffolded with Vite + React 18 + TypeScript + Tailwind + shadcn/ui
+- [x] `frontend/dashboard/` scaffolded with Vite + React 18 + TypeScript + Tailwind + shadcn/ui
 - [x] Dashboard loads all existing data (stats bar, keyword list, keyword detail, brief, SERP pages)
 - [x] Live polling: stats + sidebar refresh every 30s without page reload
 - [x] `viewer_server.py` serves `dist/` static files; falls back to inline HTML if dist not built
@@ -76,7 +76,7 @@ _None_
 
 - The two audit blockers are resolved in code: `seo view` now attempts a browser open and the selected keyword detail now refreshes on the polling cadence.
 - Viewer-server regression coverage now exists for static assets, traversal rejection, and inline fallback.
-- The stream is still waiting on human local verification. Frontend hook/component tests remain unbuilt because there is no existing React test harness in `apps/dashboard`, but that is not one of this stream's formal done criteria.
+- The stream is still waiting on human local verification. Frontend hook/component tests remain unbuilt because there is no existing React test harness in `frontend/dashboard`, but that is not one of this stream's formal done criteria.
 
 ---
 
@@ -129,9 +129,9 @@ seo view
 
 | Severity | Repo | Finding |
 |:---:|---|---|
-| 🟢 Clean | repo-primary | Viewer defaults to loopback binding and static path traversal is guarded. [apps/cli/src/nichefinder_cli/commands/viewer.py:11](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/apps/cli/src/nichefinder_cli/commands/viewer.py:11), [apps/cli/src/nichefinder_cli/viewer_server.py:331](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/apps/cli/src/nichefinder_cli/viewer_server.py:331) |
-| 🟡 Medium | repo-primary | State-changing local endpoints accept JSON without Origin/Content-Type checks. [apps/cli/src/nichefinder_cli/viewer_server.py:343](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/apps/cli/src/nichefinder_cli/viewer_server.py:343), [apps/cli/src/nichefinder_cli/viewer_server.py:459](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/apps/cli/src/nichefinder_cli/viewer_server.py:459) |
-| 🟡 Medium | repo-primary | Viewer domain docs say no external API calls, but `/api/validate-free` triggers validation and records Gemini usage. [.platform/domains/viewer.md:28](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.platform/domains/viewer.md:28), [apps/cli/src/nichefinder_cli/viewer_actions.py:61](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/apps/cli/src/nichefinder_cli/viewer_actions.py:61) |
+| 🟢 Clean | repo-primary | Viewer defaults to loopback binding and static path traversal is guarded. [backend/apps/cli/src/nichefinder_cli/commands/viewer.py:11](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/apps/cli/src/nichefinder_cli/commands/viewer.py:11), [backend/apps/cli/src/nichefinder_cli/viewer_server.py:331](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/apps/cli/src/nichefinder_cli/viewer_server.py:331) |
+| 🟡 Medium | repo-primary | State-changing local endpoints accept JSON without Origin/Content-Type checks. [backend/apps/cli/src/nichefinder_cli/viewer_server.py:343](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/apps/cli/src/nichefinder_cli/viewer_server.py:343), [backend/apps/cli/src/nichefinder_cli/viewer_server.py:459](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/apps/cli/src/nichefinder_cli/viewer_server.py:459) |
+| 🟡 Medium | repo-primary | Viewer domain docs say no external API calls, but `/api/validate-free` triggers validation and records Gemini usage. [.platform/domains/viewer.md:28](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.platform/domains/viewer.md:28), [backend/apps/cli/src/nichefinder_cli/viewer_actions.py:61](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/apps/cli/src/nichefinder_cli/viewer_actions.py:61) |
 
 ---
 
@@ -144,7 +144,7 @@ seo view
 | Viewer profile/training/action endpoints | ✅ Good | [tests/test_viewer_server.py:86](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/tests/test_viewer_server.py:86) |
 | Dashboard data payloads | ✅ Good | [tests/test_viewer_data.py:24](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/tests/test_viewer_data.py:24) |
 | CLI profile registry/runtime routing | ✅ Good | [tests/test_cli_phase1.py:349](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/tests/test_cli_phase1.py:349) |
-| Frontend component rendering / interaction | 🔴 None | [apps/dashboard/package.json:6](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/apps/dashboard/package.json:6) |
+| Frontend component rendering / interaction | 🔴 None | [frontend/dashboard/package.json:6](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/frontend/dashboard/package.json:6) |
 | Manual `seo view` verification recorded in stream | 🔴 None | [.platform/work/dashboard-rework.md:37](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.platform/work/dashboard-rework.md:37) |
 | Full regression gate | ✅ Strong | `uv run pytest -q` -> `107 passed, 1 warning`; `npm run build` -> passed |
 
@@ -155,13 +155,13 @@ seo view
 ### repo-primary
 | Component | Status | Location |
 |---|:---:|---|
-| React dashboard scaffold at `apps/dashboard/` | ✅ Done | [apps/dashboard/src/App.tsx:10](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/apps/dashboard/src/App.tsx:10) |
-| Dashboard summary polling every 30s | ✅ Done | [apps/dashboard/src/hooks/useDashboard.ts:12](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/apps/dashboard/src/hooks/useDashboard.ts:12) |
-| Keyword detail polling | ✅ Done | [apps/dashboard/src/hooks/useKeywordDetail.ts:43](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/apps/dashboard/src/hooks/useKeywordDetail.ts:43) |
-| Profile CRUD / active profile APIs | ✅ Built | [apps/cli/src/nichefinder_cli/viewer_server.py:280](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/apps/cli/src/nichefinder_cli/viewer_server.py:280), [apps/cli/src/nichefinder_cli/viewer_actions.py:17](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/apps/cli/src/nichefinder_cli/viewer_actions.py:17) |
-| Python server serves built `dist/` with inline fallback | ✅ Done | [apps/cli/src/nichefinder_cli/viewer_server.py:272](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/apps/cli/src/nichefinder_cli/viewer_server.py:272) |
+| React dashboard scaffold at `frontend/dashboard/` | ✅ Done | [frontend/dashboard/src/App.tsx:10](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/frontend/dashboard/src/App.tsx:10) |
+| Dashboard summary polling every 30s | ✅ Done | [frontend/dashboard/src/hooks/useDashboard.ts:12](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/frontend/dashboard/src/hooks/useDashboard.ts:12) |
+| Keyword detail polling | ✅ Done | [frontend/dashboard/src/hooks/useKeywordDetail.ts:43](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/frontend/dashboard/src/hooks/useKeywordDetail.ts:43) |
+| Profile CRUD / active profile APIs | ✅ Built | [backend/apps/cli/src/nichefinder_cli/viewer_server.py:280](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/apps/cli/src/nichefinder_cli/viewer_server.py:280), [backend/apps/cli/src/nichefinder_cli/viewer_actions.py:17](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/apps/cli/src/nichefinder_cli/viewer_actions.py:17) |
+| Python server serves built `dist/` with inline fallback | ✅ Done | [backend/apps/cli/src/nichefinder_cli/viewer_server.py:272](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/apps/cli/src/nichefinder_cli/viewer_server.py:272) |
 | Built `dist/` committed | ❌ Missing | [.gitignore:32](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.gitignore:32), [.platform/work/dashboard-rework.md:23](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.platform/work/dashboard-rework.md:23) |
-| `seo view` opens a browser window | ✅ Done | [apps/cli/src/nichefinder_cli/commands/viewer.py:17](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/apps/cli/src/nichefinder_cli/commands/viewer.py:17) |
+| `seo view` opens a browser window | ✅ Done | [backend/apps/cli/src/nichefinder_cli/commands/viewer.py:17](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/apps/cli/src/nichefinder_cli/commands/viewer.py:17) |
 | Stream closure criterion “manual verification” | ❌ Missing | [.platform/work/dashboard-rework.md:37](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.platform/work/dashboard-rework.md:37) |
 
 ---
@@ -171,16 +171,16 @@ seo view
 ### 🔴 Must Fix (blocking)
 | # | Repo | Issue |
 |---|---|---|
-| 1 | repo-primary | `apps/dashboard/dist/` is ignored by `dist/`, and `git ls-files apps/dashboard/dist` returns no tracked files, so the “built dist committed” criterion is false. [.gitignore:32](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.gitignore:32), [.platform/work/dashboard-rework.md:23](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.platform/work/dashboard-rework.md:23) |
+| 1 | repo-primary | `frontend/dashboard/dist/` is ignored by `dist/`, and `git ls-files frontend/dashboard/dist` returns no tracked files, so the “built dist committed” criterion is false. [.gitignore:32](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.gitignore:32), [.platform/work/dashboard-rework.md:23](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.platform/work/dashboard-rework.md:23) |
 | 2 | repo-primary | Manual verification remains unchecked: `seo view` browser open, live refresh, and all sections rendering need owner/browser confirmation. [.platform/work/dashboard-rework.md:37](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.platform/work/dashboard-rework.md:37) |
-| 3 | repo-primary | Several profile/workspace implementation files are untracked, so closure/commit would omit core feature code. [apps/cli/src/nichefinder_cli/viewer_actions.py:1](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/apps/cli/src/nichefinder_cli/viewer_actions.py:1), [apps/dashboard/src/components/ProfileConfigPanel.tsx:1](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/apps/dashboard/src/components/ProfileConfigPanel.tsx:1) |
+| 3 | repo-primary | Several profile/workspace implementation files are untracked, so closure/commit would omit core feature code. [backend/apps/cli/src/nichefinder_cli/viewer_actions.py:1](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/apps/cli/src/nichefinder_cli/viewer_actions.py:1), [frontend/dashboard/src/components/ProfileConfigPanel.tsx:1](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/frontend/dashboard/src/components/ProfileConfigPanel.tsx:1) |
 
 ### 🟡 Should Fix Soon
 | # | Repo | Issue | Location |
 |---|---|---|---|
-| 1 | repo-primary | Add Origin/Content-Type protection or another local-only write guard for profile delete/save/training/validate endpoints. | [apps/cli/src/nichefinder_cli/viewer_server.py:343](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/apps/cli/src/nichefinder_cli/viewer_server.py:343) |
+| 1 | repo-primary | Add Origin/Content-Type protection or another local-only write guard for profile delete/save/training/validate endpoints. | [backend/apps/cli/src/nichefinder_cli/viewer_server.py:343](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/apps/cli/src/nichefinder_cli/viewer_server.py:343) |
 | 2 | repo-primary | Update viewer domain docs to resolve the `validate-free` external-call/spend contradiction. | [.platform/domains/viewer.md:26](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.platform/domains/viewer.md:26) |
-| 3 | repo-primary | Split oversized files before more dashboard work: `viewer_server.py`, `App.tsx`, `ProfileConfigPanel.tsx`, `runtime.py`. | [apps/cli/src/nichefinder_cli/viewer_server.py:25](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/apps/cli/src/nichefinder_cli/viewer_server.py:25), [apps/dashboard/src/App.tsx:25](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/apps/dashboard/src/App.tsx:25) |
+| 3 | repo-primary | Split oversized files before more dashboard work: `viewer_server.py`, `App.tsx`, `ProfileConfigPanel.tsx`, `runtime.py`. | [backend/apps/cli/src/nichefinder_cli/viewer_server.py:25](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/apps/cli/src/nichefinder_cli/viewer_server.py:25), [frontend/dashboard/src/App.tsx:25](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/frontend/dashboard/src/App.tsx:25) |
 
 ### ⚪ Known Limitations (document, not block)
 | # | Limitation |

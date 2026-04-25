@@ -72,7 +72,7 @@ ready to hire, not developers learning about tech.
 
 ## Exact Changes
 
-### Change 1 — `packages/core/src/nichefinder_core/agents/keyword_agent.py`
+### Change 1 — `backend/packages/core/src/nichefinder_core/agents/keyword_agent.py`
 
 **Delete lines 65-68** (the SerpAPI expansion loop). Replace with nothing — Gemini's
 output is already sufficient. The function `_expand_with_free_sources` should return
@@ -101,7 +101,7 @@ Saves: 5 SerpAPI calls per session.
 
 ---
 
-### Change 2 — `packages/core/src/nichefinder_core/orchestrator/graph.py`
+### Change 2 — `backend/packages/core/src/nichefinder_core/orchestrator/graph.py`
 
 **In `parallel_analysis_node`**, before the `asyncio.gather`, add a filter that:
 1. Loads each keyword from the repository
@@ -139,7 +139,7 @@ Saves: ~42 SerpAPI calls per session (50 → 8).
 
 ---
 
-### Change 3 — `packages/core/src/nichefinder_core/gemini/prompts.py`
+### Change 3 — `backend/packages/core/src/nichefinder_core/gemini/prompts.py`
 
 **Rewrite `KEYWORD_EXPANSION_PROMPT`** to be explicit about:
 - The real goal: attract Montreal clients ready to hire
@@ -200,7 +200,7 @@ have a local/client angle should be deprioritized.
 
 ---
 
-### Change 4 — `packages/core/src/nichefinder_core/settings.py`
+### Change 4 — `backend/packages/core/src/nichefinder_core/settings.py`
 
 Add one new field:
 
@@ -236,14 +236,14 @@ Place it near `serpapi_calls_per_month` (line 45).
 **Branch to create:** `feature/serp-pipeline-fix` from `develop`
 **Run tests with:** `uv run pytest`
 **Key files:**
-- `packages/core/src/nichefinder_core/agents/keyword_agent.py`
-- `packages/core/src/nichefinder_core/orchestrator/graph.py`
-- `packages/core/src/nichefinder_core/gemini/prompts.py`
-- `packages/core/src/nichefinder_core/settings.py`
+- `backend/packages/core/src/nichefinder_core/agents/keyword_agent.py`
+- `backend/packages/core/src/nichefinder_core/orchestrator/graph.py`
+- `backend/packages/core/src/nichefinder_core/gemini/prompts.py`
+- `backend/packages/core/src/nichefinder_core/settings.py`
 
 **Do not touch:**
-- `packages/db/` — no schema changes needed
-- `apps/cli/` — no CLI changes needed
+- `backend/packages/db/` — no schema changes needed
+- `backend/apps/cli/` — no CLI changes needed
 - `data/site_config.json` — already correct
 - `.env` — never commit secrets
 
@@ -262,7 +262,7 @@ _Overwritten by `agentboard checkpoint` — the compact payload the next agent r
 ## Progress log
 _Append-only. Auto-trimmed by `agentboard checkpoint` to last 10 entries._
 
-2026-04-20 11:53 — Fixed SQLite path resolution so relative database URLs resolve from the repo root and the CLI works from subdirectories like apps/dashboard.
+2026-04-20 11:53 — Fixed SQLite path resolution so relative database URLs resolve from the repo root and the CLI works from subdirectories like frontend/dashboard.
 
 2026-04-20 10:33 — Pre-SERP gating now layers deterministic scoring, Trends, Tavily, and DDGS before the capped SERP stage, with usage tracking for each evidence source.
 
@@ -325,7 +325,7 @@ seo research
 
 | Severity | Repo | Finding |
 |:---:|---|---|
-| 🟢 Clean | repo-primary | `SERPAPI_KEY` remains settings/env-driven, with no hardcoded secret found. [packages/core/src/nichefinder_core/settings.py:28](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/packages/core/src/nichefinder_core/settings.py:28) |
+| 🟢 Clean | repo-primary | `SERPAPI_KEY` remains settings/env-driven, with no hardcoded secret found. [backend/packages/core/src/nichefinder_core/settings.py:28](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/packages/core/src/nichefinder_core/settings.py:28) |
 | 🟢 Clean | repo-primary | No direct `google.com/search` scraping was added in the audited path. |
 
 ---
@@ -348,10 +348,10 @@ seo research
 ### repo-primary
 | Component | Status | Location |
 |---|:---:|---|
-| Removed `get_related_searches()` expansion | ✅ Done | [packages/core/src/nichefinder_core/agents/keyword_agent.py:89](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/packages/core/src/nichefinder_core/agents/keyword_agent.py:89) |
-| CLI path uses capped shortlist | ✅ Done | [apps/cli/src/nichefinder_cli/workflows.py:71](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/apps/cli/src/nichefinder_cli/workflows.py:71) |
-| Graph path uses capped shortlist | ✅ Done | [packages/core/src/nichefinder_core/orchestrator/graph.py:68](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/packages/core/src/nichefinder_core/orchestrator/graph.py:68) |
-| `MAX_SERP_KEYWORDS=8` default | ✅ Done | [packages/core/src/nichefinder_core/settings.py:50](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/packages/core/src/nichefinder_core/settings.py:50) |
+| Removed `get_related_searches()` expansion | ✅ Done | [backend/packages/core/src/nichefinder_core/agents/keyword_agent.py:89](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/packages/core/src/nichefinder_core/agents/keyword_agent.py:89) |
+| CLI path uses capped shortlist | ✅ Done | [backend/apps/cli/src/nichefinder_cli/workflows.py:71](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/apps/cli/src/nichefinder_cli/workflows.py:71) |
+| Graph path uses capped shortlist | ✅ Done | [backend/packages/core/src/nichefinder_core/orchestrator/graph.py:68](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/packages/core/src/nichefinder_core/orchestrator/graph.py:68) |
+| `MAX_SERP_KEYWORDS=8` default | ✅ Done | [backend/packages/core/src/nichefinder_core/settings.py:50](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/packages/core/src/nichefinder_core/settings.py:50) |
 | Live `≤10` call proof recorded | ❌ Missing | [.platform/work/serp-pipeline-fix.md:217](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.platform/work/serp-pipeline-fix.md:217) |
 
 ---
@@ -367,8 +367,8 @@ seo research
 ### 🟡 Should Fix Soon
 | # | Repo | Issue | Location |
 |---|---|---|---|
-| 1 | repo-primary | `MAX_SERP_KEYWORDS` is configurable above 10, so the budget invariant assumes the default value unless guarded or documented. | [packages/core/src/nichefinder_core/settings.py:50](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/packages/core/src/nichefinder_core/settings.py:50) |
-| 2 | repo-primary | Stream criterion names `KEYWORD_EXPANSION_PROMPT`, but runtime uses `PROBLEM_KEYWORD_EXPANSION_PROMPT`; reconcile wording before sign-off. | [packages/core/src/nichefinder_core/agents/keyword_agent.py:93](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/packages/core/src/nichefinder_core/agents/keyword_agent.py:93) |
+| 1 | repo-primary | `MAX_SERP_KEYWORDS` is configurable above 10, so the budget invariant assumes the default value unless guarded or documented. | [backend/packages/core/src/nichefinder_core/settings.py:50](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/packages/core/src/nichefinder_core/settings.py:50) |
+| 2 | repo-primary | Stream criterion names `KEYWORD_EXPANSION_PROMPT`, but runtime uses `PROBLEM_KEYWORD_EXPANSION_PROMPT`; reconcile wording before sign-off. | [backend/packages/core/src/nichefinder_core/agents/keyword_agent.py:93](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/packages/core/src/nichefinder_core/agents/keyword_agent.py:93) |
 
 ### ⚪ Known Limitations (document, not block)
 | # | Limitation |

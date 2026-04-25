@@ -1,6 +1,6 @@
 # ai-nichefinder — Architecture
 
-Last updated: 2026-04-19
+Last updated: 2026-04-24
 
 > Local-first SEO research and content workflow CLI for `danilulmashev.com`, optimized for finding topics worth writing before spending time generating articles.
 
@@ -42,20 +42,21 @@ Technically, the CLI composes a set of local services around a SQLite database, 
 │ briefs/ranks/usage │                           │ Trends / websites  │
 └─────────┬──────────┘                           └────────────────────┘
           │
-          v
-┌────────────────────┐                           ┌────────────────────┐
-│ Filesystem outputs │                           │ Local viewer HTTP  │
-│ drafts/reports/etc │                           │ server + JSON APIs │
-└────────────────────┘                           └────────────────────┘
+          ├──────────────────────────────────────┐
+          v                                      v
+┌────────────────────┐                  ┌──────────────────────────┐
+│ Filesystem outputs │                  │ FastAPI viewer/API layer │
+│ drafts/reports/etc │                  │ + React dashboard dist   │
+└────────────────────┘                  └──────────────────────────┘
 ```
 
 ## 3. Tech stack (summary)
 
 | Layer | Choice | Notes |
 |---|---|---|
-| Language(s) | Python 3.12 | Workspace split across `apps/cli`, `packages/core`, `packages/db` |
-| Framework(s) | Typer, LangGraph, Pydantic v2, SQLModel | Rich is the terminal UI layer |
-| Build tool(s) | `uv`, Ruff, pytest | No containerized app runtime required |
+| Language(s) | Python 3.12, TypeScript | Workspace split across `backend/apps/cli`, `backend/packages/core`, `backend/packages/db`, with frontend in `frontend/dashboard` |
+| Framework(s) | Typer, FastAPI, LangGraph, Pydantic v2, SQLModel, React 18 + Vite | Rich is the terminal UI layer |
+| Build tool(s) | `uv`, Ruff, pytest, npm, Vite | No containerized app runtime required |
 | Data store(s) | SQLite + local filesystem | Database defaults to `data/db/seo.db` |
 | Hosting | Local machine only | CLI-first, with an optional localhost viewer/testing workspace |
 | CI/CD | None yet | Manual local execution and verification |
@@ -70,7 +71,7 @@ Per-stack conventions live in `conventions/{stack}.md`.
 4. Agents normalize those signals into `Keyword`, `SerpResult`, `CompetitorPage`, `ContentBriefRecord`, `Article`, `RankingSnapshot`, and `ApiUsageRecord` rows.
 5. Generated article content is also written to filesystem outputs so drafts remain inspectable outside the database.
 6. CLI commands render tables or structured output for the operator, who decides whether to approve or publish.
-7. The optional local viewer serves dashboard/testing pages backed by the same SQLite data and markdown outputs, and may perform low-risk local actions such as switching profiles, saving profile config, approving training signals, and triggering `validate-free`.
+7. The optional local viewer serves the built React dashboard from `frontend/dashboard/dist` through a FastAPI transport layer backed by the same SQLite data and markdown outputs, and may perform low-risk local actions such as switching profiles, saving profile config, approving training signals, and triggering `validate-free`.
 
 ## 5. Auth model
 
@@ -89,7 +90,7 @@ See `conventions/security.md` for auth-adjacent details.
 
 ## 7. Deploy topology
 
-There is no multi-environment deployment topology yet. The system is developed and run locally. Promotion today means "change code locally, run the CLI locally, inspect outputs locally." The lightweight viewer is also local-only and should not be treated as a hosted product surface. If a future hosted service appears, that will require a new architecture decision and deployment convention rather than being inferred from the current code.
+There is no multi-environment deployment topology yet. The system is developed and run locally. Promotion today means "change code locally, run the CLI locally, inspect outputs locally." The lightweight viewer is still local-first, but the transport boundary now uses FastAPI and the repo topology explicitly separates `frontend/` and `backend/` so a future hosted split is mechanical rather than a fresh reorg. If a real hosted service appears, that will still require a separate deployment/data-store decision.
 
 See `conventions/deployment.md` for the local release and rollback playbook.
 

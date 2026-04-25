@@ -140,10 +140,10 @@ local viewer (dashboard + keyword inspection)
 
 | Severity | Repo | Finding |
 |:---:|---|---|
-| 🟢 Clean | repo-primary | `publish` still enforces the human gate and rejects non-approved articles before any publication state change. `apps/cli/src/nichefinder_cli/main.py:136`; `tests/test_cli_publish.py:36` |
-| 🟢 Clean | repo-primary | Robots handling remains fail-closed by default and scraping still routes through the explicit robots checker. `packages/core/src/nichefinder_core/settings.py:45`; `packages/core/src/nichefinder_core/sources/scraper.py:40`; `tests/test_sources.py:27` |
-| 🟢 Clean | repo-primary | Secrets stay env-loaded via `Settings`; the new local viewer is read-only and does not add write-side HTTP mutations. `packages/core/src/nichefinder_core/settings.py:10`; `apps/cli/src/nichefinder_cli/viewer_server.py:174` |
-| 🟢 Clean | repo-primary | The competitor fetch path now skips scrape failures instead of crashing the brief pipeline, which reduces failure amplification without weakening robots enforcement. `packages/core/src/nichefinder_core/agents/competitor_agent.py:42`; `tests/test_competitor_agent.py:72` |
+| 🟢 Clean | repo-primary | `publish` still enforces the human gate and rejects non-approved articles before any publication state change. `backend/apps/cli/src/nichefinder_cli/main.py:136`; `tests/test_cli_publish.py:36` |
+| 🟢 Clean | repo-primary | Robots handling remains fail-closed by default and scraping still routes through the explicit robots checker. `backend/packages/core/src/nichefinder_core/settings.py:45`; `backend/packages/core/src/nichefinder_core/sources/scraper.py:40`; `tests/test_sources.py:27` |
+| 🟢 Clean | repo-primary | Secrets stay env-loaded via `Settings`; the new local viewer is read-only and does not add write-side HTTP mutations. `backend/packages/core/src/nichefinder_core/settings.py:10`; `backend/apps/cli/src/nichefinder_cli/viewer_server.py:174` |
+| 🟢 Clean | repo-primary | The competitor fetch path now skips scrape failures instead of crashing the brief pipeline, which reduces failure amplification without weakening robots enforcement. `backend/packages/core/src/nichefinder_core/agents/competitor_agent.py:42`; `tests/test_competitor_agent.py:72` |
 
 ---
 
@@ -172,14 +172,14 @@ local viewer (dashboard + keyword inspection)
 ### repo-primary
 | Component | Status | Location |
 |---|:---:|---|
-| Research command and pipeline orchestration | ✅ Done | `apps/cli/src/nichefinder_cli/main.py:48`; `apps/cli/src/nichefinder_cli/workflows.py:15` |
-| Brief generation and persisted `ContentBriefRecord` | ✅ Done | `apps/cli/src/nichefinder_cli/main.py:101`; `apps/cli/src/nichefinder_cli/workflows.py:73` |
-| Article drafting with DB row + markdown output | ✅ Done | `apps/cli/src/nichefinder_cli/main.py:113`; `apps/cli/src/nichefinder_cli/workflows.py:104`; `packages/core/src/nichefinder_core/agents/content_agent.py:102` |
-| Approval and publish gating | ✅ Done | `apps/cli/src/nichefinder_cli/commands/articles.py:30`; `apps/cli/src/nichefinder_cli/main.py:136` |
-| Rank/report/budget command surface | ✅ Done | `apps/cli/src/nichefinder_cli/commands/ranks.py:14`; `apps/cli/src/nichefinder_cli/main.py:157`; `apps/cli/src/nichefinder_cli/main.py:186` |
-| Unknown-metric fallback for free-source keywords | ✅ Done | `packages/core/src/nichefinder_core/agents/synthesis_agent.py:33`; `packages/core/src/nichefinder_core/settings.py:33` |
-| Local inspection surface for stored work | ✅ Done | `apps/cli/src/nichefinder_cli/commands/keywords.py:58`; `apps/cli/src/nichefinder_cli/viewer_server.py:174` |
-| LangGraph-based orchestrator scaffold | ⚪ Deferred | `packages/core/src/nichefinder_core/orchestrator/graph.py:15` |
+| Research command and pipeline orchestration | ✅ Done | `backend/apps/cli/src/nichefinder_cli/main.py:48`; `backend/apps/cli/src/nichefinder_cli/workflows.py:15` |
+| Brief generation and persisted `ContentBriefRecord` | ✅ Done | `backend/apps/cli/src/nichefinder_cli/main.py:101`; `backend/apps/cli/src/nichefinder_cli/workflows.py:73` |
+| Article drafting with DB row + markdown output | ✅ Done | `backend/apps/cli/src/nichefinder_cli/main.py:113`; `backend/apps/cli/src/nichefinder_cli/workflows.py:104`; `backend/packages/core/src/nichefinder_core/agents/content_agent.py:102` |
+| Approval and publish gating | ✅ Done | `backend/apps/cli/src/nichefinder_cli/commands/articles.py:30`; `backend/apps/cli/src/nichefinder_cli/main.py:136` |
+| Rank/report/budget command surface | ✅ Done | `backend/apps/cli/src/nichefinder_cli/commands/ranks.py:14`; `backend/apps/cli/src/nichefinder_cli/main.py:157`; `backend/apps/cli/src/nichefinder_cli/main.py:186` |
+| Unknown-metric fallback for free-source keywords | ✅ Done | `backend/packages/core/src/nichefinder_core/agents/synthesis_agent.py:33`; `backend/packages/core/src/nichefinder_core/settings.py:33` |
+| Local inspection surface for stored work | ✅ Done | `backend/apps/cli/src/nichefinder_cli/commands/keywords.py:58`; `backend/apps/cli/src/nichefinder_cli/viewer_server.py:174` |
+| LangGraph-based orchestrator scaffold | ⚪ Deferred | `backend/packages/core/src/nichefinder_core/orchestrator/graph.py:15` |
 | Real local workflow evidence in SQLite + filesystem | ✅ Done | `data/db/seo.db`; `outputs/articles/ai-product-development-roadmap-consulting-for-startups-your-guide-to-strategic-growth-funding.md` |
 
 ---
@@ -194,10 +194,10 @@ local viewer (dashboard + keyword inspection)
 ### 🟡 Should Fix Soon
 | # | Repo | Issue | Location |
 |---|---|---|---|
-| 1 | repo-primary | `brief`, `write`, and `rank check` still lean on live/manual evidence more than direct CLI tests, so closure confidence is strong but not fully symmetric across the command surface. | `apps/cli/src/nichefinder_cli/main.py:101`; `apps/cli/src/nichefinder_cli/main.py:113`; `apps/cli/src/nichefinder_cli/commands/ranks.py:14` |
-| 2 | repo-primary | The workflow still depends on Gemini for major judgment calls such as intent labeling, SERP competition interpretation, gap detection, and briefing; deterministic scoring exists, but calibration against first-party search data is still missing. | `packages/core/src/nichefinder_core/agents/keyword_agent.py:41`; `packages/core/src/nichefinder_core/agents/serp_agent.py:31`; `packages/core/src/nichefinder_core/agents/competitor_agent.py:68` |
-| 3 | repo-primary | The orchestration layer is still a scaffold and the CLI paths bypass it; there is no persisted checkpoint/resume or true multi-agent runtime yet. | `packages/core/src/nichefinder_core/orchestrator/graph.py:15`; `packages/core/src/nichefinder_core/orchestrator/state.py:4`; `apps/cli/src/nichefinder_cli/workflows.py:15` |
-| 4 | repo-primary | The legacy `briefs generate` placeholder remains in the tree and is not part of the mounted command surface. | `apps/cli/src/nichefinder_cli/commands/briefs.py:8` |
+| 1 | repo-primary | `brief`, `write`, and `rank check` still lean on live/manual evidence more than direct CLI tests, so closure confidence is strong but not fully symmetric across the command surface. | `backend/apps/cli/src/nichefinder_cli/main.py:101`; `backend/apps/cli/src/nichefinder_cli/main.py:113`; `backend/apps/cli/src/nichefinder_cli/commands/ranks.py:14` |
+| 2 | repo-primary | The workflow still depends on Gemini for major judgment calls such as intent labeling, SERP competition interpretation, gap detection, and briefing; deterministic scoring exists, but calibration against first-party search data is still missing. | `backend/packages/core/src/nichefinder_core/agents/keyword_agent.py:41`; `backend/packages/core/src/nichefinder_core/agents/serp_agent.py:31`; `backend/packages/core/src/nichefinder_core/agents/competitor_agent.py:68` |
+| 3 | repo-primary | The orchestration layer is still a scaffold and the CLI paths bypass it; there is no persisted checkpoint/resume or true multi-agent runtime yet. | `backend/packages/core/src/nichefinder_core/orchestrator/graph.py:15`; `backend/packages/core/src/nichefinder_core/orchestrator/state.py:4`; `backend/apps/cli/src/nichefinder_cli/workflows.py:15` |
+| 4 | repo-primary | The legacy `briefs generate` placeholder remains in the tree and is not part of the mounted command surface. | `backend/apps/cli/src/nichefinder_cli/commands/briefs.py:8` |
 
 ### ⚪ Known Limitations (document, not block)
 | # | Limitation |

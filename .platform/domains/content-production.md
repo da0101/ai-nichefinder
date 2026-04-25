@@ -37,15 +37,15 @@ Turns vetted opportunities into content briefs, draft articles, and rewrites tha
 
 ## Key files
 
-- `apps/cli/src/nichefinder_cli/main.py`
-- `apps/cli/src/nichefinder_cli/commands/articles.py`
-- `apps/cli/src/nichefinder_cli/workflows.py`
-- `packages/core/src/nichefinder_core/agents/content_agent.py`
-- `packages/core/src/nichefinder_core/agents/competitor_agent.py`
-- `packages/core/src/nichefinder_core/agents/synthesis_agent.py`
-- `packages/core/src/nichefinder_core/models/content.py`
-- `packages/core/src/nichefinder_core/sources/scraper.py`
-- `packages/db/src/nichefinder_db/crud.py`
+- `backend/apps/cli/src/nichefinder_cli/main.py`
+- `backend/apps/cli/src/nichefinder_cli/commands/articles.py`
+- `backend/apps/cli/src/nichefinder_cli/workflows.py`
+- `backend/packages/core/src/nichefinder_core/agents/content_agent.py`
+- `backend/packages/core/src/nichefinder_core/agents/competitor_agent.py`
+- `backend/packages/core/src/nichefinder_core/agents/synthesis_agent.py`
+- `backend/packages/core/src/nichefinder_core/models/content.py`
+- `backend/packages/core/src/nichefinder_core/sources/scraper.py`
+- `backend/packages/db/src/nichefinder_db/crud.py`
 
 ## Decisions locked
 

@@ -2,13 +2,15 @@
 name = "nichefinder-cli"
 version = "0.1.0"
 description = "CLI workflows for AI Nichefinder."
-readme = "../../README.md"
+readme = "../../../README.md"
 requires-python = ">=3.12,<3.15"
 dependencies = [
+  "fastapi>=0.115.0",
   "nichefinder-core",
   "nichefinder-db",
   "rich>=14.1.0",
   "typer>=0.16.0",
+  "uvicorn>=0.34.0",
 ]
 
 [project.scripts]

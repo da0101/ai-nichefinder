@@ -139,8 +139,8 @@ seo monitor sync
 
 | Severity | Repo | Finding |
 |:---:|---|---|
-| 🟢 Clean | repo-primary | GSC scope is read-only. [packages/core/src/nichefinder_core/sources/gsc_client.py:11](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/packages/core/src/nichefinder_core/sources/gsc_client.py:11) |
-| 🟢 Clean | repo-primary | Credentials path comes from settings/env, not hardcoded code. [packages/core/src/nichefinder_core/settings.py:98](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/packages/core/src/nichefinder_core/settings.py:98), [packages/core/src/nichefinder_core/sources/gsc_client.py:23](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/packages/core/src/nichefinder_core/sources/gsc_client.py:23) |
+| 🟢 Clean | repo-primary | GSC scope is read-only. [backend/packages/core/src/nichefinder_core/sources/gsc_client.py:11](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/packages/core/src/nichefinder_core/sources/gsc_client.py:11) |
+| 🟢 Clean | repo-primary | Credentials path comes from settings/env, not hardcoded code. [backend/packages/core/src/nichefinder_core/settings.py:98](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/packages/core/src/nichefinder_core/settings.py:98), [backend/packages/core/src/nichefinder_core/sources/gsc_client.py:23](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/packages/core/src/nichefinder_core/sources/gsc_client.py:23) |
 
 ---
 
@@ -161,10 +161,10 @@ seo monitor sync
 ### repo-primary
 | Component | Status | Location |
 |---|:---:|---|
-| GSC service-account adapter | ✅ Done | [packages/core/src/nichefinder_core/sources/gsc_client.py:15](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/packages/core/src/nichefinder_core/sources/gsc_client.py:15) |
-| `seo monitor sync` command | ✅ Done | [apps/cli/src/nichefinder_cli/commands/monitor.py:15](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/apps/cli/src/nichefinder_cli/commands/monitor.py:15) |
-| Update-on-resync repository logic | ✅ Done | [packages/db/src/nichefinder_db/crud.py:370](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/packages/db/src/nichefinder_db/crud.py:370) |
-| Settings fields | ✅ Done | [packages/core/src/nichefinder_core/settings.py:98](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/packages/core/src/nichefinder_core/settings.py:98) |
+| GSC service-account adapter | ✅ Done | [backend/packages/core/src/nichefinder_core/sources/gsc_client.py:15](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/packages/core/src/nichefinder_core/sources/gsc_client.py:15) |
+| `seo monitor sync` command | ✅ Done | [backend/apps/cli/src/nichefinder_cli/commands/monitor.py:15](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/apps/cli/src/nichefinder_cli/commands/monitor.py:15) |
+| Update-on-resync repository logic | ✅ Done | [backend/packages/db/src/nichefinder_db/crud.py:370](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/packages/db/src/nichefinder_db/crud.py:370) |
+| Settings fields | ✅ Done | [backend/packages/core/src/nichefinder_core/settings.py:98](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/packages/core/src/nichefinder_core/settings.py:98) |
 | Manual real-property verification | ❌ Missing | [.platform/work/gsc-monitoring.md:42](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.platform/work/gsc-monitoring.md:42) |
 
 ---
@@ -176,13 +176,13 @@ seo monitor sync
 |---|---|---|
 | 1 | repo-primary | Manual real-property verification is still unchecked. [.platform/work/gsc-monitoring.md:42](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.platform/work/gsc-monitoring.md:42) |
 | 2 | repo-primary | Closure is not owner-approved: `closure_approved: false`. [.platform/work/gsc-monitoring.md:13](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.platform/work/gsc-monitoring.md:13) |
-| 3 | repo-primary | `.env.example` is stale: it documents `GSC_SITE_URL` but code expects `GSC_CREDENTIALS_PATH` / `GSC_PROPERTY_URL`. [.env.example:7](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.env.example:7), [packages/core/src/nichefinder_core/settings.py:98](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/packages/core/src/nichefinder_core/settings.py:98) |
+| 3 | repo-primary | `.env.example` is stale: it documents `GSC_SITE_URL` but code expects `GSC_CREDENTIALS_PATH` / `GSC_PROPERTY_URL`. [.env.example:7](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.env.example:7), [backend/packages/core/src/nichefinder_core/settings.py:98](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/packages/core/src/nichefinder_core/settings.py:98) |
 
 ### 🟡 Should Fix Soon
 | # | Repo | Issue | Location |
 |---|---|---|---|
 | 1 | repo-primary | GSC domain context has stale adapter/dependency references. | [.platform/domains/gsc-monitoring.md:18](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.platform/domains/gsc-monitoring.md:18) |
-| 2 | repo-primary | `--days` has no lower bound; `0` or negative values can produce invalid ranges. | [apps/cli/src/nichefinder_cli/commands/monitor.py:17](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/apps/cli/src/nichefinder_cli/commands/monitor.py:17) |
+| 2 | repo-primary | `--days` has no lower bound; `0` or negative values can produce invalid ranges. | [backend/apps/cli/src/nichefinder_cli/commands/monitor.py:17](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/apps/cli/src/nichefinder_cli/commands/monitor.py:17) |
 
 ### ⚪ Known Limitations (document, not block)
 | # | Limitation |
