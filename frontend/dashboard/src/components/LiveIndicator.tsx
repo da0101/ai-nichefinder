@@ -29,7 +29,7 @@ export function LiveIndicator({ lastUpdated, onRefresh }: Props) {
         onClick={onRefresh}
         title="Refresh now"
         aria-label="Refresh dashboard"
-        className="h-6 w-6 text-slate-400 hover:text-blue-600"
+        className="h-6 w-6 text-slate-400 hover:text-indigo-600"
       >
         <RefreshCw className="h-3 w-3" />
       </Button>

@@ -16,11 +16,12 @@ export function ValidationLabPanel({ profile, data, running, error, onRun }: Pro
   const [keyword, setKeyword] = useState('')
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4">
+    <div className="rounded-lg border border-slate-200 bg-white p-5">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-sm font-semibold text-slate-900">Validation Lab</h2>
-          <p className="text-xs text-slate-500">Run `validate-free` for the selected profile from the browser.</p>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Validation Lab</div>
+          <h2 className="mt-1 text-lg font-semibold text-slate-950">Run phrase validation</h2>
+          <p className="mt-2 text-sm text-slate-600">Run `validate-free` for the selected profile from the browser.</p>
         </div>
         <Badge variant="outline">{profile}</Badge>
       </div>
@@ -36,14 +37,14 @@ export function ValidationLabPanel({ profile, data, running, error, onRun }: Pro
           type="button"
           disabled={running || !keyword.trim()}
           onClick={() => onRun(profile, keyword)}
-          className="h-10 bg-amber-500 text-slate-950 hover:bg-amber-400"
+          className="h-10 px-4"
         >
           {running ? 'Running...' : 'Run'}
         </Button>
       </div>
 
       {!data && !error && (
-        <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5">
+        <div className="mt-4 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-5">
           <div className="text-sm font-medium text-slate-700">Start with one buyer-problem phrase</div>
           <p className="mt-2 text-sm text-slate-500">
             Example: <span className="font-mono text-xs text-slate-700">how to reduce food cost in a restaurant</span>
@@ -76,9 +77,9 @@ export function ValidationLabPanel({ profile, data, running, error, onRun }: Pro
 
 function Section({ title, items }: { title: string; items: string[] }) {
   return (
-    <div className="rounded-xl border border-slate-200 p-3">
+    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</div>
+        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{title}</div>
         <Badge variant="secondary">{items.length}</Badge>
       </div>
       <div className="max-h-64 space-y-1 overflow-y-auto pr-1">

@@ -36,7 +36,7 @@ def _seed_article(tmp_path: Path, status: str) -> tuple[Settings, str]:
 def test_publish_requires_approved_article(monkeypatch, tmp_path: Path):
     settings, article_id = _seed_article(tmp_path, status="draft")
     monkeypatch.setattr(
-        "nichefinder_cli.main.get_runtime",
+        "nichefinder_cli.commands.root.content.get_runtime",
         lambda: (settings, None, get_session(settings)),
     )
 
@@ -49,7 +49,7 @@ def test_publish_requires_approved_article(monkeypatch, tmp_path: Path):
 def test_publish_marks_approved_article_as_published(monkeypatch, tmp_path: Path):
     settings, article_id = _seed_article(tmp_path, status="approved")
     monkeypatch.setattr(
-        "nichefinder_cli.main.get_runtime",
+        "nichefinder_cli.commands.root.content.get_runtime",
         lambda: (settings, None, get_session(settings)),
     )
 

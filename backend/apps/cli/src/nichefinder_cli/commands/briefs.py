@@ -1,11 +1,3 @@
-from rich.console import Console
-from typer import Typer
+from nichefinder_cli.commands.content.briefs import briefs_app, generate_placeholder
 
-briefs_app = Typer(help="Compatibility wrapper for brief workflows.")
-
-
-@briefs_app.command("generate")
-def generate_placeholder() -> None:
-    Console().print(
-        "[yellow]Use `seo brief <keyword-id>` for the new brief workflow.[/yellow]"
-    )
+__all__ = ["briefs_app", "generate_placeholder"]

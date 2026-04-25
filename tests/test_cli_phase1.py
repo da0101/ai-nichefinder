@@ -99,11 +99,14 @@ def test_research_command_stores_keywords_and_prints_ranked_output(monkeypatch, 
     fake_services.scraper.close = fake_close
 
     monkeypatch.setattr(
-        "nichefinder_cli.main.get_runtime",
+        "nichefinder_cli.commands.root.research.get_runtime",
         lambda: (settings, site_config, get_session(settings)),
     )
-    monkeypatch.setattr("nichefinder_cli.main.build_services", lambda settings, repository: fake_services)
-    monkeypatch.setattr("nichefinder_cli.main.run_full_pipeline", fake_run_full_pipeline)
+    monkeypatch.setattr(
+        "nichefinder_cli.commands.root.research.build_services",
+        lambda settings, repository: fake_services,
+    )
+    monkeypatch.setattr("nichefinder_cli.commands.root.research.run_full_pipeline", fake_run_full_pipeline)
 
     result = CliRunner().invoke(app, ["research", "AI tool development"])
 
@@ -153,11 +156,17 @@ def test_validate_free_command_runs_without_paid_validation(monkeypatch, tmp_pat
     fake_services.scraper.close = fake_close
 
     monkeypatch.setattr(
-        "nichefinder_cli.main.get_runtime",
+        "nichefinder_cli.commands.root.shared.get_runtime",
         lambda: (settings, site_config, get_session(settings)),
     )
-    monkeypatch.setattr("nichefinder_cli.main.build_services", lambda settings, repository: fake_services)
-    monkeypatch.setattr("nichefinder_cli.main.run_free_validation_pipeline", fake_run_free_validation_pipeline)
+    monkeypatch.setattr(
+        "nichefinder_cli.commands.root.shared.build_services",
+        lambda settings, repository: fake_services,
+    )
+    monkeypatch.setattr(
+        "nichefinder_cli.commands.root.shared.run_free_validation_pipeline",
+        fake_run_free_validation_pipeline,
+    )
 
     result = CliRunner().invoke(app, ["validate-free", "website cost"])
 
@@ -199,11 +208,17 @@ def test_validate_source_commands_pass_single_bucket(monkeypatch, tmp_path: Path
     fake_services.scraper.close = fake_close
 
     monkeypatch.setattr(
-        "nichefinder_cli.main.get_runtime",
+        "nichefinder_cli.commands.root.shared.get_runtime",
         lambda: (settings, site_config, get_session(settings)),
     )
-    monkeypatch.setattr("nichefinder_cli.main.build_services", lambda settings, repository: fake_services)
-    monkeypatch.setattr("nichefinder_cli.main.run_free_validation_pipeline", fake_run_free_validation_pipeline)
+    monkeypatch.setattr(
+        "nichefinder_cli.commands.root.shared.build_services",
+        lambda settings, repository: fake_services,
+    )
+    monkeypatch.setattr(
+        "nichefinder_cli.commands.root.shared.run_free_validation_pipeline",
+        fake_run_free_validation_pipeline,
+    )
 
     runner = CliRunner()
     ddgs_result = runner.invoke(app, ["validate-ddgs", "website cost"])
@@ -237,7 +252,7 @@ def test_review_noise_and_approve_noise_commands(monkeypatch, tmp_path: Path):
         )
 
     monkeypatch.setattr(
-        "nichefinder_cli.main.get_runtime",
+        "nichefinder_cli.commands.root.reviews.get_runtime",
         lambda: (settings, site_config, get_session(settings)),
     )
 
@@ -300,7 +315,7 @@ def test_review_training_and_approve_training_commands(monkeypatch, tmp_path: Pa
         )
 
     monkeypatch.setattr(
-        "nichefinder_cli.main.get_runtime",
+        "nichefinder_cli.commands.root.reviews.get_runtime",
         lambda: (settings, site_config, get_session(settings)),
     )
 
@@ -485,7 +500,7 @@ def test_monitor_sync_requires_gsc_credentials(monkeypatch, tmp_path: Path):
     settings, site_config = _runtime(tmp_path)
 
     monkeypatch.setattr(
-        "nichefinder_cli.commands.monitor.get_runtime",
+        "nichefinder_cli.commands.monitoring.monitor.get_runtime",
         lambda: (settings, site_config, get_session(settings)),
     )
 
@@ -528,10 +543,10 @@ def test_monitor_sync_upserts_records_and_prints_summary(monkeypatch, tmp_path: 
             ]
 
     monkeypatch.setattr(
-        "nichefinder_cli.commands.monitor.get_runtime",
+        "nichefinder_cli.commands.monitoring.monitor.get_runtime",
         lambda: (settings, site_config, get_session(settings)),
     )
-    monkeypatch.setattr("nichefinder_cli.commands.monitor.GscClient", FakeGscClient)
+    monkeypatch.setattr("nichefinder_cli.commands.monitoring.monitor.GscClient", FakeGscClient)
 
     runner = CliRunner()
     first = runner.invoke(app, ["monitor", "sync", "--days", "3"])
@@ -562,10 +577,10 @@ def test_monitor_sync_handles_empty_result_set(monkeypatch, tmp_path: Path):
             return []
 
     monkeypatch.setattr(
-        "nichefinder_cli.commands.monitor.get_runtime",
+        "nichefinder_cli.commands.monitoring.monitor.get_runtime",
         lambda: (settings, site_config, get_session(settings)),
     )
-    monkeypatch.setattr("nichefinder_cli.commands.monitor.GscClient", EmptyGscClient)
+    monkeypatch.setattr("nichefinder_cli.commands.monitoring.monitor.GscClient", EmptyGscClient)
 
     result = CliRunner().invoke(app, ["monitor", "sync"])
 
@@ -602,7 +617,7 @@ def test_report_command_reads_local_keyword_and_article_state(monkeypatch, tmp_p
         )
 
     monkeypatch.setattr(
-        "nichefinder_cli.main.get_runtime",
+        "nichefinder_cli.commands.root.reporting.get_runtime",
         lambda: (settings, site_config, get_session(settings)),
     )
 

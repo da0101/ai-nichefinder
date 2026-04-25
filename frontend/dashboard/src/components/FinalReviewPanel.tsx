@@ -9,8 +9,9 @@ interface Props {
 export function FinalReviewPanel({ data, loading, error }: Props) {
   if (loading) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-slate-900">Final Review</h2>
+      <div className="rounded-lg border border-slate-200 bg-white p-5">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Final Review</div>
+        <h2 className="mt-1 text-lg font-semibold text-slate-950">Compare profile learnings</h2>
         <p className="mt-2 text-sm text-slate-400">Loading profile comparison...</p>
       </div>
     )
@@ -18,8 +19,8 @@ export function FinalReviewPanel({ data, loading, error }: Props) {
 
   if (error) {
     return (
-      <div className="rounded-xl border border-red-200 bg-red-50 p-4">
-        <h2 className="text-sm font-semibold text-red-800">Final Review</h2>
+      <div className="rounded-lg border border-red-200 bg-red-50 p-5">
+        <h2 className="text-lg font-semibold text-red-800">Final Review</h2>
         <p className="mt-2 text-sm text-red-600">{error}</p>
       </div>
     )
@@ -27,8 +28,9 @@ export function FinalReviewPanel({ data, loading, error }: Props) {
 
   if (!data || data.summary.length === 0) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-slate-900">Final Review</h2>
+      <div className="rounded-lg border border-slate-200 bg-white p-5">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Final Review</div>
+        <h2 className="mt-1 text-lg font-semibold text-slate-950">Compare profile learnings</h2>
         <p className="mt-2 text-sm text-slate-500">
           No profile comparison available yet. Create another profile and run validations to compare learned signals across businesses.
         </p>
@@ -37,10 +39,11 @@ export function FinalReviewPanel({ data, loading, error }: Props) {
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4">
+    <div className="rounded-lg border border-slate-200 bg-white p-5">
       <div className="mb-3">
-        <h2 className="text-sm font-semibold text-slate-900">Final Review</h2>
-        <p className="text-xs text-slate-500">Cross-profile training summary.</p>
+        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Final Review</div>
+        <h2 className="mt-1 text-lg font-semibold text-slate-950">Compare profile learnings</h2>
+        <p className="mt-2 text-sm text-slate-500">Cross-profile training summary.</p>
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full text-sm">

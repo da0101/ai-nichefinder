@@ -70,12 +70,12 @@ export function ProfileConfigPanel({
         <CardHeader className="border-b border-slate-100">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <CardTitle className="text-slate-500">Business Profiles</CardTitle>
-              <p className="mt-1 text-sm text-slate-600">Manage businesses like web development, restaurants, or gardening as proper app records.</p>
+              <CardTitle>Business Profiles</CardTitle>
+              <p className="mt-2 text-sm text-slate-600">Manage businesses like web development, restaurants, or gardening as proper app records.</p>
             </div>
             <Button
               type="button"
-              className="rounded-xl bg-blue-700 px-4"
+              className="px-4"
               onClick={() => setEditor({ mode: 'create', slug: '', draft: { ...EMPTY_CONFIG } })}
             >
               <Plus className="h-4 w-4" />
@@ -85,7 +85,7 @@ export function ProfileConfigPanel({
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
           {error && (
-            <div className="flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               <span>
                 <span className="font-semibold">Profile action failed:</span> {error}
               </span>
@@ -99,11 +99,11 @@ export function ProfileConfigPanel({
 
           <div className="grid gap-3 xl:grid-cols-2">
             {sortedProfiles.map(profile => (
-              <div key={profile.slug} className={`rounded-2xl border p-4 transition ${profile.slug === activeProfile ? 'border-blue-300 bg-blue-50/60' : 'border-slate-200 bg-white'}`}>
+              <div key={profile.slug} className={`rounded-lg border p-4 transition ${profile.slug === activeProfile ? 'border-indigo-300 bg-indigo-50/50' : 'border-slate-200 bg-white'}`}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <div className="rounded-xl bg-slate-100 p-2 text-slate-600">
+                      <div className="rounded-lg bg-slate-100 p-2 text-slate-600">
                         <Building2 className="h-4 w-4" />
                       </div>
                       <div>
@@ -131,21 +131,20 @@ export function ProfileConfigPanel({
                 </div>
 
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <Button type="button" variant={profile.slug === activeProfile ? 'outline' : 'default'} className="rounded-xl" onClick={() => onSwitchProfile(profile.slug)}>
+                  <Button type="button" variant={profile.slug === activeProfile ? 'outline' : 'default'} onClick={() => onSwitchProfile(profile.slug)}>
                     <CheckCircle2 className="h-4 w-4" />
                     {profile.slug === activeProfile ? 'Selected' : 'Use'}
                   </Button>
                   <Button
                     type="button"
                     variant="outline"
-                    className="rounded-xl"
                     onClick={() => setEditor({ mode: 'edit', slug: profile.slug, draft: structuredClone(profile.site_config) })}
                   >
                     <Pencil className="h-4 w-4" />
                     Edit
                   </Button>
                   {!profile.is_default && (
-                    <Button type="button" variant="outline" className="rounded-xl text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => setPendingDelete(profile)}>
+                    <Button type="button" variant="outline" className="text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => setPendingDelete(profile)}>
                       <Trash2 className="h-4 w-4" />
                       Delete
                     </Button>
@@ -225,10 +224,9 @@ function ProfileEditorDialog({
           </div>
 
           <div className="flex justify-end gap-2 border-t border-slate-200 pt-4">
-            <Button type="button" variant="outline" className="rounded-xl" onClick={onClose}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
             <Button
               type="button"
-              className="rounded-xl"
               disabled={saving || !slug.trim() || !draft.site_name.trim()}
               onClick={() => onSubmit(slug.trim(), draft)}
             >
@@ -261,12 +259,12 @@ function DeleteProfileDialog({
       className="max-w-xl"
     >
       <div className="space-y-4 px-5 py-4">
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {profile?.slug} will be removed permanently. The active profile will fall back to `default` if needed.
         </div>
         <div className="flex justify-end gap-2 border-t border-slate-200 pt-4">
-          <Button type="button" variant="outline" className="rounded-xl" onClick={onClose}>Cancel</Button>
-          <Button type="button" className="rounded-xl bg-red-600 hover:bg-red-700" disabled={saving} onClick={onConfirm}>
+          <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+          <Button type="button" className="bg-red-600 hover:bg-red-700" disabled={saving} onClick={onConfirm}>
             {saving ? 'Deleting…' : 'Delete business'}
           </Button>
         </div>
@@ -277,7 +275,7 @@ function DeleteProfileDialog({
 
 function StatPill({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+    <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
       <div className="font-mono text-sm font-semibold text-slate-900">{value}</div>
       <div className="mt-1 text-[11px] uppercase tracking-[0.14em] text-slate-500">{label}</div>
     </div>
@@ -297,7 +295,7 @@ function TextArea({ label, value, onChange }: { label: string; value: string; on
   return (
     <label className="block">
       <span className="mb-1.5 block text-xs font-medium text-slate-500">{label}</span>
-      <textarea value={value} onChange={event => onChange(event.target.value)} rows={4} className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
+      <textarea value={value} onChange={event => onChange(event.target.value)} rows={4} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" />
     </label>
   )
 }

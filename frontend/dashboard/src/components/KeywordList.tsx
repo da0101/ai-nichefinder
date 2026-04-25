@@ -51,9 +51,9 @@ export function KeywordList({ keywords, selectedId, onSelect }: Props) {
               aria-current={selectedId === kw.id ? 'page' : undefined}
               className={cn(
                 'w-full cursor-pointer border-b border-slate-100 px-4 py-3 text-left transition-colors',
-                'hover:bg-blue-50',
+                'hover:bg-indigo-50',
                 selectedId === kw.id
-                  ? 'border-l-2 border-l-blue-600 bg-blue-50'
+                  ? 'border-l-2 border-l-indigo-600 bg-indigo-50'
                   : 'border-l-2 border-l-transparent'
               )}
             >

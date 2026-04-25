@@ -200,7 +200,7 @@ export function KeywordDetail({ data, loading, error }: Props) {
                         href={page.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="mt-0.5 block truncate text-[11px] text-blue-600 hover:underline"
+                        className="mt-0.5 block truncate text-[11px] text-indigo-600 hover:underline"
                       >
                         {page.url}
                       </a>

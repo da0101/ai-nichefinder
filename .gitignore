@@ -57,3 +57,4 @@ node_modules/
 .platform/.watch.pid
 .platform/.watch/
 # agentboard:runtime-end
+.gstack/

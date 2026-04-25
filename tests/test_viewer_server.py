@@ -98,9 +98,15 @@ def test_viewer_command_opens_browser(monkeypatch, tmp_path: Path):
     served: list[tuple[str, int]] = []
     settings = Settings(database_url=f"sqlite:///{tmp_path / 'seo.db'}")
 
-    monkeypatch.setattr("nichefinder_cli.commands.viewer.get_runtime", lambda: (settings, None, None))
-    monkeypatch.setattr("nichefinder_cli.commands.viewer.serve_viewer", lambda settings, host, port: served.append((host, port)))
-    monkeypatch.setattr("nichefinder_cli.commands.viewer.webbrowser.open", lambda url, new=0: opened.append((url, new)))
+    monkeypatch.setattr("nichefinder_cli.commands.system.viewer.get_runtime", lambda: (settings, None, None))
+    monkeypatch.setattr(
+        "nichefinder_cli.commands.system.viewer.serve_viewer",
+        lambda settings, host, port: served.append((host, port)),
+    )
+    monkeypatch.setattr(
+        "nichefinder_cli.commands.system.viewer.webbrowser.open",
+        lambda url, new=0: opened.append((url, new)),
+    )
 
     view(host="127.0.0.1", port=9876)
 
@@ -121,6 +127,7 @@ def test_viewer_server_serves_dist_assets_and_rejects_traversal(monkeypatch, tmp
     try:
         assert urlopen(f"{base}/").read() == b"<html>react</html>"
         assert urlopen(f"{base}/app.js").read() == b"console.log('ok')"
+        assert urlopen(f"{base}/explorer").read() == b"<html>react</html>"
 
         try:
             urlopen(f"{base}/../secret.txt")

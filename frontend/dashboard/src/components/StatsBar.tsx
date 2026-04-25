@@ -16,11 +16,11 @@ const STATS = [
 export function StatsBar({ data }: Props) {
   return (
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      {STATS.map(({ key, label }, i) => (
-        <Card key={key} className={i === 0 ? 'border-blue-200 bg-blue-50/40' : ''}>
+      {STATS.map(({ key, label }) => (
+        <Card key={key}>
           <CardContent className="px-5 py-4">
             {data ? (
-              <span className="font-mono text-3xl font-bold text-blue-700">
+              <span className="font-mono text-3xl font-bold text-slate-900">
                 {data.summary[key]}
               </span>
             ) : (

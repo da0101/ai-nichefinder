@@ -25,6 +25,7 @@ Format: `YYYY-MM-DD — <task> — <outcome> — <takeaway>`
 2026-04-20 — dashboard-rework — React 18 + shadcn/ui dashboard built and served by Python; live 30s polling eliminates server restart requirement — inline HTML in Python strings doesn't scale; dist/ committed to git keeps CLI-first UX intact
 
 ---
+- 2026-04-24 — commit `9220b92`: update — auto-logged
 - 2026-04-24 — commit `9b372e3`: update — auto-logged
 - 2026-04-24 — commit `50df18a`: pl;atform flatening — auto-logged
 - 2026-04-24 — commit `4129e12`: update — auto-logged
@@ -92,3 +93,6 @@ Format: `YYYY-MM-DD — <task> — <outcome> — <takeaway>`
 2026-04-24 — rest-api-control-plane — added explicit Python API models, matching TypeScript interfaces, and typed rewrite/monitor-sync jobs — the control-plane contract is now much harder to drift between backend, tests, and dashboard code
 2026-04-24 — rest-api-control-plane — added typed noise/training/final review contracts plus noise review/approval REST routes, and fixed default-profile resolution in the review layer — approval workflows need the same explicit contract discipline as jobs and data reads
 2026-04-24 — rest-api-control-plane — replaced the custom viewer HTTP transport with a FastAPI + uvicorn app while keeping the typed action/job layer intact — cloud-ready transport should be standard ASGI, but the application core must stay separate from route handlers
+2026-04-24 — repo-topology-reorg — split the root CLI surface into grouped `commands/root/*` modules and reduced `main.py` to Typer assembly only — entry files should wire command families together, not absorb every workflow concern directly
+2026-04-24 — repo-topology-reorg — grouped the remaining CLI implementation into `commands/{content,discovery,monitoring,system}` with thin flat-file shims for compatibility — file ownership should follow concern folders even while import compatibility is preserved
+2026-04-24 — debug: dashboard shell gutter and collapsed-rail clipping — fixed root cause: the app shell centered a max-width content container while the collapsed nav reused expanded button geometry — dashboard shells should left-align the workspace and give collapsed rails their own icon-button layout

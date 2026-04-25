@@ -1,9 +1,54 @@
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Fira+Sans:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    @apply bg-slate-50;
+  }
+
   body {
     font-family: 'Fira Sans', ui-sans-serif, system-ui, sans-serif;
+    @apply bg-slate-50 text-slate-900 antialiased;
+  }
+
+  html,
+  body {
+    height: 100%;
+  }
+
+  #root {
+    height: 100%;
+  }
+
+  code,
+  pre,
+  kbd {
+    font-family: 'Fira Code', ui-monospace, SFMono-Regular, monospace;
+  }
+
+  * {
+    scrollbar-color: #cbd5e1 transparent;
+    scrollbar-width: thin;
+  }
+
+  ::selection {
+    background: rgba(99, 102, 241, 0.18);
+  }
+}
+
+@layer components {
+  .app-panel {
+    @apply rounded-lg border border-slate-200 bg-white shadow-sm;
+  }
+
+  .app-muted {
+    @apply text-sm text-slate-600;
   }
 }

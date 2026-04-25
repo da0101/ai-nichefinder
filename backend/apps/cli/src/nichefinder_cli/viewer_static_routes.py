@@ -20,6 +20,9 @@ def register_static_routes(app: FastAPI) -> None:
         target = _static_target(path)
         if target is False:
             return error_response("forbidden", status=403)
+        if target == "index":
+            index = _dist_dir() / "index.html"
+            return FileResponse(index) if index.exists() else HTMLResponse(HTML)
         if target is None:
             return error_response("not found", status=404)
         return FileResponse(target)
@@ -29,7 +32,7 @@ def _dist_dir() -> Path:
     return Path(__file__).parent.parent.parent.parent.parent.parent / "frontend" / "dashboard" / "dist"
 
 
-def _static_target(path: str) -> Path | None | bool:
+def _static_target(path: str) -> Path | str | None | bool:
     if any(part == ".." for part in Path(path).parts):
         return False
     dist = _dist_dir().resolve()
@@ -40,4 +43,6 @@ def _static_target(path: str) -> Path | None | bool:
         return False
     if target.exists() and target.is_file():
         return target
-    return None
+    if target.suffix:
+        return None
+    return "index"
