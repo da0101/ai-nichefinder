@@ -3,7 +3,7 @@
 > Read this first — every session, every agent (Claude, Codex, Gemini).
 > 30-second orientation: what we're building, why, and where we stand.
 
-**Features:** gsc-monitoring, serp-pipeline-fix, buyer-problem-research, dashboard-rework, reddit-api-integration, google-ads-api-integration, rest-api-control-plane, repo-topology-reorg
+**Features:** gsc-monitoring, serp-pipeline-fix, buyer-problem-research, dashboard-rework, dashboard-layout-fix, reddit-api-integration, google-ads-api-integration, rest-api-control-plane, repo-topology-reorg
 **Status:** mixed active states (in-progress, blocked, planning)
 
 ---
@@ -49,6 +49,7 @@ The current pipeline still proposes many commercially flavored but unwinnable qu
 - `.platform/domains/repo-topology.md`
 - `backend/core/src/nichefinder_core/pre_serp.py` — deterministic pre-SERP shortlist scoring
 - `.platform/work/dashboard-rework.md`
+- `.platform/work/dashboard-layout-fix.md`
 - `.platform/domains/viewer.md`
 - `backend/apps/cli/src/nichefinder_cli/viewer_server.py`
 - `frontend/dashboard/` — React + shadcn/ui dashboard (new)

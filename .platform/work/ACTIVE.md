@@ -13,6 +13,7 @@
 | google-ads-api-integration | feature | planning | codex | 2026-04-21 |
 | rest-api-control-plane | feature | in-progress | codex | 2026-04-24 |
 | repo-topology-reorg | refactor | in-progress | codex | 2026-04-24 |
+| dashboard-layout-fix | feature | in-progress | claude-code | 2026-04-25 |
 
 ---
 

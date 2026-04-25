@@ -1,7 +1,6 @@
-import { ChevronLeft, Sparkles, TrendingUp } from 'lucide-react'
+import { ChevronLeft } from 'lucide-react'
 import { NavLink, useMatch } from 'react-router-dom'
 
-import { Badge } from '@/components/ui/badge'
 import {
   Tooltip,
   TooltipContent,
@@ -14,16 +13,14 @@ import { APP_NAV_ITEMS, NAV_GROUP_ORDER } from '../routes'
 
 interface AppSidebarProps {
   collapsed: boolean
-  activeProfile: string
-  keywordCount: number
   onToggleCollapse?: () => void
   onNavigate?: () => void
   mobile?: boolean
 }
 
-// Separate component so useMatch can be called as a hook (not inside .map)
-// Radix UI asChild/Slot converts function classNames to their source string via
-// Array.join — this resolves active state to a plain string before Slot sees it.
+// Separate component so useMatch runs as a hook (not inside .map).
+// Radix UI asChild/Slot converts function classNames to source strings via
+// Array.join — resolving active state here keeps className a plain string.
 function CollapsedNavItem({
   item,
   onNavigate,
@@ -40,10 +37,10 @@ function CollapsedNavItem({
           to={item.path}
           onClick={onNavigate}
           className={cn(
-            'flex items-center rounded-lg text-[13px] font-medium transition-colors mx-auto h-9 w-9 justify-center',
+            'flex items-center justify-center rounded-lg transition-colors mx-auto h-9 w-9',
             match
-              ? 'bg-slate-800 text-white ring-1 ring-inset ring-slate-700'
-              : 'text-slate-400 hover:bg-slate-900 hover:text-white',
+              ? 'bg-indigo-500/15 text-indigo-300 ring-1 ring-inset ring-indigo-500/20'
+              : 'text-white/60 hover:bg-white/10 hover:text-white',
           )}
         >
           <Icon className="h-[18px] w-[18px] shrink-0" />
@@ -56,40 +53,21 @@ function CollapsedNavItem({
 
 export function AppSidebar({
   collapsed,
-  activeProfile,
-  keywordCount,
   onToggleCollapse,
   onNavigate,
   mobile = false,
 }: AppSidebarProps) {
   return (
-    <div className="flex h-full w-full flex-col bg-slate-950 text-slate-100">
-      {/* Logo / brand */}
-      <div
-        className={cn(
-          'flex h-14 shrink-0 items-center border-b border-slate-800',
-          collapsed ? 'justify-center px-2' : 'gap-2.5 px-4',
-        )}
-      >
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-500/15 text-indigo-300 ring-1 ring-inset ring-indigo-400/20">
-          <TrendingUp className="h-4 w-4" />
-        </div>
-        {!collapsed && (
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-semibold">Nichefinder</div>
-            <div className="truncate text-xs text-slate-400">Research control center</div>
-          </div>
-        )}
-      </div>
+    <div className="flex h-full w-full flex-col bg-[#1a1a1a] text-white">
 
-      {/* Navigation */}
+      {/* ── Navigation ──────────────────────────────── */}
       <nav className="flex-1 overflow-y-auto px-2 py-3">
         {NAV_GROUP_ORDER.map(group => {
           const items = APP_NAV_ITEMS.filter(item => item.group === group)
           return (
-            <div key={group} className="mb-4">
+            <div key={group} className="mb-5">
               {!collapsed && (
-                <div className="mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+                <div className="mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-widest text-white/40">
                   {group}
                 </div>
               )}
@@ -107,14 +85,14 @@ export function AppSidebar({
                           onClick={onNavigate}
                           className={({ isActive }) =>
                             cn(
-                              'flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors',
+                              'flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-colors',
                               isActive
-                                ? 'bg-slate-800 text-white ring-1 ring-inset ring-slate-700'
-                                : 'text-slate-400 hover:bg-slate-900 hover:text-white',
+                                ? 'bg-indigo-500/15 text-indigo-300 ring-1 ring-inset ring-indigo-500/20'
+                                : 'text-white/70 hover:bg-white/10 hover:text-white',
                             )
                           }
                         >
-                          <Icon className="h-[18px] w-[18px] shrink-0" />
+                          <Icon className="h-[17px] w-[17px] shrink-0" />
                           <span className="truncate">{item.title}</span>
                         </NavLink>
                       )
@@ -125,57 +103,19 @@ export function AppSidebar({
         })}
       </nav>
 
-      {/* Active profile chip */}
-      <div className={cn('border-t border-slate-800', collapsed ? 'p-2' : 'p-3')}>
-        <div
-          className={cn(
-            'rounded-lg border border-slate-800 bg-slate-900/70',
-            collapsed ? 'flex flex-col items-center py-3' : 'p-3',
-          )}
-        >
-          {collapsed ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex h-9 w-9 cursor-default items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-300">
-                  <Sparkles className="h-4 w-4" />
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="right">{activeProfile}</TooltipContent>
-            </Tooltip>
-          ) : (
-            <>
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-300">
-                  <Sparkles className="h-4 w-4" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-medium">{activeProfile}</div>
-                  <div className="truncate text-xs text-slate-400">{keywordCount} tracked keywords</div>
-                </div>
-              </div>
-              <Badge className="mt-3 w-full justify-center bg-slate-800 text-slate-200">
-                Local mode
-              </Badge>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Collapse toggle (desktop only) */}
+      {/* ── Collapse toggle — desktop only ─────────── */}
       {!mobile && onToggleCollapse && (
-        <div className="shrink-0 border-t border-slate-800 p-2">
+        <div className="shrink-0 border-t border-white/[0.07] p-2">
           <button
             type="button"
             onClick={onToggleCollapse}
-            className="flex w-full items-center justify-center rounded-lg py-1.5 text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-200"
+            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg py-1.5 text-[12px] font-medium text-white/45 transition-colors hover:bg-white/10 hover:text-white/80"
             aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             <ChevronLeft
-              className={cn(
-                'h-4 w-4 transition-transform duration-200',
-                collapsed && 'rotate-180',
-              )}
+              className={cn('h-4 w-4 shrink-0 transition-transform duration-200', collapsed && 'rotate-180')}
             />
+            {!collapsed && <span>Collapse</span>}
           </button>
         </div>
       )}

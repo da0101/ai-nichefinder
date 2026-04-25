@@ -18,7 +18,7 @@ export function LiveIndicator({ lastUpdated, onRefresh }: Props) {
   }, [])
 
   return (
-    <div className="flex items-center gap-2 text-xs text-slate-400">
+    <div className="flex items-center gap-2 text-xs text-white/60">
       <span className="flex items-center gap-1">
         <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
         {lastUpdated ? `Updated ${timeAgo(lastUpdated)}` : 'Loading\u2026'}
@@ -29,7 +29,7 @@ export function LiveIndicator({ lastUpdated, onRefresh }: Props) {
         onClick={onRefresh}
         title="Refresh now"
         aria-label="Refresh dashboard"
-        className="h-6 w-6 text-slate-400 hover:text-indigo-600"
+        className="h-6 w-6 cursor-pointer text-white/60 hover:bg-white/10 hover:text-white"
       >
         <RefreshCw className="h-3 w-3" />
       </Button>

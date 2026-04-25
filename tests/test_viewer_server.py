@@ -146,7 +146,7 @@ def test_viewer_server_serves_dist_assets_and_rejects_traversal(monkeypatch, tmp
         thread.join(timeout=2)
 
 
-def test_viewer_server_falls_back_to_inline_html_when_dist_missing(monkeypatch, tmp_path: Path):
+def test_viewer_server_returns_503_when_dist_missing(monkeypatch, tmp_path: Path):
     dist = tmp_path / "dist"
     dist.mkdir()
     settings = Settings(database_url=f"sqlite:///{tmp_path / 'seo.db'}")
@@ -155,9 +155,13 @@ def test_viewer_server_falls_back_to_inline_html_when_dist_missing(monkeypatch, 
     server, thread = _start_server(settings)
     base = f"http://127.0.0.1:{server.server_port}"
     try:
-        body = urlopen(f"{base}/").read().decode("utf-8")
-        assert "Nichefinder" in body
-        assert "Local SEO research viewer" in body
+        try:
+            urlopen(f"{base}/")
+            assert False, "expected 503 when dist/index.html is missing"
+        except HTTPError as exc:
+            assert exc.code == 503
+            body = exc.read().decode("utf-8")
+            assert "react dashboard not built" in body
     finally:
         server.shutdown()
         server.server_close()

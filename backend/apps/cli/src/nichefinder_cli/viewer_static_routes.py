@@ -1,17 +1,23 @@
 from pathlib import Path
 
 from fastapi import FastAPI
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse
 
 from nichefinder_cli.api_responses import error_response
-from nichefinder_cli.viewer_html import HTML
+
+
+_DIST_MISSING = (
+    "react dashboard not built — run `npm run build` in `frontend/dashboard`"
+)
 
 
 def register_static_routes(app: FastAPI) -> None:
     @app.get("/", response_model=None)
     async def root():
         index = _dist_dir() / "index.html"
-        return FileResponse(index) if index.exists() else HTMLResponse(HTML)
+        if not index.exists():
+            return error_response(_DIST_MISSING, status=503)
+        return FileResponse(index)
 
     @app.get("/{path:path}", response_model=None)
     async def static_or_not_found(path: str):
@@ -22,7 +28,9 @@ def register_static_routes(app: FastAPI) -> None:
             return error_response("forbidden", status=403)
         if target == "index":
             index = _dist_dir() / "index.html"
-            return FileResponse(index) if index.exists() else HTMLResponse(HTML)
+            if not index.exists():
+                return error_response(_DIST_MISSING, status=503)
+            return FileResponse(index)
         if target is None:
             return error_response("not found", status=404)
         return FileResponse(target)
