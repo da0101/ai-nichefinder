@@ -15,10 +15,10 @@ Google Search Console integration — fetches post-publish performance signals (
 | Layer | Component | Role |
 |---|---|---|
 | CLI | `backend/apps/cli` → `seo monitor sync` | Entry point; triggers the GSC fetch + persist cycle |
-| Adapter | `backend/packages/core/.../adapters/gsc_client.py` | OAuth2 credentials + Google Search Console API v1 calls |
+| Adapter | `backend/core/.../adapters/gsc_client.py` | OAuth2 credentials + Google Search Console API v1 calls |
 | Core models | `SearchConsoleRecord` (tracking.py) | Target persistence entity — already exists in schema |
 | DB / repo | `SeoRepository.save_search_console_record()` | Already implemented; just needs a caller |
-| Migration | `backend/packages/db/.../migrations.py` | Table already created via V2 migration |
+| Migration | `backend/db/.../migrations.py` | Table already created via V2 migration |
 | Config | `.env` / `site_config.json` | GSC property URL, credentials path |
 
 ## External dependencies

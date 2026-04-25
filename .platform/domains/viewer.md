@@ -18,8 +18,8 @@ The local web viewer (`seo view`) is a Python HTTP server that serves a React + 
 | Server | `backend/apps/cli/src/nichefinder_cli/viewer_server.py` | HTTP server — serves React dist/ + JSON API |
 | React app | `frontend/dashboard/` | Vite + React 18 + TypeScript + Tailwind + shadcn/ui |
 | Built assets | `frontend/dashboard/dist/` | Pre-built, committed — served by Python server |
-| Repository | `backend/packages/db/src/nichefinder_db/crud.py` | `SeoRepository` methods consumed by viewer_data |
-| Models | `backend/packages/db/src/nichefinder_db/models.py` | ORM tables; viewer reads `OpportunityScoreRecord`, `Keyword`, `Article` |
+| Repository | `backend/db/src/nichefinder_db/crud.py` | `SeoRepository` methods consumed by viewer_data |
+| Models | `backend/db/src/nichefinder_db/models.py` | ORM tables; viewer reads `OpportunityScoreRecord`, `Keyword`, `Article` |
 
 ## Invariants
 

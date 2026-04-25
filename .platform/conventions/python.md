@@ -7,12 +7,12 @@ Last updated: 2026-04-17
 - Python 3.12 workspace managed by `uv`
 - Package split:
 - `backend/apps/cli` for Typer command surface
-- `backend/packages/core` for models, agents, adapters, settings, and orchestration
-- `backend/packages/db` for persistence and session/bootstrap helpers
+- `backend/core` for models, agents, adapters, settings, and orchestration
+- `backend/db` for persistence and session/bootstrap helpers
 
 ## Rules for this repo
 
-- Keep commands thin. Business logic belongs in `backend/packages/core` or `backend/packages/db`, not in Typer handlers.
+- Keep commands thin. Business logic belongs in `backend/core` or `backend/db`, not in Typer handlers.
 - Prefer explicit models with Pydantic/SQLModel over loose dicts once data crosses a package boundary.
 - Async stays inside agents, workflows, and adapters; CLI commands may use `asyncio.run(...)` as the sync boundary.
 - Read and write through `SeoRepository` rather than spreading raw SQLModel queries across the codebase.
@@ -24,9 +24,9 @@ Last updated: 2026-04-17
 - Entry point: `backend/apps/cli/src/nichefinder_cli/main.py`
 - Runtime wiring: `backend/apps/cli/src/nichefinder_cli/runtime.py`
 - Workflow orchestration: `backend/apps/cli/src/nichefinder_cli/workflows.py`
-- Domain models: `backend/packages/core/src/nichefinder_core/models/`
-- External adapters: `backend/packages/core/src/nichefinder_core/sources/`
-- Persistence: `backend/packages/db/src/nichefinder_db/`
+- Domain models: `backend/core/src/nichefinder_core/models/`
+- External adapters: `backend/core/src/nichefinder_core/sources/`
+- Persistence: `backend/db/src/nichefinder_db/`
 
 ## Things to avoid
 

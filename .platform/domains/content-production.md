@@ -40,12 +40,12 @@ Turns vetted opportunities into content briefs, draft articles, and rewrites tha
 - `backend/apps/cli/src/nichefinder_cli/main.py`
 - `backend/apps/cli/src/nichefinder_cli/commands/articles.py`
 - `backend/apps/cli/src/nichefinder_cli/workflows.py`
-- `backend/packages/core/src/nichefinder_core/agents/content_agent.py`
-- `backend/packages/core/src/nichefinder_core/agents/competitor_agent.py`
-- `backend/packages/core/src/nichefinder_core/agents/synthesis_agent.py`
-- `backend/packages/core/src/nichefinder_core/models/content.py`
-- `backend/packages/core/src/nichefinder_core/sources/scraper.py`
-- `backend/packages/db/src/nichefinder_db/crud.py`
+- `backend/core/src/nichefinder_core/agents/content_agent.py`
+- `backend/core/src/nichefinder_core/agents/competitor_agent.py`
+- `backend/core/src/nichefinder_core/agents/synthesis_agent.py`
+- `backend/core/src/nichefinder_core/models/content.py`
+- `backend/core/src/nichefinder_core/sources/scraper.py`
+- `backend/db/src/nichefinder_db/crud.py`
 
 ## Decisions locked
 

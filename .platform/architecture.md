@@ -54,7 +54,7 @@ Technically, the CLI composes a set of local services around a SQLite database, 
 
 | Layer | Choice | Notes |
 |---|---|---|
-| Language(s) | Python 3.12, TypeScript | Workspace split across `backend/apps/cli`, `backend/packages/core`, `backend/packages/db`, with frontend in `frontend/dashboard` |
+| Language(s) | Python 3.12, TypeScript | Workspace split across `backend/apps/cli`, `backend/core`, `backend/db`, with frontend in `frontend/dashboard` |
 | Framework(s) | Typer, FastAPI, LangGraph, Pydantic v2, SQLModel, React 18 + Vite | Rich is the terminal UI layer |
 | Build tool(s) | `uv`, Ruff, pytest, npm, Vite, Vitest | No containerized app runtime required |
 | Data store(s) | SQLite + local filesystem | Database defaults to `data/db/seo.db` |

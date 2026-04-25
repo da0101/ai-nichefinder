@@ -15,8 +15,8 @@ Expose ai-nichefinder workflows through typed local REST endpoints so the browse
 | HTTP server | `backend/apps/cli/src/nichefinder_cli/viewer_server.py`, `viewer_html.py` | FastAPI app that serves dashboard assets and `/api/*` routes, with a minimal HTML fallback when the built dashboard is missing |
 | API action layer | `backend/apps/cli/src/nichefinder_cli/viewer_actions.py`, `viewer_profile_data.py`, `viewer_data.py` | Thin request/response wrappers around runtime/domain services |
 | Runtime/services | `backend/apps/cli/src/nichefinder_cli/runtime.py`, `workflows.py` | Builds settings, repositories, agents, and executes workflows |
-| Core workflows | `backend/packages/core/src/nichefinder_core/**` | Domain models, agents, source clients, scoring, validation, generation |
-| Persistence | `backend/packages/db/src/nichefinder_db/**` | SQLite-backed records used by CLI and API |
+| Core workflows | `backend/core/src/nichefinder_core/**` | Domain models, agents, source clients, scoring, validation, generation |
+| Persistence | `backend/db/src/nichefinder_db/**` | SQLite-backed records used by CLI and API |
 | Frontend | `frontend/dashboard/` | React client that should consume only `/api/*`, not shell commands |
 
 ## Invariants

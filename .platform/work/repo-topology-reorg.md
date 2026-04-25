@@ -35,18 +35,28 @@ closure_approved: false
 ## Key decisions
 
 2026-04-24 — Treat the repo topology change as a phased refactor, not a one-shot move — directory churn across workspace config, tests, and frontend build paths is too broad to do safely without staged checkpoints.
-2026-04-24 — Phase 1 layout target is `frontend/dashboard` plus `backend/{apps,packages}` — this keeps the future repo boundary obvious without rewriting the existing Python workspace/package architecture.
+2026-04-24 — Phase 1 layout target is `frontend/dashboard` plus `backend/{apps,core,db}` — this keeps the future repo boundary obvious without implying that internal backend modules are plugins or external libraries.
 
 ## Resume state
 _Overwritten by `agentboard checkpoint` — the compact payload the next agent reads first. Keep this block under ~10 lines._
 
 - **Last updated:** 2026-04-24 by danilulmashev
-- **What just happened:** Completed frontend Phase 2A: added a shared typed HTTP client, moved dashboard hooks under feature-owned folders, deleted the generic hooks layer, and introduced Vitest hook/API tests.
-- **Current focus:** frontend features/shared API boundary
-- **Next action:** Split the backend FastAPI viewer surface into smaller route and service modules while keeping the new frontend API boundary stable.
+- **What just happened:** Split viewer_actions.py into dedicated service modules for profile, article, workflow, and runtime context; routes and jobs now call those services directly and the suite stayed green.
+- **Current focus:** backend service boundary cleanup
+- **Next action:** Trim workflow_service.py into smaller workflow-specific modules and continue shrinking the remaining oversized backend files.
 - **Blockers:** none
 
 ## Progress log
+
+2026-04-24 21:16 — Split viewer_actions.py into dedicated service modules for profile, article, workflow, and runtime context; routes and jobs now call those services directly and the suite stayed green.
+
+2026-04-24 21:16 — Split `viewer_actions.py` into dedicated `services/{profile,article,workflow,runtime_context}.py` modules, reduced `viewer_actions.py` to a thin compatibility layer, pointed routes/jobs at the new services directly, and verified `uv run pytest -q`, `npm run test:run`, and `npm run build`.
+
+2026-04-24 21:10 — Renamed backend ownership folders to backend/{core,db} and split the FastAPI transport into dedicated route, response, security, and static-serving modules while keeping pytest and frontend checks green.
+
+2026-04-24 21:10 — Renamed `backend/packages/{core,db}` to `backend/{core,db}` and split `viewer_server.py` into dedicated API route, security, response, and static-serving modules; verified `uv run pytest -q`, `npm run test:run`, and `npm run build`.
+
+2026-04-24 21:06 — Renamed `backend/packages/{core,db}` to `backend/{core,db}`, updated workspace/config/docs references, and re-verified `uv sync`, `uv run pytest -q`, `npm run test:run`, and `npm run build`.
 
 2026-04-24 20:56 — Completed frontend Phase 2A: added a shared typed HTTP client, moved dashboard hooks under feature-owned folders, deleted the generic hooks layer, and introduced Vitest hook/API tests.
 
@@ -58,11 +68,9 @@ _Overwritten by `agentboard checkpoint` — the compact payload the next agent r
 
 2026-04-24 18:47 — Registered the repo-topology reorg stream and domain after the user asked for a mature frontend/backend split; next step is to define the target layout and staged migration plan.
 
-2026-04-24 20:45 — Registered the repo-topology reorg stream and domain; next step is to propose a phased frontend/backend split layout.
-
 ## Open questions
 
-- Is there enough future value in flattening `backend/{apps,packages}` into `backend/{cli,core,db}`, or is the current split already the right stable extraction boundary?
+- After the naming cleanup to `backend/{apps,core,db}`, should the next backend pass stop at route/service extraction, or is there still a real need to collapse `backend/apps/cli` further?
 
 ---
 

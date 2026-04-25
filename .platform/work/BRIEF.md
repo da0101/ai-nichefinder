@@ -47,12 +47,12 @@ The current pipeline still proposes many commercially flavored but unwinnable qu
 - `.platform/domains/keyword-research.md`
 - `.platform/domains/rest-api-control-plane.md`
 - `.platform/domains/repo-topology.md`
-- `backend/packages/core/src/nichefinder_core/pre_serp.py` — deterministic pre-SERP shortlist scoring
+- `backend/core/src/nichefinder_core/pre_serp.py` — deterministic pre-SERP shortlist scoring
 - `.platform/work/dashboard-rework.md`
 - `.platform/domains/viewer.md`
 - `backend/apps/cli/src/nichefinder_cli/viewer_server.py`
 - `frontend/dashboard/` — React + shadcn/ui dashboard (new)
-- `backend/packages/core/src/nichefinder_core/models/tracking.py` — SearchConsoleRecord model
-- `backend/packages/db/src/nichefinder_db/crud.py` — save_search_console_record / list_search_console_records
+- `backend/core/src/nichefinder_core/models/tracking.py` — SearchConsoleRecord model
+- `backend/db/src/nichefinder_db/crud.py` — save_search_console_record / list_search_console_records
 
 **Never load:** `work/archive/*`

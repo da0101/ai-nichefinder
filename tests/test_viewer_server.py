@@ -114,7 +114,7 @@ def test_viewer_server_serves_dist_assets_and_rejects_traversal(monkeypatch, tmp
     (dist / "index.html").write_text("<html>react</html>", encoding="utf-8")
     (dist / "app.js").write_text("console.log('ok')", encoding="utf-8")
     settings = Settings(database_url=f"sqlite:///{tmp_path / 'seo.db'}")
-    monkeypatch.setattr("nichefinder_cli.viewer_server._dist_dir", lambda: dist)
+    monkeypatch.setattr("nichefinder_cli.viewer_static_routes._dist_dir", lambda: dist)
 
     server, thread = _start_server(settings)
     base = f"http://127.0.0.1:{server.server_port}"
@@ -143,7 +143,7 @@ def test_viewer_server_falls_back_to_inline_html_when_dist_missing(monkeypatch, 
     dist = tmp_path / "dist"
     dist.mkdir()
     settings = Settings(database_url=f"sqlite:///{tmp_path / 'seo.db'}")
-    monkeypatch.setattr("nichefinder_cli.viewer_server._dist_dir", lambda: dist)
+    monkeypatch.setattr("nichefinder_cli.viewer_static_routes._dist_dir", lambda: dist)
 
     server, thread = _start_server(settings)
     base = f"http://127.0.0.1:{server.server_port}"
@@ -160,7 +160,7 @@ def test_viewer_server_falls_back_to_inline_html_when_dist_missing(monkeypatch, 
 def test_viewer_server_profile_and_training_endpoints(monkeypatch, tmp_path: Path):
     settings = Settings(database_url=f"sqlite:///{tmp_path / 'seo.db'}")
     monkeypatch.setattr(
-        "nichefinder_cli.viewer_server.load_profiles",
+        "nichefinder_cli.viewer_api_routes.load_profiles",
         lambda: {
             "active_profile": "restaurant",
             "profiles": [{
@@ -174,7 +174,7 @@ def test_viewer_server_profile_and_training_endpoints(monkeypatch, tmp_path: Pat
         },
     )
     monkeypatch.setattr(
-        "nichefinder_cli.viewer_server.load_training_review",
+        "nichefinder_cli.viewer_api_routes.load_training_review",
         lambda profile_slug=None, min_runs=2, limit=18: TrainingReviewResponse(
             profile=ReviewProfileSummary(
                 slug=profile_slug or "restaurant",
@@ -203,7 +203,7 @@ def test_viewer_server_profile_and_training_endpoints(monkeypatch, tmp_path: Pat
         ),
     )
     monkeypatch.setattr(
-        "nichefinder_cli.viewer_server.load_noise_review",
+        "nichefinder_cli.viewer_api_routes.load_noise_review",
         lambda profile_slug=None, min_runs=2, limit=12: NoiseReviewResponse(
             profile=ReviewProfileSummary(
                 slug=profile_slug or "restaurant",
@@ -232,7 +232,7 @@ def test_viewer_server_profile_and_training_endpoints(monkeypatch, tmp_path: Pat
         ),
     )
     monkeypatch.setattr(
-        "nichefinder_cli.viewer_server.load_final_review",
+        "nichefinder_cli.viewer_api_routes.load_final_review",
         lambda profiles=None, min_runs=2, limit=9: FinalReviewResponse(
             summary=[
                 ReviewProfileSummary(
@@ -251,11 +251,11 @@ def test_viewer_server_profile_and_training_endpoints(monkeypatch, tmp_path: Pat
         ),
     )
     monkeypatch.setattr(
-        "nichefinder_cli.viewer_server.switch_active_profile",
+        "nichefinder_cli.viewer_api_routes.switch_active_profile",
         lambda profile: {"active_profile": profile or "default", "profiles": []},
     )
     monkeypatch.setattr(
-        "nichefinder_cli.viewer_server.approve_training_review",
+        "nichefinder_cli.viewer_api_routes.approve_training_review",
         lambda **kwargs: TrainingReviewResponse(
             profile=ReviewProfileSummary(
                 slug=kwargs["profile_slug"],
@@ -275,7 +275,7 @@ def test_viewer_server_profile_and_training_endpoints(monkeypatch, tmp_path: Pat
         ),
     )
     monkeypatch.setattr(
-        "nichefinder_cli.viewer_server.approve_noise_review",
+        "nichefinder_cli.viewer_api_routes.approve_noise_review",
         lambda **kwargs: NoiseReviewResponse(
             profile=ReviewProfileSummary(
                 slug=kwargs["profile_slug"],
@@ -295,7 +295,7 @@ def test_viewer_server_profile_and_training_endpoints(monkeypatch, tmp_path: Pat
         ),
     )
     monkeypatch.setattr(
-        "nichefinder_cli.viewer_server.load_profile_config",
+        "nichefinder_cli.viewer_api_routes.load_profile_config",
         lambda profile_slug=None: {
             "profile": profile_slug or "restaurant",
             "site_config": {"site_name": "Restaurant", "site_url": "https://example.com", "site_description": "", "target_audience": "", "services": [], "primary_language": "en", "blog_url": "", "existing_articles": [], "seed_keywords": [], "target_persona": "", "competitors": [], "geographic_focus": []},
@@ -303,7 +303,7 @@ def test_viewer_server_profile_and_training_endpoints(monkeypatch, tmp_path: Pat
         },
     )
     monkeypatch.setattr(
-        "nichefinder_cli.viewer_server.save_profile_config_action",
+        "nichefinder_cli.viewer_api_routes.save_profile_config_action",
         lambda profile_slug=None, payload=None: {
             "profile": profile_slug or "restaurant",
             "site_config": payload,
@@ -311,7 +311,7 @@ def test_viewer_server_profile_and_training_endpoints(monkeypatch, tmp_path: Pat
         },
     )
     monkeypatch.setattr(
-        "nichefinder_cli.viewer_server.create_profile_action",
+        "nichefinder_cli.viewer_api_routes.create_profile_action",
         lambda slug, from_current=False, use=False, payload=None: {
             "slug": slug,
             "site_config": payload or {"site_name": "", "site_url": "", "site_description": "", "target_audience": "", "services": [], "primary_language": "en", "blog_url": "", "existing_articles": [], "seed_keywords": [], "target_persona": "", "competitors": [], "geographic_focus": []},
@@ -321,11 +321,11 @@ def test_viewer_server_profile_and_training_endpoints(monkeypatch, tmp_path: Pat
         },
     )
     monkeypatch.setattr(
-        "nichefinder_cli.viewer_server.delete_profile_action",
+        "nichefinder_cli.viewer_api_routes.delete_profile_action",
         lambda profile_slug: {"deleted": profile_slug, "active_profile": "default"},
     )
     monkeypatch.setattr(
-        "nichefinder_cli.viewer_server.run_validate_free_action",
+        "nichefinder_cli.viewer_api_routes.run_validate_free_action",
         lambda profile_slug=None, keyword="", sources=("ddgs", "bing", "yahoo"): {
             "profile": profile_slug or "restaurant",
             "keyword": keyword,
@@ -434,7 +434,7 @@ def test_viewer_server_profile_and_training_endpoints(monkeypatch, tmp_path: Pat
 
 def test_viewer_server_rejects_invalid_training_payload(monkeypatch, tmp_path: Path):
     settings = Settings(database_url=f"sqlite:///{tmp_path / 'seo.db'}")
-    monkeypatch.setattr("nichefinder_cli.viewer_server.approve_training_review", lambda **kwargs: kwargs)
+    monkeypatch.setattr("nichefinder_cli.viewer_api_routes.approve_training_review", lambda **kwargs: kwargs)
 
     server, thread = _start_server(settings)
     base = f"http://127.0.0.1:{server.server_port}"
@@ -458,7 +458,7 @@ def test_viewer_server_rejects_invalid_training_payload(monkeypatch, tmp_path: P
 
 def test_viewer_server_rejects_invalid_noise_payload(monkeypatch, tmp_path: Path):
     settings = Settings(database_url=f"sqlite:///{tmp_path / 'seo.db'}")
-    monkeypatch.setattr("nichefinder_cli.viewer_server.approve_noise_review", lambda **kwargs: kwargs)
+    monkeypatch.setattr("nichefinder_cli.viewer_api_routes.approve_noise_review", lambda **kwargs: kwargs)
 
     server, thread = _start_server(settings)
     base = f"http://127.0.0.1:{server.server_port}"
@@ -663,7 +663,7 @@ def test_viewer_server_rejects_non_loopback_write_without_token(monkeypatch, tmp
     settings = Settings(database_url=f"sqlite:///{tmp_path / 'seo.db'}")
 
     monkeypatch.setattr(
-        "nichefinder_cli.viewer_server._client_is_loopback",
+        "nichefinder_cli.api_security._client_is_loopback",
         lambda request: False,
     )
 

@@ -93,9 +93,9 @@ Reddit OAuth settings -> Reddit Data API client -> posts/comments fetch
 
 | Severity | Repo | Finding |
 |:---:|---|---|
-| 🟡 Medium | repo-primary | Reddit OAuth credentials are not modeled in settings/env yet. [backend/packages/core/src/nichefinder_core/settings.py:27](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/packages/core/src/nichefinder_core/settings.py:27), [.env.example:4](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.env.example:4) |
+| 🟡 Medium | repo-primary | Reddit OAuth credentials are not modeled in settings/env yet. [backend/core/src/nichefinder_core/settings.py:27](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/core/src/nichefinder_core/settings.py:27), [.env.example:4](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.env.example:4) |
 | 🟢 Clean | repo-primary | No hardcoded Reddit secrets found; no Reddit client exists yet to leak tokens. |
-| 🟡 Medium | repo-primary | Existing generic HTML search User-Agent is browser-like, not a descriptive Reddit API User-Agent. [backend/packages/core/src/nichefinder_core/sources/html_search_engine.py:13](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/packages/core/src/nichefinder_core/sources/html_search_engine.py:13) |
+| 🟡 Medium | repo-primary | Existing generic HTML search User-Agent is browser-like, not a descriptive Reddit API User-Agent. [backend/core/src/nichefinder_core/sources/html_search_engine.py:13](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/core/src/nichefinder_core/sources/html_search_engine.py:13) |
 
 ---
 
@@ -122,7 +122,7 @@ Reddit OAuth settings -> Reddit Data API client -> posts/comments fetch
 | Reddit source module | ❌ Missing | [backend/apps/cli/src/nichefinder_cli/runtime.py:26](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/apps/cli/src/nichefinder_cli/runtime.py:26) |
 | Reddit service wiring | ❌ Missing | [backend/apps/cli/src/nichefinder_cli/runtime.py:64](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/apps/cli/src/nichefinder_cli/runtime.py:64) |
 | Reddit enrichment in research pipeline | ❌ Missing | [backend/apps/cli/src/nichefinder_cli/workflows.py:98](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/apps/cli/src/nichefinder_cli/workflows.py:98) |
-| Legacy Reddit SERP scoring | ✅ Existing, not this integration | [backend/packages/core/src/nichefinder_core/utils/serp_signals.py:4](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/packages/core/src/nichefinder_core/utils/serp_signals.py:4) |
+| Legacy Reddit SERP scoring | ✅ Existing, not this integration | [backend/core/src/nichefinder_core/utils/serp_signals.py:4](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/core/src/nichefinder_core/utils/serp_signals.py:4) |
 
 ---
 
@@ -138,9 +138,9 @@ Reddit OAuth settings -> Reddit Data API client -> posts/comments fetch
 ### 🟡 Should Fix Soon
 | # | Repo | Issue | Location |
 |---|---|---|---|
-| 1 | repo-primary | Add Reddit settings with local-secret handling, readiness check, rate/budget limits, and descriptive User-Agent. | [backend/packages/core/src/nichefinder_core/settings.py:27](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/packages/core/src/nichefinder_core/settings.py:27) |
-| 2 | repo-primary | Add structured evidence fields/path for buyer signals, questions, phrases, and source URLs without treating Reddit as primary keyword validation. | [backend/packages/core/src/nichefinder_core/agents/synthesis_agent.py:129](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/packages/core/src/nichefinder_core/agents/synthesis_agent.py:129) |
-| 3 | repo-primary | Keep new Reddit code out of already-large files. | [backend/packages/core/src/nichefinder_core/pre_serp_external.py:1](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/packages/core/src/nichefinder_core/pre_serp_external.py:1) |
+| 1 | repo-primary | Add Reddit settings with local-secret handling, readiness check, rate/budget limits, and descriptive User-Agent. | [backend/core/src/nichefinder_core/settings.py:27](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/core/src/nichefinder_core/settings.py:27) |
+| 2 | repo-primary | Add structured evidence fields/path for buyer signals, questions, phrases, and source URLs without treating Reddit as primary keyword validation. | [backend/core/src/nichefinder_core/agents/synthesis_agent.py:129](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/core/src/nichefinder_core/agents/synthesis_agent.py:129) |
+| 3 | repo-primary | Keep new Reddit code out of already-large files. | [backend/core/src/nichefinder_core/pre_serp_external.py:1](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/core/src/nichefinder_core/pre_serp_external.py:1) |
 
 ### ⚪ Known Limitations (document, not block)
 | # | Limitation |

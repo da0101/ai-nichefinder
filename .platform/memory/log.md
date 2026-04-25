@@ -4,6 +4,10 @@ One line per completed task. Newest at the top. Append-only.
 
 Format: `YYYY-MM-DD — <task> — <outcome> — <takeaway>`
 
+2026-04-24 — repo-topology-reorg backend service split — moved mixed viewer actions into dedicated profile/article/workflow service modules and kept routes/jobs green against the new seams — once transport is separated, the next maintainability win is separating service logic by concern instead of one helper bucket
+
+2026-04-24 — repo-topology-reorg backend naming + transport split — renamed backend ownership folders to `backend/{core,db}` and split FastAPI transport helpers/routes out of `viewer_server.py`; pytest and frontend checks stayed green — cleaner names matter, but the larger maintainability win is shrinking transport files to clear responsibilities
+
 2026-04-24 — repo-topology-reorg frontend Phase 2A — introduced `src/features/*`, `src/shared/api`, and Vitest hook/API coverage; frontend build and backend pytest stayed green — enterprise structure comes from enforced boundaries plus tests, not from folder churn alone
 
 2026-04-24 — repo-topology-reorg Phase 1 — moved the dashboard to `frontend/dashboard` and the Python workspace to `backend/{apps,packages}`; pytest, frontend build, and `seo view` smoke verification all passed after path updates — a topology reorg is safe only when the runtime entrypoints are re-verified from the new tree, not just when files are moved
@@ -21,6 +25,7 @@ Format: `YYYY-MM-DD — <task> — <outcome> — <takeaway>`
 2026-04-20 — dashboard-rework — React 18 + shadcn/ui dashboard built and served by Python; live 30s polling eliminates server restart requirement — inline HTML in Python strings doesn't scale; dist/ committed to git keeps CLI-first UX intact
 
 ---
+- 2026-04-24 — commit `9b372e3`: update — auto-logged
 - 2026-04-24 — commit `50df18a`: pl;atform flatening — auto-logged
 - 2026-04-24 — commit `4129e12`: update — auto-logged
 - 2026-04-24 — commit `318a1f9`: update — auto-logged

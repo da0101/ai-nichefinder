@@ -21,7 +21,7 @@ Class: <the category of problem — so you can grep it>
 Date: 2026-04-19 | Repo: repo-primary
 Symptom: Live research completed and stored keywords, but `brief` never produced a brief for discovered topics even after the external providers were working.
 Root cause: The opportunity gate treated missing volume and difficulty on free-source (`gemini_serpapi`) keywords as effectively worst-case values, so real discovered keywords never crossed the score threshold needed for brief and draft creation.
-Fix: Added neutral fallback scoring in `backend/packages/core/src/nichefinder_core/settings.py` and `backend/packages/core/src/nichefinder_core/agents/synthesis_agent.py`, then validated the fix with a real `brief` and `write` run.
+Fix: Added neutral fallback scoring in `backend/core/src/nichefinder_core/settings.py` and `backend/core/src/nichefinder_core/agents/synthesis_agent.py`, then validated the fix with a real `brief` and `write` run.
 Class: scoring / workflow-threshold / live-validation
 
 <!-- Append new entries above this line, newest at top. -->

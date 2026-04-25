@@ -1,8 +1,8 @@
 [tool.uv.workspace]
 members = [
   "backend/apps/cli",
-  "backend/packages/core",
-  "backend/packages/db",
+  "backend/core",
+  "backend/db",
 ]
 
 [dependency-groups]

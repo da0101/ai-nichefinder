@@ -71,11 +71,11 @@ Defines the persistent data contracts that every future agent family depends on:
 
 ## Key files
 
-- `backend/packages/core/src/nichefinder_core/models/`
-- `backend/packages/db/src/nichefinder_db/models.py`
-- `backend/packages/db/src/nichefinder_db/crud.py`
-- `backend/packages/db/src/nichefinder_db/migrations.py`
-- `backend/packages/db/alembic/`
+- `backend/core/src/nichefinder_core/models/`
+- `backend/db/src/nichefinder_db/models.py`
+- `backend/db/src/nichefinder_db/crud.py`
+- `backend/db/src/nichefinder_db/migrations.py`
+- `backend/db/alembic/`
 - `backend/apps/cli/src/nichefinder_cli/workflows.py`
 - `docs/seo-platform-gap-analysis-roadmap.md`
 

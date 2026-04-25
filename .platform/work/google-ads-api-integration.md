@@ -95,7 +95,7 @@ Google Ads credentials -> official Ads API source client
 | Severity | Repo | Finding |
 |:---:|---|---|
 | 🟢 Clean | repo-primary | No Google Ads credentials or hardcoded Ads secrets found. |
-| 🟡 Medium | repo-primary | Optional credential gating is missing because settings have no Google Ads developer-token/customer/login fields. [backend/packages/core/src/nichefinder_core/settings.py:27](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/packages/core/src/nichefinder_core/settings.py:27) |
+| 🟡 Medium | repo-primary | Optional credential gating is missing because settings have no Google Ads developer-token/customer/login fields. [backend/core/src/nichefinder_core/settings.py:27](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/core/src/nichefinder_core/settings.py:27) |
 | 🟡 Medium | repo-primary | `.env.example` documents no Google Ads variables. [.env.example:4](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.env.example:4) |
 
 ---
@@ -119,10 +119,10 @@ Google Ads credentials -> official Ads API source client
 |---|:---:|---|
 | Stream registration | ✅ Done | [.platform/work/google-ads-api-integration.md:1](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.platform/work/google-ads-api-integration.md:1) |
 | Use cases and required metrics | ❌ Missing | [.platform/work/google-ads-api-integration.md:26](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.platform/work/google-ads-api-integration.md:26) |
-| Optional local credential/config handling | ❌ Missing | [backend/packages/core/src/nichefinder_core/settings.py:27](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/packages/core/src/nichefinder_core/settings.py:27) |
-| Official Google Ads dependency/client | ❌ Missing | [backend/packages/core/pyproject.toml:6](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/packages/core/pyproject.toml:6) |
-| Google Ads source module | ❌ Missing | `backend/packages/core/src/nichefinder_core/sources/` |
-| Existing ad-snippet agent | ✅ Existing, not this feature | [backend/packages/core/src/nichefinder_core/agents/ads_agent.py:27](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/packages/core/src/nichefinder_core/agents/ads_agent.py:27) |
+| Optional local credential/config handling | ❌ Missing | [backend/core/src/nichefinder_core/settings.py:27](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/core/src/nichefinder_core/settings.py:27) |
+| Official Google Ads dependency/client | ❌ Missing | [backend/core/pyproject.toml:6](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/core/pyproject.toml:6) |
+| Google Ads source module | ❌ Missing | `backend/core/src/nichefinder_core/sources/` |
+| Existing ad-snippet agent | ✅ Existing, not this feature | [backend/core/src/nichefinder_core/agents/ads_agent.py:27](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/core/src/nichefinder_core/agents/ads_agent.py:27) |
 
 ---
 
@@ -132,14 +132,14 @@ Google Ads credentials -> official Ads API source client
 | # | Repo | Issue |
 |---|---|---|
 | 1 | repo-primary | Define exact Google Ads use cases, endpoints, and metrics before implementation. [.platform/work/google-ads-api-integration.md:49](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.platform/work/google-ads-api-integration.md:49) |
-| 2 | repo-primary | Add safe optional Google Ads config/readiness fields and `.env.example` placeholders. [backend/packages/core/src/nichefinder_core/settings.py:27](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/packages/core/src/nichefinder_core/settings.py:27) |
-| 3 | repo-primary | Add an official Google Ads source adapter and mocked tests; current `AdsAgent` only reads SERP ad snippets. [backend/packages/core/src/nichefinder_core/agents/ads_agent.py:30](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/packages/core/src/nichefinder_core/agents/ads_agent.py:30) |
+| 2 | repo-primary | Add safe optional Google Ads config/readiness fields and `.env.example` placeholders. [backend/core/src/nichefinder_core/settings.py:27](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/core/src/nichefinder_core/settings.py:27) |
+| 3 | repo-primary | Add an official Google Ads source adapter and mocked tests; current `AdsAgent` only reads SERP ad snippets. [backend/core/src/nichefinder_core/agents/ads_agent.py:30](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/core/src/nichefinder_core/agents/ads_agent.py:30) |
 | 4 | repo-primary | Add budget/rate/usage accounting for Ads calls. [.platform/conventions/data-sources.md:27](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.platform/conventions/data-sources.md:27) |
 
 ### 🟡 Should Fix Soon
 | # | Repo | Issue | Location |
 |---|---|---|---|
-| 1 | repo-primary | Rename or split current `AdsAgent` semantics when official Google Ads arrives; today “ads” means SERP ad-snippet analysis. | [backend/packages/core/src/nichefinder_core/agents/ads_agent.py:22](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/packages/core/src/nichefinder_core/agents/ads_agent.py:22) |
+| 1 | repo-primary | Rename or split current `AdsAgent` semantics when official Google Ads arrives; today “ads” means SERP ad-snippet analysis. | [backend/core/src/nichefinder_core/agents/ads_agent.py:22](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/backend/core/src/nichefinder_core/agents/ads_agent.py:22) |
 | 2 | repo-primary | Keep the integration source-specific and out of Typer command logic per domain contract. | [.platform/domains/keyword-research.md:31](/Users/danilulmashev/Documents/GitHub/ai-nichefinder/.platform/domains/keyword-research.md:31) |
 
 ### ⚪ Known Limitations (document, not block)

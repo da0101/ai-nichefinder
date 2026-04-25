@@ -18,7 +18,7 @@ It covers where frontend code lives, where backend code lives, which build/runti
 
 ## Backend / source of truth
 
-- Python workspace members currently live under `backend/apps/cli`, `backend/packages/core`, and `backend/packages/db`.
+- Python workspace members currently live under `backend/apps/cli`, `backend/core`, and `backend/db`.
 - Root `pyproject.toml` defines the `uv` workspace membership and is the current backend package graph entrypoint.
 - Backend runtime and API/server code currently live in `backend/apps/cli/src/nichefinder_cli/`.
 - Stable backend invariants: CLI scripts keep working, workspace imports keep resolving, and tests/build commands remain discoverable from the repo root.
@@ -43,15 +43,15 @@ It covers where frontend code lives, where backend code lives, which build/runti
 - `frontend/dashboard/`
 - `frontend/dashboard/src/features/`
 - `frontend/dashboard/src/shared/api/`
-- `backend/packages/core/`
-- `backend/packages/db/`
+- `backend/core/`
+- `backend/db/`
 - `.platform/architecture.md`
 - `.platform/work/rest-api-control-plane.md`
 
 ## Decisions locked
 
 - The frontend/backend split should be explicit at the top level, not implied by mixed `apps/` and `packages/` naming.
-- The stable Phase 1 backend boundary is `backend/{apps,packages}`, not a forced flattening that would rename Python ownership boundaries without product value.
+- The stable backend boundary is `backend/{apps,core,db}`; avoid names like `packages` that imply plugins or third-party libraries.
 - Business logic should not move just to satisfy folder naming; the goal is clearer topology, not churn for its own sake.
 - Shared root config should stay minimal and intentional so future repo extraction is mechanical.
 - Any reorg must preserve existing CLI, test, and build entrypoints through compatibility updates during the transition.
